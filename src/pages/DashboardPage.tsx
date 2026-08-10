@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ export const DashboardPage = () => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,9 +95,14 @@ export const DashboardPage = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
-          <p className="text-slate-500">Manage assessments and review candidates.</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)}>
+            <Menu className="w-6 h-6" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
+            <p className="text-slate-500">Manage assessments and review candidates.</p>
+          </div>
         </div>
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
           <div className="flex flex-col">
@@ -359,6 +366,27 @@ export const DashboardPage = () => {
               <Button variant="destructive" className="flex-1" onClick={() => selectedCandidate && handleDelete(selectedCandidate.id)}>Delete Data (GDPR)</Button>
               <DrawerClose asChild>
                 <Button variant="outline" className="flex-1">Close</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-sm p-4">
+            <DrawerHeader>
+              <DrawerTitle>Navigation</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex flex-col gap-2 mt-4">
+              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/dashboard'; }}>Recruiter Dashboard</Button>
+              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/admin'; }}>Owner / Admin</Button>
+              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/pricing'; }}>Pricing / Buy Credits</Button>
+              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/'; }}>Home / Landing</Button>
+            </div>
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline" className="w-full mt-4">Close Menu</Button>
               </DrawerClose>
             </DrawerFooter>
           </div>

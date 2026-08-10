@@ -25,6 +25,15 @@ export const AdminPage = () => {
   const [creditReason, setCreditReason] = useState('');
   const [creditSaving, setCreditSaving] = useState(false);
 
+  // Add Client state
+  const [addClientDialog, setAddClientDialog] = useState(false);
+  const [newCompany, setNewCompany] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newVat, setNewVat] = useState('');
+  const [newCredits, setNewCredits] = useState(5);
+  const [newReason, setNewReason] = useState('Promo / testing');
+  const [addingClient, setAddingClient] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -62,6 +71,46 @@ export const AdminPage = () => {
     finally { setCreditSaving(false); }
   };
 
+  const handleAddClient = async () => {
+    if (!newCompany.trim() || !newEmail.trim() || newCredits < 0) return;
+    setAddingClient(true);
+    try {
+      const userData = {
+        companyName: newCompany.trim(),
+        email: newEmail.trim(),
+        vatId: newVat.trim(),
+        credits: newCredits,
+        totalSpent: 0,
+        role: 'recruiter',
+        createdAt: serverTimestamp()
+      };
+      
+      const userRef = await addDoc(collection(db, 'users'), userData);
+      
+      await addDoc(collection(db, 'users', userRef.id, 'creditAuditLog'), {
+        amount: newCredits,
+        reason: newReason.trim() || 'Promo / testing',
+        adjustedBy: 'admin',
+        previousBalance: 0,
+        newBalance: newCredits,
+        createdAt: serverTimestamp()
+      });
+
+      setRecruiters(prev => [...prev, { id: userRef.id, ...userData } as RecruiterAccount]);
+      setAddClientDialog(false);
+      setNewCompany('');
+      setNewEmail('');
+      setNewVat('');
+      setNewCredits(5);
+      setNewReason('Promo / testing');
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add client.");
+    } finally {
+      setAddingClient(false);
+    }
+  };
+
   const totalCreds = recruiters.reduce((s, r) => s + (r.credits || 0), 0);
   const totalRev = recruiters.reduce((s, r) => s + (r.totalSpent || 0), 0);
 
@@ -75,7 +124,10 @@ export const AdminPage = () => {
           </div>
           <p className="text-slate-500">Global overview of all PreSift customer accounts.</p>
         </div>
-        <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>← Recruiter View</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>← Recruiter View</Button>
+          <Button onClick={() => setAddClientDialog(true)}>Add Client</Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -181,6 +233,46 @@ export const AdminPage = () => {
             <Button variant="outline" onClick={() => setCreditDialog(false)}>Cancel</Button>
             <Button onClick={handleCreditAdjust} disabled={creditSaving || creditAmount === 0 || !creditReason.trim()}>
               {creditSaving ? "Saving..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addClientDialog} onOpenChange={setAddClientDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+            <DialogDescription>Create a new customer account and grant initial credits.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Company Name (required)</Label>
+              <Input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="e.g. Acme Corp" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email (required)</Label>
+              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="hello@acme.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>VAT/Tax ID (optional)</Label>
+              <Input value={newVat} onChange={(e) => setNewVat(e.target.value)} placeholder="e.g. DE123456789" />
+            </div>
+            <div className="space-y-2">
+              <Label>Free credits for promo/testing</Label>
+              <Input type="number" min="0" value={newCredits} onChange={(e) => setNewCredits(parseInt(e.target.value) || 0)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Input value={newReason} onChange={(e) => setNewReason(e.target.value)} placeholder="e.g., Promo / testing" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddClientDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddClient} 
+              disabled={addingClient || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
+            >
+              {addingClient ? "Saving..." : "Create Client"}
             </Button>
           </DialogFooter>
         </DialogContent>
