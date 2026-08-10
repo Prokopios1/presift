@@ -50,14 +50,6 @@ export const LandingPage = () => {
             >
               Get Started
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-14 px-8 text-lg"
-              onClick={() => (window.location.href = '/dashboard')}
-            >
-              View Demo Dashboard →
-            </Button>
           </div>
         </div>
       </main>
