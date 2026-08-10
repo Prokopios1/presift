@@ -1,0 +1,20 @@
+import { initializeApp } from "firebase/app";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+
+// For demo purposes, we can use a dummy config because we are using emulators
+const firebaseConfig = {
+  projectId: "demo-presift",
+  apiKey: "fake-api-key",
+  authDomain: "demo-presift.firebaseapp.com",
+};
+
+export const app = initializeApp(firebaseConfig);
+export const functions = getFunctions(app);
+export const db = getFirestore(app);
+
+// Connect to local emulator during development
+if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+}

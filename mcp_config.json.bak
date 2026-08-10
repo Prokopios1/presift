@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "firebase-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-tools@latest",
+        "mcp"
+      ],
+      "env": {
+        "USE_GHOST_KEYRING": "1"
+      }
+    },
+    "gke-oss": {
+      "command": "/home/fupazuzi/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.7.linux-amd64/bin/go",
+      "args": [
+        "run",
+        "github.com/GoogleCloudPlatform/gke-mcp@v0.10.0"
+      ],
+      "env": {}
+    },
+    "testsprite": {
+      "command": "/home/fupazuzi/.npm-global/bin/testsprite-mcp-plugin",
+      "args": [],
+      "env": {
+        "TESTSPRITE_API_KEY": "sk-user-bH4Vl2dYLPXNM1f9_g01idR7VStpyvu8d8y2KWzSlG3LyaIJGugQ9RZPKXXfSwNg43euJ46ymbzI9gCiYP-_-I9ll8vvAxqU2GozTMJUHcSbXVGH1EmjXNdrAiIPFBe0LdU"
+      }
+    },
+    "joules-mcp": {
+      "command": "/home/fupazuzi/ApplyPilot/venv/bin/joules",
+      "args": [],
+      "env": {
+        "PYTHONPATH": "/home/fupazuzi/ApplyPilot/venv/lib/python3.12/site-packages",
+        "JULES_API_KEY": "AQ.Ab8RN6JVGhPZvpH02g_S_N1O7pB8Fcesl3yT7wzPOClaK5algw"
+      }
+    }
+  }
+}

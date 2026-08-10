@@ -1,0 +1,123 @@
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/firebase';
+
+export const DevToolbar = () => {
+  const [loading, setLoading] = useState(false);
+  const isSubmitting = useRef(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const searchParams = new URLSearchParams(location.search);
+  const isDemo = searchParams.get('demo') === 'true' || import.meta.env.MODE === 'development';
+  const isPublicRoute = location.pathname === '/' || location.pathname === '/pricing';
+
+  if (!isDemo || isPublicRoute) return null;
+
+  const handleMockRecruiterLogin = () => {
+    localStorage.setItem('presift_demo_session', JSON.stringify({
+      email: 'demo_recruiter@presift.app',
+      role: 'recruiter',
+      credits: 5,
+      vatId: 'DE123456789',
+      companyName: 'Acme Corp (Demo)',
+      assessments: ['/assessment/demo1', '/assessment/demo2', '/assessment/demo3'],
+    }));
+    localStorage.setItem('presift_uid', 'demo_recruiter');
+    navigate('/dashboard');
+    window.location.reload();
+  };
+
+  const handleMockOwnerLogin = () => {
+    localStorage.setItem('presift_demo_session', JSON.stringify({
+      email: 'prokopios@presift.app',
+      role: 'admin',
+      credits: 999,
+      companyName: 'PreSift Admin',
+    }));
+    localStorage.setItem('presift_uid', 'owner_prokopios');
+    navigate('/admin');
+    window.location.reload();
+  };
+
+  const handleSeedData = async () => {
+    setLoading(true);
+    try {
+      const seedDemoData = httpsCallable(functions, 'seedDemoData');
+      await seedDemoData();
+      navigate('/dashboard');
+      window.location.reload();
+    } catch (e) {
+      console.error("Failed to seed data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInstantSubmit = async () => {
+    const match = location.pathname.match(/\/(test|assessment)\/([^/]+)/);
+    const assessmentId = match ? match[2] : null;
+    if (!assessmentId) return;
+
+    const savedSession = localStorage.getItem(`assessment_${assessmentId}_sessionData`);
+    if (!savedSession) {
+      alert("No session — please reload the test page first.");
+      return;
+    }
+    
+    if (isSubmitting.current) return;
+    
+    setLoading(true);
+    isSubmitting.current = true;
+    try {
+      const sessionData = JSON.parse(savedSession);
+      const icar = sessionData.items.map((i: any) => ({
+        itemId: i.itemId,
+        selectedIndex: Math.floor(Math.random() * 4),
+      }));
+      const wleis = sessionData.wleisItems.map((i: any) => ({
+        itemId: i.itemId,
+        value: Math.floor(Math.random() * 7) + 1,
+      }));
+
+      const submitAssessment = httpsCallable(functions, 'submitAssessment');
+      await submitAssessment({ sessionId: sessionData.sessionId, icar, wleis });
+      alert("Auto-Submitted!");
+      navigate('/');
+    } catch (e) {
+      console.error("Auto-submit failed", e);
+      isSubmitting.current = false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isTestPage = location.pathname.includes('/test/') || location.pathname.includes('/assessment/');
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-2 flex items-center justify-between z-50 text-xs border-t border-red-600/50">
+      <div className="font-bold flex items-center gap-2">
+        <span className="bg-red-600 px-2 py-1 rounded text-[10px] uppercase tracking-wider animate-pulse">Dev Mode</span>
+        PreSift Test Kit
+      </div>
+      <div className="flex gap-2">
+        {!isTestPage && (
+          <>
+            <Button size="sm" variant="secondary" onClick={handleMockRecruiterLogin}>🧑‍💼 Recruiter Login</Button>
+            <Button size="sm" variant="secondary" onClick={handleMockOwnerLogin}>👑 Owner Login</Button>
+            <Button size="sm" variant="secondary" onClick={handleSeedData} disabled={loading}>
+              {loading ? "Seeding..." : "🌱 Seed Demo Data"}
+            </Button>
+          </>
+        )}
+        {isTestPage && (
+          <Button size="sm" variant="destructive" onClick={handleInstantSubmit} disabled={loading}>
+            ⚡ Auto-Fill & Submit Test
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};

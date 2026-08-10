@@ -1,0 +1,446 @@
+{
+    "$schema": "presift-bank.schema.json",
+    "schemaVersion": "1.0.0",
+    "platform": "PreSift",
+    "generatedAt": "2026-08-06T12:47:00Z",
+    "notes": [
+        "difficulty is the classical p-value (proportion correct in the norming sample); range 0.1-1.0, HIGHER = EASIER. irt.b is derived as b = -ln(p/(1-p)), with p capped to [0.02, 0.98] for derivation.",
+        "IRT model: 3PL (a = discrimination, b = difficulty on the logit scale, c = pseudo-guessing). Theta is on the N(0,1) logit scale.",
+        "Scale mapping: percentileRank = Phi(theta)*100 (0-100); standardScore = 100 + 15*z (baseline mean 100, SD 15). Both interpretations of the spec are emitted.",
+        "ICAR items are ICAR-format originals (4 domains x 4 items). They are NOT verbatim ICAR items, which are copyrighted (ICAR Project).",
+        "WLEIS items are construct-parallel originals (4 subscales x 4 items). The original WLEIS is copyrighted (Wong & Law, 2002); replace with licensed items for commercial use.",
+        "All templates and answer keys are server-side only. Clients receive fully resolved session instances (see antiCheat).",
+        "Spatial items use asset codes (e.g. L-UP) resolved server-side to hosted SVG assets; the key scheme is renderer-agnostic."
+    ],
+    "norming": {
+        "baseline": { "mean": 100, "sd": 15, "thetaPriorMean": 0, "thetaPriorSd": 1 },
+        "estimator": "EAP (default): deterministic midpoint quadrature over [-6, 6], step 0.025. MLE (bisection on the 3PL score function) available with EAP fallback."
+    },
+    "antiCheat": {
+        "templateDelivery": "Templates and answer keys are stored server-side only; clients receive a fully resolved session instance.",
+        "perSessionSeed": "crypto.getRandomValues(new Uint32Array(1))[0] generated at session start; one draw per randomized variable per item per session.",
+        "parameterRandomization": "Every variable listed under item.parameterization.randomizedVariables is re-sampled per session; no parameter set is reused across sessions for the same candidate.",
+        "distractorUniqueness": "After sampling, options are deduplicated and checked against the correct answer; collision triggers a re-sample (max 5 attempts, then a deterministic fallback pool).",
+        "optionShuffle": "Option order MAY be shuffled server-side; correctIndex is recomputed and stored on the session record. Never shipped in the template.",
+        "answerValidation": "Answer keys are never exposed to the client; scoring runs exclusively server-side.",
+        "itemVersioning": "Every resolved instance carries itemId + variantHash (SHA-256 of the resolved prompt/options) for post-hoc audit."
+    },
+    "banks": {
+        "analogyPairs": [
+            ["doctor", "hospital", "teacher", "school"],
+            ["chef", "kitchen", "pilot", "cockpit"],
+            ["author", "book", "composer", "symphony"],
+            ["carpenter", "wood", "tailor", "fabric"],
+            ["driver", "vehicle", "captain", "ship"]
+        ],
+        "analogyDistractorPool": ["office", "library", "clinic", "factory", "studio", "garage", "court", "ward"],
+        "synonymSets": [
+            ["rapid", "fast", "slow", "loud", "heavy", "soft"],
+            ["abundant", "plentiful", "scarce", "tiny", "empty", "sparse"],
+            ["candid", "frank", "vague", "polite", "harsh", "secretive"],
+            ["fragile", "delicate", "sturdy", "coarse", "heavy", "rough"],
+            ["evident", "obvious", "hidden", "subtle", "vague", "obscure"]
+        ],
+        "antonymSets": [
+            ["expand", "shrink", "grow", "stretch", "spread"],
+            ["ancient", "modern", "old", "aged", "antique"],
+            ["assemble", "disassemble", "gather", "build", "construct"],
+            ["ascend", "descend", "climb", "rise", "soar"],
+            ["generous", "stingy", "kind", "giving", "noble"]
+        ],
+        "oddOneOutSets": [
+            ["apple", "banana", "carrot", "cherry", 2],
+            ["guitar", "piano", "drum", "violin", 2],
+            ["eagle", "sparrow", "penguin", "hawk", 2],
+            ["ruby", "emerald", "sapphire", "diamond", 3],
+            ["river", "stream", "ocean", "lake", 2]
+        ],
+        "abstractGlyphPairs": [["◇", "◆"], ["▲", "●"], ["■", "□"]],
+        "spatialShapes": [
+            { "code": "L-UP", "rot90cw": "L-RIGHT", "rot90ccw": "L-LEFT", "rot180": "L-DOWN", "mirror": "L-LEFT" },
+            { "code": "T-UP", "rot90cw": "T-RIGHT", "rot90ccw": "T-LEFT", "rot180": "T-DOWN", "mirror": "T-LEFT" },
+            { "code": "F-UP", "rot90cw": "F-RIGHT", "rot90ccw": "F-LEFT", "rot180": "F-DOWN", "mirror": "F-LEFT" },
+            { "code": "P-RIGHT", "rot90cw": "P-DOWN", "rot90ccw": "P-UP", "rot180": "P-LEFT", "mirror": "P-LEFT" }
+        ]
+    },
+    "cognitive": {
+        "domains": {
+            "numerical": "Letter & Number Series",
+            "verbal": "Verbal Reasoning",
+            "abstract": "Pattern / Rule Inference",
+            "spatial": "Mental Rotation"
+        },
+        "itemsPerDomain": 4,
+        "optionsPerItem": 4,
+        "scoring": "dichotomous (1 correct / 0 incorrect per item)",
+        "items": [
+            {
+                "id": "ICAR-N-01",
+                "domain": "numerical",
+                "promptTemplate": "What number completes the series?  {{a}}, {{a+d}}, {{a+2d}}, {{a+3d}}, {{a+4d}}, ?",
+                "optionTemplates": ["{{a+5d}}", "{{a+5d-d}}", "{{a+5d+d}}", "{{a+5d-2d}}"],
+                "correctIndex": 0,
+                "difficulty": 0.72,
+                "irt": { "a": 1.1, "b": -0.94, "c": 0.15 },
+                "parameterization": {
+                    "randomizedVariables": ["a", "d"],
+                    "rules": [
+                        { "variable": "a", "type": "integer", "range": [2, 9] },
+                        { "variable": "d", "type": "integer", "range": [2, 7], "constraint": "(a + 5*d) <= 120" }
+                    ],
+                    "distractorRules": ["correct - d", "correct + d", "correct - 2*d"],
+                    "uniqueness": ["all four options distinct", "all options >= 0", "no distractor equals the correct answer"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 48
+                },
+                "resolvedExample": { "prompt": "What number completes the series?  3, 7, 11, 15, 19, ?", "options": ["23", "19", "27", "15"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-N-02",
+                "domain": "numerical",
+                "promptTemplate": "What number completes the series?  {{a}}, {{a*r}}, {{a*r^2}}, {{a*r^3}}, {{a*r^4}}, ?",
+                "optionTemplates": ["{{a*r^5}}", "{{a*r^4 + a*r^3}}", "{{a*r^5 - a*r^2}}", "{{a*r^5 + a*r^2}}"],
+                "correctIndex": 0,
+                "difficulty": 0.58,
+                "irt": { "a": 1.3, "b": -0.32, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["a", "r"],
+                    "rules": [
+                        { "variable": "a", "type": "integer", "range": [2, 5] },
+                        { "variable": "r", "type": "integer", "range": [2, 3], "constraint": "a * r^5 <= 1000" }
+                    ],
+                    "distractorRules": ["correct - a*r^2", "a*r^4 + a*r^3", "correct + a*r^2"],
+                    "uniqueness": ["all four options distinct", "all options >= 0", "no distractor equals the correct answer"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 7
+                },
+                "resolvedExample": { "prompt": "What number completes the series?  4, 8, 16, 32, 64, ?", "options": ["128", "96", "112", "144"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-N-03",
+                "domain": "numerical",
+                "promptTemplate": "What number completes the series?  {{a}}, {{a/3}}, {{a/9}}, {{a/27}}, {{a/81}}, ?",
+                "optionTemplates": ["{{a/243}}", "{{a/243 + 1}}", "{{a/81}}", "{{a/243 - 1}}"],
+                "correctIndex": 0,
+                "difficulty": 0.55,
+                "irt": { "a": 1.2, "b": -0.2, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["a"],
+                    "rules": [
+                        { "variable": "a", "type": "integer", "enum": [243, 486, 729], "constraint": "all terms stay integers" }
+                    ],
+                    "distractorRules": ["correct + 1", "previous term (a/81)", "correct - 1"],
+                    "uniqueness": ["all four options distinct", "no distractor equals the correct answer"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 3
+                },
+                "resolvedExample": { "prompt": "What number completes the series?  243, 81, 27, 9, 3, ?", "options": ["1", "2", "3", "0"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-N-04",
+                "domain": "numerical",
+                "promptTemplate": "What number completes the series?  {{b^2}}, {{(b+1)^2}}, {{(b+2)^2}}, {{(b+3)^2}}, {{(b+4)^2}}, ?",
+                "optionTemplates": ["{{(b+5)^2}}", "{{(b+5)^2 - (b+4)}}", "{{(b+5)^2 - 2*(b+4)}}", "{{(b+5)^2 + (b+4)}}"],
+                "correctIndex": 0,
+                "difficulty": 0.65,
+                "irt": { "a": 1.0, "b": -0.62, "c": 0.15 },
+                "parameterization": {
+                    "randomizedVariables": ["b"],
+                    "rules": [
+                        { "variable": "b", "type": "integer", "range": [1, 3] }
+                    ],
+                    "distractorRules": ["correct - (b+4)", "correct - 2*(b+4)", "correct + (b+4)"],
+                    "uniqueness": ["all four options distinct", "no distractor equals the correct answer"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 3
+                },
+                "resolvedExample": { "prompt": "What number completes the series?  1, 4, 9, 16, 25, ?", "options": ["36", "31", "26", "41"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-V-01",
+                "domain": "verbal",
+                "promptTemplate": "{{X}} is to {{Y}} as {{P}} is to ?",
+                "optionTemplates": ["{{Q}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+                "correctIndex": 0,
+                "difficulty": 0.85,
+                "irt": { "a": 0.9, "b": -1.73, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["analogyPair", "distractors"],
+                    "rules": [
+                        { "variable": "analogyPair", "source": "banks.analogyPairs", "strategy": "uniform random pick per session", "shape": [2, 4] },
+                        { "variable": "distractors", "source": "banks.analogyDistractorPool", "strategy": "sample 3 of 8 without replacement", "constraint": "distractors must differ from Q and from each other; semantic relatedness to the Y field preferred" }
+                    ],
+                    "distractorRules": ["D1..D3 sampled from pool, related to Y"],
+                    "uniqueness": ["all four options distinct", "correct option (Q) never collides with distractors"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 280
+                },
+                "resolvedExample": { "prompt": "doctor is to hospital as teacher is to ?", "options": ["school", "office", "library", "clinic"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-V-02",
+                "domain": "verbal",
+                "promptTemplate": "Which word is closest in meaning to '{{TARGET}}'?",
+                "optionTemplates": ["{{SYN}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+                "correctIndex": 0,
+                "difficulty": 0.78,
+                "irt": { "a": 1.0, "b": -1.27, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["synonymSet", "distractors"],
+                    "rules": [
+                        { "variable": "synonymSet", "source": "banks.synonymSets", "strategy": "uniform pick", "shape": [6], "mapping": "entry[0]=TARGET, entry[1]=SYN" },
+                        { "variable": "distractors", "source": "entries 2..5 of the selected set", "strategy": "sample 3 of 4 without replacement" }
+                    ],
+                    "distractorRules": ["D1..D3 = sampled set entries"],
+                    "uniqueness": ["all four options distinct"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 20
+                },
+                "resolvedExample": { "prompt": "Which word is closest in meaning to 'rapid'?", "options": ["fast", "slow", "loud", "heavy"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-V-03",
+                "domain": "verbal",
+                "promptTemplate": "Which word is the OPPOSITE of '{{TARGET}}'?",
+                "optionTemplates": ["{{ANT}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+                "correctIndex": 0,
+                "difficulty": 0.7,
+                "irt": { "a": 1.1, "b": -0.85, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["antonymSet", "distractors"],
+                    "rules": [
+                        { "variable": "antonymSet", "source": "banks.antonymSets", "strategy": "uniform pick", "shape": [5], "mapping": "entry[0]=TARGET, entry[1]=ANT" },
+                        { "variable": "distractors", "source": "entries 2..4 of the selected set", "strategy": "all three served" }
+                    ],
+                    "distractorRules": ["D1..D3 = entries 2..4"],
+                    "uniqueness": ["all four options distinct"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 5
+                },
+                "resolvedExample": { "prompt": "Which word is the OPPOSITE of 'expand'?", "options": ["shrink", "grow", "stretch", "spread"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-V-04",
+                "domain": "verbal",
+                "promptTemplate": "Which word does NOT belong with the others?  {{W1}}, {{W2}}, {{W3}}, {{W4}}",
+                "optionTemplates": ["{{W1}}", "{{W2}}", "{{W3}}", "{{W4}}"],
+                "correctIndex": 2,
+                "difficulty": 0.62,
+                "irt": { "a": 0.8, "b": -0.49, "c": 0.25 },
+                "parameterization": {
+                    "randomizedVariables": ["oddOneOutSet", "optionOrder"],
+                    "rules": [
+                        { "variable": "oddOneOutSet", "source": "banks.oddOneOutSets", "strategy": "uniform pick", "shape": [5], "mapping": "entry[4] = index of the odd word" },
+                        { "variable": "optionOrder", "strategy": "server-side shuffle of the 4 words; correctIndex recomputed post-shuffle" }
+                    ],
+                    "distractorRules": ["n/a - options ARE the four set members"],
+                    "uniqueness": ["four distinct words guaranteed by bank construction"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 120
+                },
+                "resolvedExample": { "prompt": "Which word does NOT belong with the others?  apple, banana, carrot, cherry", "options": ["apple", "banana", "carrot", "cherry"], "correctIndex": 2 }
+            },
+            {
+                "id": "ICAR-A-01",
+                "domain": "abstract",
+                "promptTemplate": "Which arrow completes the sequence?  {{S0}} {{S1}} {{S2}} {{S3}} {{S4}} {{S5}} ?",
+                "optionTemplates": ["{{S6}}", "{{S0}}", "{{S1}}", "{{S3}}"],
+                "correctIndex": 0,
+                "difficulty": 0.68,
+                "irt": { "a": 1.0, "b": -0.75, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["startPhase"],
+                    "rules": [
+                        { "variable": "startPhase", "type": "integer", "range": [0, 3] },
+                        { "variable": "cycle", "type": "fixed", "value": ["↑", "→", "↓", "←"], "constraint": "S_i = cycle[(startPhase + i) mod 4]; correct = S6; distractors = S0, S1, S3 (always distinct mod 4)" }
+                    ],
+                    "distractorRules": ["S0, S1, S3 of the cycle window"],
+                    "uniqueness": ["guaranteed by modular distinctness of indices 0, 1, 3, 6 mod 4"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 4
+                },
+                "resolvedExample": { "prompt": "Which arrow completes the sequence?  ↑ → ↓ ← ↑ → ?", "options": ["↓", "↑", "→", "←"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-A-02",
+                "domain": "abstract",
+                "promptTemplate": "If  {{P1}}{{P2}}{{P1}}{{P2}}  becomes  {{P2}}{{P1}}{{P2}}{{P1}}  (reversal), then  {{G1}}{{G2}}{{G1}}{{G2}}  becomes ?",
+                "optionTemplates": ["{{G2}}{{G1}}{{G2}}{{G1}}", "{{G1}}{{G2}}{{G1}}{{G2}}", "{{G2}}{{G1}}{{G1}}{{G2}}", "{{G1}}{{G2}}{{G2}}{{G1}}"],
+                "correctIndex": 0,
+                "difficulty": 0.6,
+                "irt": { "a": 0.9, "b": -0.41, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["sourcePair", "targetPair"],
+                    "rules": [
+                        { "variable": "sourcePair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick" },
+                        { "variable": "targetPair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick, targetPair != sourcePair", "constraint": "prevents trivial matching" }
+                    ],
+                    "distractorRules": ["original order", "partial reversal (G2G1G1G2)", "partial reversal (G1G2G2G1)"],
+                    "uniqueness": ["all four options distinct by construction"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 6
+                },
+                "resolvedExample": { "prompt": "If  ◇◆◇◆  becomes  ◆◇◆◇  (reversal), then  ▲●▲●  becomes ?", "options": ["●▲●▲", "▲●▲●", "●▲▲●", "▲●●▲"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-A-03",
+                "domain": "abstract",
+                "promptTemplate": "Which figure completes the sequence?  {{G}}   {{G}}{{G}}   {{G}}{{G}}{{G}}   {{G}}{{G}}{{G}}{{G}}   ?",
+                "optionTemplates": ["{{G}}{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}"],
+                "correctIndex": 0,
+                "difficulty": 0.9,
+                "irt": { "a": 1.2, "b": -2.2, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["glyph", "startCount", "step"],
+                    "rules": [
+                        { "variable": "glyph", "source": "banks.abstractGlyphPairs flattened", "strategy": "uniform pick of 3 glyphs" },
+                        { "variable": "startCount", "type": "integer", "range": [1, 2] },
+                        { "variable": "step", "type": "integer", "range": [1, 2], "constraint": "startCount + 4*step <= 6" }
+                    ],
+                    "distractorRules": ["previous term", "correct + step", "correct - step"],
+                    "uniqueness": ["all four options distinct by construction"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 12
+                },
+                "resolvedExample": { "prompt": "Which figure completes the sequence?  ◆   ◆◆   ◆◆◆   ◆◆◆◆   ?", "options": ["◆◆◆◆◆", "◆◆◆◆", "◆◆◆◆◆◆", "◆◆◆"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-A-04",
+                "domain": "abstract",
+                "promptTemplate": "Which figure completes the sequence?  {{A}}   {{B}}   {{A}}   {{B}}   {{A}}   ?",
+                "optionTemplates": ["{{B}}", "{{A}}", "{{G1}}{{G1}}", "{{G2}}{{G2}}"],
+                "correctIndex": 0,
+                "difficulty": 0.85,
+                "irt": { "a": 1.1, "b": -1.73, "c": 0.2 },
+                "parameterization": {
+                    "randomizedVariables": ["glyphPair"],
+                    "rules": [
+                        { "variable": "glyphPair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick", "constraint": "A = G1G2, B = G2G1" }
+                    ],
+                    "distractorRules": ["previous term (A)", "G1G1", "G2G2"],
+                    "uniqueness": ["all four options distinct by construction"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 3
+                },
+                "resolvedExample": { "prompt": "Which figure completes the sequence?  ◇◆   ◆◇   ◇◆   ◆◇   ◇◆   ?", "options": ["◆◇", "◇◆", "◆◆", "◇◇"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-S-01",
+                "domain": "spatial",
+                "promptTemplate": "The shape {{SHAPE}} is rotated 90° clockwise. Which option shows the result?",
+                "optionTemplates": ["{{ROT90CW}}", "{{MIRROR}}", "{{ROT180}}", "{{ORIGINAL}}"],
+                "correctIndex": 0,
+                "difficulty": 0.55,
+                "irt": { "a": 1.4, "b": -0.2, "c": 0.2 },
+                "parameterization": {
+                    "visual": true,
+                    "rendering": "asset codes resolved server-side to hosted SVGs",
+                    "randomizedVariables": ["shape"],
+                    "rules": [
+                        { "variable": "shape", "source": "banks.spatialShapes", "strategy": "uniform pick", "mapping": "rotations/mirror read from the shape entry" }
+                    ],
+                    "distractorRules": ["mirror of original", "180° rotation", "original"],
+                    "uniqueness": ["all four option codes distinct per bank table"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 4
+                },
+                "resolvedExample": { "prompt": "The shape L-UP is rotated 90° clockwise. Which option shows the result?", "options": ["L-RIGHT", "L-LEFT", "L-DOWN", "L-UP"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-S-02",
+                "domain": "spatial",
+                "promptTemplate": "The shape {{SHAPE}} is rotated 180°. Which option shows the result?",
+                "optionTemplates": ["{{ROT180}}", "{{ORIGINAL}}", "{{ROT90CW}}", "{{ROT90CCW}}"],
+                "correctIndex": 0,
+                "difficulty": 0.75,
+                "irt": { "a": 1.3, "b": -1.1, "c": 0.2 },
+                "parameterization": {
+                    "visual": true,
+                    "rendering": "asset codes resolved server-side to hosted SVGs",
+                    "randomizedVariables": ["shape"],
+                    "rules": [
+                        { "variable": "shape", "source": "banks.spatialShapes", "strategy": "uniform pick" }
+                    ],
+                    "distractorRules": ["original", "90° clockwise", "90° counter-clockwise"],
+                    "uniqueness": ["all four option codes distinct per bank table"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 4
+                },
+                "resolvedExample": { "prompt": "The shape T-UP is rotated 180°. Which option shows the result?", "options": ["T-DOWN", "T-UP", "T-RIGHT", "T-LEFT"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-S-03",
+                "domain": "spatial",
+                "promptTemplate": "Which option is the MIRROR IMAGE of the shape {{SHAPE}}?",
+                "optionTemplates": ["{{MIRROR}}", "{{ORIGINAL}}", "{{ROT90CW}}", "{{ROT90CCW}}"],
+                "correctIndex": 0,
+                "difficulty": 0.45,
+                "irt": { "a": 1.5, "b": 0.2, "c": 0.2 },
+                "parameterization": {
+                    "visual": true,
+                    "rendering": "asset codes resolved server-side to hosted SVGs",
+                    "randomizedVariables": ["shape"],
+                    "rules": [
+                        { "variable": "shape", "source": "banks.spatialShapes", "strategy": "uniform pick" }
+                    ],
+                    "distractorRules": ["original", "90° clockwise", "90° counter-clockwise"],
+                    "uniqueness": ["all four option codes distinct per bank table"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 4
+                },
+                "resolvedExample": { "prompt": "Which option is the MIRROR IMAGE of the shape F-UP?", "options": ["F-LEFT", "F-UP", "F-RIGHT", "F-DOWN"], "correctIndex": 0 }
+            },
+            {
+                "id": "ICAR-S-04",
+                "domain": "spatial",
+                "promptTemplate": "The shape {{SHAPE}} is rotated 90° counter-clockwise. Which option shows the result?",
+                "optionTemplates": ["{{ROT90CCW}}", "{{ROT90CW}}", "{{MIRROR}}", "{{ROT180}}"],
+                "correctIndex": 0,
+                "difficulty": 0.5,
+                "irt": { "a": 1.4, "b": 0.0, "c": 0.2 },
+                "parameterization": {
+                    "visual": true,
+                    "rendering": "asset codes resolved server-side to hosted SVGs",
+                    "randomizedVariables": ["shape"],
+                    "rules": [
+                        { "variable": "shape", "source": "banks.spatialShapes", "strategy": "uniform pick" }
+                    ],
+                    "distractorRules": ["90° clockwise", "mirror", "180° rotation"],
+                    "uniqueness": ["all four option codes distinct per bank table"],
+                    "seed": "per-session crypto seed",
+                    "estimatedUniqueInstances": 4
+                },
+                "resolvedExample": { "prompt": "The shape P-RIGHT is rotated 90° counter-clockwise. Which option shows the result?", "options": ["P-UP", "P-DOWN", "P-LEFT", "P-RIGHT"], "correctIndex": 0 }
+            }
+        ]
+    },
+    "wleis": {
+        "subscales": {
+            "SEA": "Self-Emotion Appraisal",
+            "OEA": "Others' Emotion Appraisal",
+            "UOE": "Use of Emotion",
+            "ROE": "Regulation of Emotion"
+        },
+        "itemsPerSubscale": 4,
+        "likert": { "min": 1, "max": 7, "labels": { "1": "Strongly Disagree", "4": "Neutral", "7": "Strongly Agree" } },
+        "reverseScoring": "transformed = (min + max) - original = 8 - original",
+        "items": [
+            { "id": "WLEIS-SEA-01", "subscale": "SEA", "item": "I have a good sense of why I feel the emotions I feel.", "reverse": false },
+            { "id": "WLEIS-SEA-02", "subscale": "SEA", "item": "I really understand what I am feeling.", "reverse": false },
+            { "id": "WLEIS-SEA-03", "subscale": "SEA", "item": "I am often confused about my own feelings.", "reverse": true },
+            { "id": "WLEIS-SEA-04", "subscale": "SEA", "item": "I can always tell exactly how I am feeling.", "reverse": false },
+            { "id": "WLEIS-OEA-01", "subscale": "OEA", "item": "I always know my friends' emotions from their behavior.", "reverse": false },
+            { "id": "WLEIS-OEA-02", "subscale": "OEA", "item": "I am a good observer of others' emotions.", "reverse": false },
+            { "id": "WLEIS-OEA-03", "subscale": "OEA", "item": "I find it hard to understand why other people feel the way they do.", "reverse": true },
+            { "id": "WLEIS-OEA-04", "subscale": "OEA", "item": "I can tell when someone is upset even if they say nothing.", "reverse": false },
+            { "id": "WLEIS-UOE-01", "subscale": "UOE", "item": "I always set goals for myself and then try my best to achieve them.", "reverse": false },
+            { "id": "WLEIS-UOE-02", "subscale": "UOE", "item": "I always tell myself I am a competent person.", "reverse": false },
+            { "id": "WLEIS-UOE-03", "subscale": "UOE", "item": "I am a self-motivating person.", "reverse": false },
+            { "id": "WLEIS-UOE-04", "subscale": "UOE", "item": "I encourage myself to try harder even after setbacks.", "reverse": false },
+            { "id": "WLEIS-ROE-01", "subscale": "ROE", "item": "I am able to control my temper and handle problems rationally.", "reverse": false },
+            { "id": "WLEIS-ROE-02", "subscale": "ROE", "item": "I am quite capable of controlling my own emotions.", "reverse": false },
+            { "id": "WLEIS-ROE-03", "subscale": "ROE", "item": "I can calm down quickly when I am very angry.", "reverse": false },
+            { "id": "WLEIS-ROE-04", "subscale": "ROE", "item": "I lose control of my emotions when under pressure.", "reverse": true }
+        ]
+    }
+}

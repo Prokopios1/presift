@@ -1,0 +1,91 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SubmissionError = void 0;
+exports.candidateDocId = candidateDocId;
+exports.validateSubmission = validateSubmission;
+exports.processSubmission = processSubmission;
+const psychometrics_1 = require("./psychometrics");
+class SubmissionError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'SubmissionError';
+    }
+}
+exports.SubmissionError = SubmissionError;
+function candidateDocId(sessionId) {
+    if (!sessionId)
+        throw new SubmissionError('Missing sessionId');
+    return 'cand_' + sessionId;
+}
+function validateSubmission(payload, bank) {
+    if (!payload || typeof payload !== 'object')
+        throw new SubmissionError('Invalid payload');
+    if (!payload.sessionId)
+        throw new SubmissionError('Missing sessionId');
+    if (!Array.isArray(payload.icar) || payload.icar.length !== 16)
+        throw new SubmissionError('Invalid icar array');
+    if (!Array.isArray(payload.wleis) || payload.wleis.length !== 16)
+        throw new SubmissionError('Invalid wleis array');
+    const icarIds = new Set();
+    const normalizedIcar = [];
+    for (const item of payload.icar) {
+        if ('correctAnswerKey' in item || 'correctIndex' in item || 'irt' in item || 'difficulty' in item || 'parameterization' in item) {
+            throw new SubmissionError('forbidden key');
+        }
+        const bankItem = bank.cognitive.items.find(i => i.id === item.itemId);
+        if (!bankItem)
+            throw new SubmissionError(`Unknown icar item ${item.itemId}`);
+        if (icarIds.has(item.itemId))
+            throw new SubmissionError(`Duplicate icar item ${item.itemId}`);
+        icarIds.add(item.itemId);
+        if (item.selectedIndex !== null && (!Number.isInteger(item.selectedIndex) || item.selectedIndex < 0 || item.selectedIndex > 3)) {
+            throw new SubmissionError(`Invalid selectedIndex for ${item.itemId}`);
+        }
+        normalizedIcar.push({ itemId: item.itemId, selectedIndex: item.selectedIndex });
+    }
+    const wleisIds = new Set();
+    const normalizedWleis = [];
+    for (const item of payload.wleis) {
+        if ('correctAnswerKey' in item || 'correctIndex' in item || 'irt' in item || 'difficulty' in item || 'parameterization' in item) {
+            throw new SubmissionError('forbidden key');
+        }
+        const bankItem = bank.wleis.items.find(i => i.id === item.itemId);
+        if (!bankItem)
+            throw new SubmissionError(`Unknown wleis item ${item.itemId}`);
+        if (wleisIds.has(item.itemId))
+            throw new SubmissionError(`Duplicate wleis item ${item.itemId}`);
+        wleisIds.add(item.itemId);
+        if (item.value !== null && (!Number.isInteger(item.value) || item.value < 1 || item.value > 7)) {
+            throw new SubmissionError(`Invalid likert value for ${item.itemId}`);
+        }
+        normalizedWleis.push({
+            itemId: item.itemId,
+            value: item.value || 4, // default to neutral if null
+            subscale: bankItem.subscale,
+            reverse: bankItem.reverse
+        });
+    }
+    return {
+        sessionId: payload.sessionId,
+        icar: normalizedIcar,
+        wleis: normalizedWleis
+    };
+}
+function processSubmission(submission, sessionKeys) {
+    if (submission.answers.length !== sessionKeys.length) {
+        throw new SubmissionError("Length mismatch between submitted answers and session keys.");
+    }
+    const responseVector = [];
+    const irtParams = [];
+    for (const sessionKey of sessionKeys) {
+        const submittedAnswer = submission.answers.find(a => a.itemId === sessionKey.itemId);
+        if (!submittedAnswer) {
+            throw new SubmissionError(`Missing answer for item: ${sessionKey.itemId}`);
+        }
+        const isCorrect = submittedAnswer.selectedIndex === sessionKey.correctIndex ? 1 : 0;
+        responseVector.push(isCorrect);
+        irtParams.push(sessionKey.irt);
+    }
+    return (0, psychometrics_1.evaluateCandidate)(responseVector, submission.wleisAnswers, irtParams);
+}
+//# sourceMappingURL=submission.js.map

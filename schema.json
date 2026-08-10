@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PreSift Assessment Item Bank",
+  "type": "object",
+  "properties": {
+    "icar16": {
+      "type": "array",
+      "description": "ICAR-16 Cognitive Items (Numerical, Verbal, Abstract, and Spatial Reasoning)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Numerical",
+              "Verbal",
+              "Abstract",
+              "Spatial"
+            ]
+          },
+          "stem": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "correctAnswerKey": {
+            "type": "string"
+          },
+          "difficultyCoefficient": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 1.0
+          },
+          "parameterizationRules": {
+            "type": "object",
+            "description": "Rules for server-side dynamic variable randomization.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "integer",
+                    "float",
+                    "string",
+                    "expression"
+                  ]
+                },
+                "range": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "formula": {
+                  "type": "string"
+                },
+                "pool": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "stem",
+          "options",
+          "correctAnswerKey",
+          "difficultyCoefficient",
+          "parameterizationRules"
+        ]
+      }
+    },
+    "wleis16": {
+      "type": "array",
+      "description": "WLEIS-16 Emotional Intelligence Items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subscale": {
+            "type": "string",
+            "enum": [
+              "SEA",
+              "OEA",
+              "UOE",
+              "ROE"
+            ]
+          },
+          "statement": {
+            "type": "string"
+          },
+          "scaleMax": {
+            "type": "integer",
+            "default": 7
+          },
+          "scaleMin": {
+            "type": "integer",
+            "default": 1
+          },
+          "reverseScored": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "subscale",
+          "statement",
+          "reverseScored"
+        ]
+      }
+    }
+  },
+  "required": [
+    "icar16",
+    "wleis16"
+  ]
+}
