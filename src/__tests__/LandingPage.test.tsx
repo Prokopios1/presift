@@ -15,7 +15,7 @@ describe('LandingPage', () => {
       </MemoryRouter>
     );
     // Core hero elements
-    expect(screen.getByText(/B2B Psychometric Screening Engine/i)).toBeTruthy();
+    expect(screen.queryByText(/B2B Psychometric Screening Engine/i)).toBeNull();
     expect(screen.getByText(/Stop interviewing candidates/i)).toBeTruthy();
     expect(screen.getByRole('link', { name: /Pricing/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Get Started/i })).toBeTruthy();

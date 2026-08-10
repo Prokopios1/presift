@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 
 export const LandingPage = () => {
@@ -31,9 +30,6 @@ export const LandingPage = () => {
       {/* Hero Section */}
       <main className="max-w-6xl mx-auto px-6 py-20 md:py-28">
         <div className="max-w-3xl mx-auto text-center space-y-8">
-          <Badge className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 border-none px-4 py-1.5 text-sm font-medium">
-            B2B Psychometric Screening Engine
-          </Badge>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
             Stop interviewing candidates who look good on paper but{' '}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
