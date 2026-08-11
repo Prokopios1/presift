@@ -50,31 +50,15 @@ describe('DashboardPage (iteration 5)', () => {
     expect(await screen.findByText(/10\s*Credits/i)).toBeInTheDocument();
   });
 
-  it('hamburger menu works and navigates properly', async () => {
+  it('sidebar links are visible and navigate properly', async () => {
     render(
       <MemoryRouter>
         <DashboardPage />
       </MemoryRouter>
     );
     
-    // find menu trigger (button containing Menu icon)
-    // The closest semantic locator is probably getByRole('button') but let's find the SVG or the container.
-    // Given the markup: <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)}><Menu className="w-6 h-6" /></Button>
-    // Since there's no aria-label, we can find it by looking for the sibling of the title or querying buttons.
-    // A safe way: the button has no text, but we can query by a combination.
-    // Wait for initial render
-    await screen.findByText('Alice Strong');
-    
-    // The title Recruiter Dashboard is next to the button. Let's find all buttons and get the one without text or specific classes if needed, 
-    // or we can add aria-label="Menu" but the prompt didn't say. Let's just find the first ghost button that has no text Content or contains SVG.
-    const allButtons = screen.getAllByRole('button');
-    const menuBtn = allButtons.find(b => b.innerHTML.includes('svg') && !b.textContent);
-    
-    expect(menuBtn).toBeTruthy();
-    fireEvent.click(menuBtn!);
-    
-    expect(await screen.findByText('Navigation')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Recruiter Dashboard' })).toBeInTheDocument();
+    // Sidebar should be immediately visible
+    expect(await screen.findByRole('button', { name: 'Recruiter Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Owner / Admin' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Pricing / Buy Credits' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Home / Landing' })).toBeInTheDocument();
@@ -83,7 +67,7 @@ describe('DashboardPage (iteration 5)', () => {
     fireEvent.click(adminLink);
     
     await waitFor(() => {
-      expect(window.location.href).toBe('/admin');
+      expect(window.location.href).toMatch(/\/admin$/);
     });
   });
 });

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { collection, getDocs, doc, updateDoc, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { AppNavMenu } from '@/components/AppNavMenu';
+import { AppSidebar } from '@/components/AppSidebar';
 
 interface RecruiterAccount { id: string; email?: string; companyName?: string; credits?: number; totalSpent?: number; vatId?: string; }
 interface CandidateRecord { id: string; name?: string; appliedRole?: string; status?: string; fitBadge?: string; completionDate?: string; }
@@ -116,15 +116,17 @@ export const AdminPage = () => {
   const totalRev = recruiters.reduce((s, r) => s + (r.totalSpent || 0), 0);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
-        <div className="flex items-center gap-3">
-          <AppNavMenu />
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold tracking-tight">Owner Dashboard</h1>
-              <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-none">Admin</Badge>
-            </div>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      <AppSidebar />
+      <main className="flex-1 w-full pl-0 md:pl-60">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-3xl font-bold tracking-tight">Owner Dashboard</h1>
+                  <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-none">Admin</Badge>
+                </div>
             <p className="text-slate-500">Global overview of all PreSift customer accounts.</p>
           </div>
         </div>
@@ -281,6 +283,8 @@ export const AdminPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   );
 };

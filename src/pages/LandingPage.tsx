@@ -1,19 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { AppNavMenu } from '@/components/AppNavMenu';
+import { AppSidebar } from '@/components/AppSidebar';
 
 export const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-950 text-slate-900 dark:text-slate-50 selection:bg-blue-200">
-      {/* Navigation */}
-      <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-4 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <AppNavMenu />
-            <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              PreSift
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-950 text-slate-900 dark:text-slate-50 selection:bg-blue-200">
+      <AppSidebar />
+      <main className="flex-1 w-full pl-0 md:pl-60">
+        {/* Navigation */}
+        <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-4 sticky top-0 z-40">
+          <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                PreSift
+              </div>
             </div>
-          </div>
           <div className="flex gap-3 items-center">
             <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>
               Dashboard
@@ -57,7 +58,8 @@ export const LandingPage = () => {
       {/* Footer */}
       <footer className="border-t border-slate-200/60 dark:border-slate-800/60 py-8 text-center text-sm text-slate-400">
         <p>© {new Date().getFullYear()} PreSift. All rights reserved. GDPR Compliant.</p>
-      </footer>
+        </footer>
+      </main>
     </div>
   );
 };

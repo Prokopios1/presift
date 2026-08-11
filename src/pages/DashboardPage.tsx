@@ -8,7 +8,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, Dr
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { AppNavMenu } from '@/components/AppNavMenu';
+import { AppSidebar } from '@/components/AppSidebar';
 
 import { useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -105,15 +105,17 @@ export const DashboardPage = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
-        <div className="flex items-center gap-3">
-          <AppNavMenu />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
-            <p className="text-slate-500">Manage assessments and review candidates.</p>
-          </div>
-        </div>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      <AppSidebar />
+      <main className="flex-1 w-full pl-0 md:pl-60">
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
+                <p className="text-slate-500">Manage assessments and review candidates.</p>
+              </div>
+            </div>
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
           <div className="flex flex-col">
             <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
@@ -401,6 +403,8 @@ export const DashboardPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   );
 };
