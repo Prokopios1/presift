@@ -1,37 +1,28 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Landing page (B2B psychometric engine)', () => {
-  test('renders core marketing content and new pricing UI', async ({ page }) => {
+  test('renders core marketing content and navigation', async ({ page }) => {
     // Arrange
     await page.goto('/');
 
     // Act
+    const dashboardLink = page.getByRole('button', { name: /Dashboard/i });
+    const adminLink = page.getByRole('button', { name: /Admin/i });
+    const pricingLink = page.getByRole('link', { name: 'Pricing', exact: true });
+    
     const headline = page.getByRole('heading', { name: /Stop interviewing candidates who look good on paper but fail under pressure./i });
-    const badge = page.getByText('B2B Psychometric Screening Engine');
-    const trialButton = page.getByRole('button', { name: 'Start Free Trial (5 Credits)' });
-    const demoButton = page.getByRole('button', { name: 'View Demo Dashboard →' });
-    const unitPrice = page.getByText('€5');
-    const minusFive = page.getByRole('button', { name: '−5' });
-    const minus = page.getByRole('button', { name: '−', exact: true });
-    const plus = page.getByRole('button', { name: '+', exact: true });
-    const plusFive = page.getByRole('button', { name: '+5' });
-    const input = page.getByRole('spinbutton');
-    const billingAddress = page.getByPlaceholder('Berlin, Germany');
-    const checkout = page.getByRole('button', { name: 'Checkout — €25.00' });
+    const subtext = page.getByText('Screen fluid intelligence & stress resilience in 10 minutes. Reduce bad hires by filtering candidates objectively before the first interview.');
+    const getStartedLink = page.getByRole('link', { name: /Get Started/i });
+    const footerText = page.getByText('© 2026 PreSift. All rights reserved. GDPR Compliant.');
 
     // Assert
+    await expect(dashboardLink).toBeVisible();
+    await expect(adminLink).toBeVisible();
+    await expect(pricingLink).toBeVisible();
     await expect(headline).toBeVisible();
-    await expect(badge).toBeVisible();
-    await expect(trialButton).toBeVisible();
-    await expect(demoButton).toBeVisible();
-    await expect(unitPrice).toBeVisible();
-    await expect(minusFive).toBeVisible();
-    await expect(minus).toBeVisible();
-    await expect(plus).toBeVisible();
-    await expect(plusFive).toBeVisible();
-    await expect(input).toHaveValue('5');
-    await expect(billingAddress).toBeVisible();
-    await expect(checkout).toBeVisible();
+    await expect(subtext).toBeVisible();
+    await expect(getStartedLink).toBeVisible();
+    await expect(footerText).toBeVisible();
   });
 
   test('checkout redirects to Stripe hosted checkout', async ({ page }) => {
@@ -43,9 +34,14 @@ test.describe('Landing page (B2B psychometric engine)', () => {
     });
     page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
 
-    await page.goto('/');
+    await page.goto('/pricing');
 
     // Act
+    const unitPrice = page.getByText('€5', { exact: true });
+    await expect(unitPrice).toBeVisible();
+    const input = page.getByRole('spinbutton');
+    await expect(input).toHaveValue('5');
+
     // Click +5 twice to make it 15 credits (€75)
     await page.getByRole('button', { name: '+5' }).click();
     await page.getByRole('button', { name: '+5' }).click();

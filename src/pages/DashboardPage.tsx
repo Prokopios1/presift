@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AppNavMenu } from '@/components/AppNavMenu';
 
 import { useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -21,7 +23,17 @@ export const DashboardPage = () => {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [createLinkDialogOpen, setCreateLinkDialogOpen] = useState(false);
+
+  const filteredCandidates = candidates.filter(c => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.roleTitle || c.appliedRole || '').toLowerCase().includes(q) ||
+      (c.status || '').toLowerCase().includes(q)
+    );
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,7 +57,7 @@ export const DashboardPage = () => {
   }, []);
 
 
-  const chartData = candidates.map(c => ({
+  const chartData = filteredCandidates.map(c => ({
     name: c.name,
     icar: c.scoreResult?.icar?.percentile || 0,
     wleis: c.scoreResult?.wleis?.rawScores?.Total || 0,
@@ -96,9 +108,7 @@ export const DashboardPage = () => {
     <div className="p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)}>
-            <Menu className="w-6 h-6" />
-          </Button>
+          <AppNavMenu />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
             <p className="text-slate-500">Manage assessments and review candidates.</p>
@@ -125,51 +135,22 @@ export const DashboardPage = () => {
         </div>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1 shadow-sm">
-          <CardHeader>
-            <CardTitle>Assessment Links</CardTitle>
-            <CardDescription>Generate links to send to candidates.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <Input 
-                placeholder="Candidate Name" 
-                id="candidateNameInput"
-              />
-              <Input 
-                placeholder="Candidate Email (optional)" 
-                id="candidateEmailInput"
-                type="email"
-              />
-              <Input 
-                placeholder="Role Title (e.g., Software Engineer)" 
-                id="roleTitleInput"
-              />
-              <Button className="w-full" variant="outline" disabled={balance <= 0} onClick={async () => {
-                const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
-                const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
-                const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
-                if (!roleTitle) return alert("Enter a role title");
-                try {
-                  const createLink = httpsCallable(functions, 'createAssessmentLink');
-                  const res = await createLink({ roleTitle, candidateName, candidateEmail });
-                  const data = res.data as any;
-                  setBalance(b => b - 1);
-                  navigator.clipboard.writeText(data.url);
-                  alert("Link created and copied to clipboard!\n" + data.url);
-                } catch (e) {
-                  console.error(e);
-                  alert("Failed to create link.");
-                }
-              }}>
-                {balance <= 0 ? "Out of Credits - Top Up to Create" : "Generate Assessment Link"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input 
+            className="pl-9" 
+            placeholder="Search candidates by name, role, or status..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Button onClick={() => setCreateLinkDialogOpen(true)}>Create New Link</Button>
+      </div>
 
-        <Card className="md:col-span-2 shadow-sm">
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Recent Candidates</CardTitle>
             <CardDescription>Overview of recent applicants.</CardDescription>
@@ -188,7 +169,7 @@ export const DashboardPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {candidates.map((c) => (
+                {filteredCandidates.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-slate-500">{c.roleTitle || c.appliedRole}</TableCell>
@@ -220,7 +201,7 @@ export const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-3 shadow-sm mt-6">
+        <Card className="shadow-sm mt-6">
           <CardHeader>
             <CardTitle>Candidate Benchmarking</CardTitle>
             <CardDescription>ICAR (Cognitive) vs WLEIS (Emotional Intelligence) Score Distribution</CardDescription>
@@ -372,26 +353,54 @@ export const DashboardPage = () => {
         </DrawerContent>
       </Drawer>
 
-      <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
-        <DrawerContent>
-          <div className="mx-auto w-full max-w-sm p-4">
-            <DrawerHeader>
-              <DrawerTitle>Navigation</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex flex-col gap-2 mt-4">
-              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/dashboard'; }}>Recruiter Dashboard</Button>
-              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/admin'; }}>Owner / Admin</Button>
-              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/pricing'; }}>Pricing / Buy Credits</Button>
-              <Button variant="ghost" className="w-full justify-start text-lg h-12" onClick={() => { setMenuOpen(false); window.location.href = '/'; }}>Home / Landing</Button>
+      <Dialog open={createLinkDialogOpen} onOpenChange={setCreateLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assessment Links</DialogTitle>
+            <DialogDescription>Generate links to send to candidates.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-2">
+              <Input 
+                placeholder="Candidate Name" 
+                id="candidateNameInput"
+              />
+              <Input 
+                placeholder="Candidate Email (optional)" 
+                id="candidateEmailInput"
+                type="email"
+              />
+              <Input 
+                placeholder="Role Title (e.g., Software Engineer)" 
+                id="roleTitleInput"
+              />
             </div>
-            <DrawerFooter>
-              <DrawerClose asChild>
-                <Button variant="outline" className="w-full mt-4">Close Menu</Button>
-              </DrawerClose>
-            </DrawerFooter>
           </div>
-        </DrawerContent>
-      </Drawer>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>Cancel</Button>
+            <Button disabled={balance <= 0} onClick={async () => {
+              const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
+              const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
+              const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
+              if (!roleTitle) return alert("Enter a role title");
+              try {
+                const createLink = httpsCallable(functions, 'createAssessmentLink');
+                const res = await createLink({ roleTitle, candidateName, candidateEmail });
+                const data = res.data as any;
+                setBalance(b => b - 1);
+                navigator.clipboard.writeText(data.url);
+                alert("Link created and copied to clipboard!\n" + data.url);
+                setCreateLinkDialogOpen(false);
+              } catch (e) {
+                console.error(e);
+                alert("Failed to create link.");
+              }
+            }}>
+              {balance <= 0 ? "Out of Credits - Top Up to Create" : "Generate Assessment Link"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

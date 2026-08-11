@@ -12,7 +12,7 @@ function captureDialogs(page: Page): string[] {
 test.describe('Dashboard (mock recruiter flows)', () => {
   test('mock login lands on dashboard', async ({ page }) => {
     // Arrange
-    await page.goto('/?demo=true');
+    await page.goto('/dashboard?demo=true');
 
     // Act
     await page.getByRole('button', { name: /Recruiter Login/ }).click();
@@ -25,7 +25,7 @@ test.describe('Dashboard (mock recruiter flows)', () => {
   test('seed demo data populates candidates table', async ({ page }) => {
     // Arrange
     const _dialogs = captureDialogs(page);
-    await page.goto('/?demo=true');
+    await page.goto('/dashboard?demo=true');
     await page.getByRole('button', { name: /Recruiter Login/ }).click();
     await expect(page.getByRole('heading', { name: 'Recruiter Dashboard' })).toBeVisible();
 
@@ -37,12 +37,12 @@ test.describe('Dashboard (mock recruiter flows)', () => {
     // Assert
     await expect(page.getByText('Alice Strong')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Harry Flag')).toBeVisible();
-    await expect(page.getByText('5 Credits')).toBeVisible();
+    await expect(page.getByText('Balance')).toBeVisible();
   });
 
   test('candidate drawer opens and shows score breakdown', async ({ page }) => {
     // Arrange
-    await page.goto('/?demo=true');
+    await page.goto('/dashboard?demo=true');
     await page.getByRole('button', { name: /Recruiter Login/ }).click();
     await expect(page.getByRole('heading', { name: 'Recruiter Dashboard' })).toBeVisible();
     

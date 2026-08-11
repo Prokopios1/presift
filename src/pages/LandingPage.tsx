@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { AppNavMenu } from '@/components/AppNavMenu';
 
 export const LandingPage = () => {
   return (
@@ -7,8 +8,11 @@ export const LandingPage = () => {
       {/* Navigation */}
       <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-4 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-          <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            PreSift
+          <div className="flex items-center gap-3">
+            <AppNavMenu />
+            <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              PreSift
+            </div>
           </div>
           <div className="flex gap-3 items-center">
             <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>
