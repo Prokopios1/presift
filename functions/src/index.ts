@@ -121,6 +121,136 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
   return { url: `${origin}/assessment/${candRef.id}`, candidateId: candRef.id };
 });
 
+// Candidate mutations go through callables (admin SDK) so Firestore rules can
+// lock candidates against direct client writes/deletes. The auth gate matches
+// the rest of the app: anonymous callers are accepted only in demo mode
+// (emulator or demo.allow_anon=true config).
+export const deleteCandidate = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  const { candidateId } = data || {};
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+  await candRef.delete();
+  return { success: true };
+});
+
+const ALLOWED_CANDIDATE_STATUSES = new Set([
+  "Invited", "In Progress", "Shortlisted", "Interviewing", "Rejected", "Completed", "Abandoned",
+]);
+
+export const updateCandidateStatus = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  const { candidateId, status } = data || {};
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+  if (!status || typeof status !== "string" || !ALLOWED_CANDIDATE_STATUSES.has(status)) {
+    throw new functions.https.HttpsError("invalid-argument", `Invalid status. Allowed: ${[...ALLOWED_CANDIDATE_STATUSES].join(", ")}`);
+  }
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+  await candRef.update({ status });
+  return { success: true };
+});
+
+export const updateCandidate = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  const { candidateId, name, email, appliedRole } = data || {};
+  
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+
+  const updates: Record<string, string> = {};
+  
+  if (name !== undefined) {
+    if (typeof name !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid name");
+    const trimmed = name.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "Name cannot be empty");
+    updates.name = trimmed;
+  }
+  
+  if (email !== undefined) {
+    if (typeof email !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid email");
+    const trimmed = email.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "Email cannot be empty");
+    updates.email = trimmed;
+  }
+  
+  if (appliedRole !== undefined) {
+    if (typeof appliedRole !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid appliedRole");
+    const trimmed = appliedRole.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "Applied role cannot be empty");
+    updates.appliedRole = trimmed;
+  }
+
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await candRef.update(updates);
+  }
+  
+  return { success: true };
+});
+
+export const bulkDeleteCandidates = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  const { candidateIds } = data || {};
+  
+  if (!Array.isArray(candidateIds) || candidateIds.length === 0 || candidateIds.length > 100) {
+    throw new functions.https.HttpsError("invalid-argument", "candidateIds must be an array of length 1-100");
+  }
+  
+  for (const id of candidateIds) {
+    if (typeof id !== "string" || !id.trim()) {
+      throw new functions.https.HttpsError("invalid-argument", "Invalid candidate ID in array");
+    }
+  }
+
+  if (new Set(candidateIds).size !== candidateIds.length) {
+    throw new functions.https.HttpsError("invalid-argument", "Duplicate candidate IDs not allowed");
+  }
+
+  const db = admin.firestore();
+  
+  const refs = candidateIds.map(id => db.collection("candidates").doc(id));
+  const docs = await db.getAll(...refs);
+  
+  const existingIds: string[] = [];
+  const missingIds: string[] = [];
+  
+  docs.forEach((doc, i) => {
+    if (doc.exists) {
+      existingIds.push(candidateIds[i]);
+    } else {
+      missingIds.push(candidateIds[i]);
+    }
+  });
+  
+  if (existingIds.length > 0) {
+    const batch = db.batch();
+    for (const id of existingIds) {
+      batch.delete(db.collection("candidates").doc(id));
+    }
+    await batch.commit();
+  }
+  
+  return { deleted: existingIds.length, missing: missingIds };
+});
+
 export const startSession = functions.https.onCall(async (data, _context) => {
   const { assessmentId } = data;
   if (!assessmentId) {
@@ -132,6 +262,36 @@ export const startSession = functions.https.onCall(async (data, _context) => {
     const sessionKeys = buildSessionKeys(session, bank);
     const sessionToken = crypto.randomUUID();
 
+    // Capture the candidate's identity from the candidate record (if it exists
+    // in THIS database). submitAssessment later uses this as the fallback
+    // identity for the result doc, so a completed result is never written as an
+    // anonymous invisible orphan — even if the candidate doc is deleted between
+    // session start and submission (e.g. by the demo seeder).
+    let identity: { candidateName: string; candidateEmail: string; appliedRole: string; candidateRecruiterId: string } = {
+      candidateName: "",
+      candidateEmail: "",
+      appliedRole: "",
+      candidateRecruiterId: "",
+    };
+    try {
+      const candDoc = await admin.firestore().collection("candidates").doc(assessmentId).get();
+      if (candDoc.exists) {
+        const c = candDoc.data() as { name?: string; email?: string; appliedRole?: string; recruiterId?: string };
+        identity = {
+          candidateName: c.name || "",
+          candidateEmail: c.email || "",
+          appliedRole: c.appliedRole || "",
+          candidateRecruiterId: c.recruiterId || "",
+        };
+      }
+    } catch (err) {
+      // Best-effort capture: if the candidate read fails (e.g. the link was
+      // created against a different database/emulator), the session still
+      // starts; submitAssessment will then fail loudly instead of producing an
+      // invisible orphan result.
+      console.error("startSession: could not read candidate identity for", assessmentId, err);
+    }
+
     // Store session keys securely on the server
     await admin.firestore().collection("sessions").doc(session.sessionId).set({
       keys: sessionKeys,
@@ -140,12 +300,14 @@ export const startSession = functions.https.onCall(async (data, _context) => {
       sessionToken,
       answers: [],
       integrityEvents: [],
-      recruiterId: "demo_recruiter"
+      recruiterId: "demo_recruiter",
+      ...identity,
     });
 
     // Return the safe items and token to the client (never _keys)
     return { sessionId: session.sessionId, items: session.items, wleisItems: session.wleisItems, sessionToken };
   } catch (error) {
+    if (error instanceof functions.https.HttpsError) throw error;
     console.error("Session generation error:", error);
     throw new functions.https.HttpsError("internal", "Failed to start session.");
   }
@@ -162,7 +324,15 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
       throw new functions.https.HttpsError("not-found", "This test session has expired or already been submitted.");
     }
 
-    const { keys, assessmentId, integrityEvents } = sessionDoc.data() as { keys: SessionKey[], assessmentId: string, integrityEvents?: any[] };
+    const { keys, assessmentId, integrityEvents, candidateName, candidateEmail, appliedRole, candidateRecruiterId } = sessionDoc.data() as {
+      keys: SessionKey[];
+      assessmentId: string;
+      integrityEvents?: any[];
+      candidateName?: string;
+      candidateEmail?: string;
+      appliedRole?: string;
+      candidateRecruiterId?: string;
+    };
 
     const submission: AssessmentSubmission = {
       sessionId: validData.sessionId,
@@ -176,25 +346,39 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
     if (scoreResult.icar.percentile >= 80) fitBadge = "🟢 Strong Fit";
     else if (scoreResult.icar.percentile >= 50) fitBadge = "🟡 Conditional Fit";
 
+    const resultPayload = {
+      scoreResult,
+      fitBadge,
+      status: "Completed",
+      completedAt: FieldValue.serverTimestamp(),
+      completionDate: new Date().toISOString(),
+      integrityEvents: integrityEvents || [],
+    };
+
     const candRef = admin.firestore().collection("candidates").doc(assessmentId);
     const candDoc = await candRef.get();
 
     if (candDoc.exists) {
-      await candRef.set({
-        scoreResult,
-        fitBadge,
-        status: "Completed",
-        completedAt: FieldValue.serverTimestamp(),
-        integrityEvents: integrityEvents || [],
-      }, { merge: true });
+      await candRef.set(resultPayload, { merge: true });
     } else {
+      // No candidate record in this database. If startSession captured the
+      // candidate's identity (the candidate doc existed at session start), we
+      // reconstruct a NAMED result doc so the dashboard query can always find
+      // it. Without a recruiterId the result would be invisible — fail loudly
+      // instead of writing an anonymous orphan.
+      if (!candidateRecruiterId) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "This assessment link is invalid — no candidate record was found for it. Please contact the recruiter to receive a new link."
+        );
+      }
       await admin.firestore().collection("candidates").doc(candidateDocId(validData.sessionId)).set({
         assessmentId,
-        scoreResult,
-        fitBadge,
-        status: "Completed",
-        completedAt: FieldValue.serverTimestamp(),
-        integrityEvents: integrityEvents || [],
+        name: candidateName || "",
+        email: candidateEmail || "",
+        appliedRole: appliedRole || "",
+        recruiterId: candidateRecruiterId,
+        ...resultPayload,
       }, { merge: true });
     }
 
@@ -203,6 +387,7 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
 
     return { success: true };
   } catch (error) {
+    if (error instanceof functions.https.HttpsError) throw error;
     console.error("Submission error:", error);
     throw new functions.https.HttpsError("invalid-argument", "Failed to evaluate candidate.");
   }

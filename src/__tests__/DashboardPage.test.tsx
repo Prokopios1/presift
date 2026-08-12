@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { DashboardPage } from '../pages/DashboardPage';
+import { DashboardPage, toggleSelectAll, toggleSelectRow, getSelectionState } from '../pages/DashboardPage';
 
 const { docs } = vi.hoisted(() => ({
   docs: [
@@ -23,6 +23,41 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     updateDoc: vi.fn(),
     deleteDoc: vi.fn(),
   };
+});
+
+describe('Selection Logic Helpers', () => {
+  it('toggleSelectAll selects and deselects all filtered ids', () => {
+    const initial = new Set<string>();
+    const filtered = ['cand_1', 'cand_2'];
+    
+    const selected = toggleSelectAll(initial, filtered, true);
+    expect(Array.from(selected)).toEqual(['cand_1', 'cand_2']);
+
+    const deselected = toggleSelectAll(selected, filtered, false);
+    expect(deselected.size).toBe(0);
+  });
+
+  it('toggleSelectRow adds and removes candidate id', () => {
+    const initial = new Set<string>();
+    const withOne = toggleSelectRow(initial, 'cand_1', true);
+    expect(withOne.has('cand_1')).toBe(true);
+
+    const withoutOne = toggleSelectRow(withOne, 'cand_1', false);
+    expect(withoutOne.has('cand_1')).toBe(false);
+  });
+
+  it('getSelectionState computes isAllSelected and isSomeSelected', () => {
+    const filtered = ['cand_1', 'cand_2'];
+    
+    const none = getSelectionState(new Set(), filtered);
+    expect(none).toEqual({ isAllSelected: false, isSomeSelected: false });
+
+    const partial = getSelectionState(new Set(['cand_1']), filtered);
+    expect(partial).toEqual({ isAllSelected: false, isSomeSelected: true });
+
+    const all = getSelectionState(new Set(['cand_1', 'cand_2']), filtered);
+    expect(all).toEqual({ isAllSelected: true, isSomeSelected: false });
+  });
 });
 
 describe('DashboardPage (iteration 5)', () => {
@@ -69,5 +104,20 @@ describe('DashboardPage (iteration 5)', () => {
     await waitFor(() => {
       expect(window.location.href).toMatch(/\/admin$/);
     });
+  });
+
+  it('renders bulk action bar when row is selected', async () => {
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+    
+    expect(await screen.findByText('Alice Strong')).toBeInTheDocument();
+    const selectAlice = screen.getByRole('checkbox', { name: 'Select Alice Strong' });
+    fireEvent.click(selectAlice);
+
+    expect(await screen.findByText('1 selected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Delete selected/i })).toBeInTheDocument();
   });
 });

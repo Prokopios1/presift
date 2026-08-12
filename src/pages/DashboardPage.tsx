@@ -1,22 +1,63 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, Edit, Copy, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppSidebar } from '@/components/AppSidebar';
 
-import { useEffect } from 'react';
-import { collection, query, where, getDocs, doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const RECRUITER_ID = 'demo_recruiter';
+
+export const toggleSelectAll = (
+  currentSelected: Set<string>,
+  filteredIds: string[],
+  shouldSelect: boolean
+): Set<string> => {
+  const next = new Set(currentSelected);
+  if (shouldSelect) {
+    filteredIds.forEach(id => next.add(id));
+  } else {
+    filteredIds.forEach(id => next.delete(id));
+  }
+  return next;
+};
+
+export const toggleSelectRow = (
+  currentSelected: Set<string>,
+  id: string,
+  shouldSelect: boolean
+): Set<string> => {
+  const next = new Set(currentSelected);
+  if (shouldSelect) {
+    next.add(id);
+  } else {
+    next.delete(id);
+  }
+  return next;
+};
+
+export const getSelectionState = (
+  selectedIds: Set<string>,
+  filteredIds: string[]
+): { isAllSelected: boolean; isSomeSelected: boolean } => {
+  if (filteredIds.length === 0) {
+    return { isAllSelected: false, isSomeSelected: false };
+  }
+  const isAllSelected = filteredIds.every(id => selectedIds.has(id));
+  const isSomeSelected = filteredIds.some(id => selectedIds.has(id)) && !isAllSelected;
+  return { isAllSelected, isSomeSelected };
+};
 
 export const DashboardPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
@@ -25,6 +66,11 @@ export const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [createLinkDialogOpen, setCreateLinkDialogOpen] = useState(false);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+  const [editCandidateDialog, setEditCandidateDialog] = useState<any>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
   const filteredCandidates = candidates.filter(c => {
     const q = searchQuery.toLowerCase();
@@ -34,6 +80,15 @@ export const DashboardPage = () => {
       (c.status || '').toLowerCase().includes(q)
     );
   });
+
+  const filteredCandidateIds = filteredCandidates.map(c => c.id);
+  const { isAllSelected, isSomeSelected } = getSelectionState(selectedCandidateIds, filteredCandidateIds);
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      (headerCheckboxRef.current as any).indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,18 +111,81 @@ export const DashboardPage = () => {
     fetchData();
   }, []);
 
-
   const chartData = filteredCandidates.map(c => ({
     name: c.name,
     icar: c.scoreResult?.icar?.percentile || 0,
     wleis: c.scoreResult?.wleis?.rawScores?.Total || 0,
   }));
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    const shouldSelect = checked === true || checked === 'indeterminate';
+    setSelectedCandidateIds(prev => toggleSelectAll(prev, filteredCandidateIds, shouldSelect));
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    setSelectedCandidateIds(prev => toggleSelectRow(prev, id, checked));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCandidateIds.size === 0) return;
+    if (confirm(`Are you sure you want to delete ${selectedCandidateIds.size} candidate(s)? This cannot be undone.`)) {
+      try {
+        const bulkDelete = httpsCallable(functions, 'bulkDeleteCandidates');
+        await bulkDelete({ candidateIds: Array.from(selectedCandidateIds) });
+        setCandidates(prev => prev.filter(c => !selectedCandidateIds.has(c.id)));
+        setSelectedCandidateIds(new Set());
+      } catch (e) {
+        alert("Failed to delete candidates.");
+        console.error(e);
+      }
+    }
+  };
+
+  const handleCopyLink = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/assessment/${id}`);
+      setCopiedId(id);
+      setTimeout(() => {
+        setCopiedId(prev => (prev === id ? null : prev));
+      }, 2000);
+    } catch(e) {
+      console.error(e);
+    }
+  };
+  
+  const handleEditCandidate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCandidateDialog) return;
+    try {
+      const updateCandidate = httpsCallable(functions, 'updateCandidate');
+      await updateCandidate({
+        candidateId: editCandidateDialog.id,
+        name: editCandidateDialog.name,
+        email: editCandidateDialog.email,
+        appliedRole: editCandidateDialog.appliedRole
+      });
+      setCandidates(prev => prev.map(c => c.id === editCandidateDialog.id ? { ...c, ...editCandidateDialog } : c));
+      if (selectedCandidate?.id === editCandidateDialog.id) {
+        setSelectedCandidate((prev: any) => prev ? { ...prev, ...editCandidateDialog } : null);
+      }
+      setEditCandidateDialog(null);
+    } catch(e) {
+      alert("Failed to edit candidate.");
+      console.error(e);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.")) {
       try {
-        await deleteDoc(doc(db, 'candidates', id));
+        const deleteCandidate = httpsCallable(functions, 'deleteCandidate');
+        await deleteCandidate({ candidateId: id });
         setCandidates(prev => prev.filter(c => c.id !== id));
+        setSelectedCandidateIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         if (selectedCandidate?.id === id) setSelectedCandidate(null);
       } catch (e) {
         alert("Failed to delete candidate.");
@@ -79,7 +197,8 @@ export const DashboardPage = () => {
   const updateStatus = async (status: string) => {
     if (!selectedCandidate) return;
     try {
-      await updateDoc(doc(db, 'candidates', selectedCandidate.id), { status });
+      const updateCandidateStatus = httpsCallable(functions, 'updateCandidateStatus');
+      await updateCandidateStatus({ candidateId: selectedCandidate.id, status });
       setCandidates(prev => prev.map(c => c.id === selectedCandidate.id ? { ...c, status } : c));
       setSelectedCandidate({ ...selectedCandidate, status });
     } catch (e) {
@@ -153,14 +272,30 @@ export const DashboardPage = () => {
 
       <div className="grid grid-cols-1 gap-6">
         <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Recent Candidates</CardTitle>
-            <CardDescription>Overview of recent applicants.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Recent Candidates</CardTitle>
+              <CardDescription>Overview of recent applicants.</CardDescription>
+            </div>
+            {selectedCandidateIds.size > 0 && (
+              <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 px-4 py-2 rounded-lg border border-red-200 dark:border-red-800">
+                <span className="text-sm font-medium">{selectedCandidateIds.size} selected</span>
+                <Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-2" /> Delete selected</Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox 
+                      ref={headerCheckboxRef as any}
+                      checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
@@ -173,6 +308,13 @@ export const DashboardPage = () => {
               <TableBody>
                 {filteredCandidates.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedCandidateIds.has(c.id)}
+                        onCheckedChange={(checked) => handleSelectRow(c.id, !!checked)}
+                        aria-label={`Select ${c.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-slate-500">{c.roleTitle || c.appliedRole}</TableCell>
                     <TableCell>{c.status || 'Pending'}</TableCell>
@@ -193,7 +335,29 @@ export const DashboardPage = () => {
                         <span className="text-slate-400 text-sm">Clear</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right flex items-center justify-end gap-2">
+                    <TableCell className="text-right flex items-center justify-end gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleCopyLink(c.id)} 
+                        title={copiedId === c.id ? "Copied!" : "Copy assessment link"}
+                        aria-label={`Copy link for ${c.name}`}
+                      >
+                        {copiedId === c.id ? (
+                          <span className="text-xs font-semibold text-green-600">Copied</span>
+                        ) : (
+                          <Copy className="w-4 h-4 text-slate-500" />
+                        )}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setEditCandidateDialog({ id: c.id, name: c.name || '', email: c.email || '', appliedRole: c.roleTitle || c.appliedRole || '' })} 
+                        title="Edit candidate"
+                        aria-label={`Edit ${c.name}`}
+                      >
+                        <Edit className="w-4 h-4 text-slate-500" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
                     </TableCell>
                   </TableRow>
@@ -401,6 +565,47 @@ export const DashboardPage = () => {
               {balance <= 0 ? "Out of Credits - Top Up to Create" : "Generate Assessment Link"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={!!editCandidateDialog} onOpenChange={(o) => !o && setEditCandidateDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Candidate</DialogTitle>
+            <DialogDescription>Update the candidate's details.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditCandidate}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Candidate Name</Label>
+                <Input 
+                  value={editCandidateDialog?.name || ''} 
+                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Candidate Email</Label>
+                <Input 
+                  type="email"
+                  value={editCandidateDialog?.email || ''} 
+                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Applied Role</Label>
+                <Input 
+                  value={editCandidateDialog?.appliedRole || ''} 
+                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, appliedRole: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
         </div>
