@@ -6,12 +6,12 @@ export const AppSidebar = () => {
   const navItems = [
     { label: 'Recruiter Dashboard', href: '/dashboard' },
     { label: 'Owner / Admin', href: '/admin' },
-    { label: 'Pricing / Buy Credits', href: '/pricing' },
+    { label: 'Buy Credits', href: '/pricing' },
     { label: 'Home / Landing', href: '/' },
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col">
+    <aside className="fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 hidden md:flex flex-col">
       <div className="p-6 border-b border-slate-200 dark:border-slate-800">
         <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           PreSift
