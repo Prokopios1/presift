@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as functions from 'firebase-functions';
 import { submitAssessment } from '../index';
 import { bank } from '../data/presift-bank';
 import { resolveSession, buildSessionKeys } from '../session';
@@ -100,12 +101,13 @@ describe('submitAssessment integration', () => {
     expect(sessionDeleteMock).toHaveBeenCalled();
   });
 
-  it('falls back to cand_<sessionId> if candidates/<assessmentId> is missing', async () => {
+  it('fails loudly (failed-precondition) if candidates/<assessmentId> is missing and no identity was captured', async () => {
     // Arrange
     const payload = validPayload();
     const assessmentId = 'direct_test_link';
-    
-    // Mock session doc
+
+    // Mock session doc — no identity fields (candidate record never existed
+    // in this database, e.g. link created in the emulator, completed on prod).
     sessionGetMock.mockResolvedValueOnce({
       exists: true,
       data: () => ({
@@ -122,18 +124,93 @@ describe('submitAssessment integration', () => {
     });
 
     // Act
+    const err: any = await (submitAssessment as any).run(payload, { auth: null }).catch((e: any) => e);
+
+    // Assert — explicit error, NO anonymous orphan doc, session NOT consumed.
+    expect(err).toBeInstanceOf(functions.https.HttpsError);
+    expect(err.code).toBe('failed-precondition');
+    expect(String(err.message)).toMatch(/invalid/i);
+    expect(candidateGetMock).toHaveBeenCalled();
+    expect(candidateSetMock).not.toHaveBeenCalled();
+    expect(sessionDeleteMock).not.toHaveBeenCalled();
+  });
+
+  // --- Smile Assessment Integration ---
+
+  it('stores scoreResult.smile block when valid smileAnswers are provided', async () => {
+    // Arrange
+    const payload = {
+      ...validPayload(),
+      smileAnswers: bank.smileTask.trials.map((t: any) => ({
+        trialId: t.trialId,
+        perceived: t.groundTruth,
+        rtMs: 500
+      }))
+    };
+    const assessmentId = 'invited_cand_456';
+    
+    sessionGetMock.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({
+        keys: validKeys,
+        assessmentId,
+        integrityEvents: []
+      }),
+      ref: { delete: sessionDeleteMock }
+    });
+
+    candidateGetMock.mockResolvedValueOnce({
+      exists: true
+    });
+
+    // Act
     await (submitAssessment as any).run(payload, { auth: null });
 
     // Assert
-    expect(candidateGetMock).toHaveBeenCalled();
     expect(candidateSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        assessmentId: 'direct_test_link',
-        status: 'Completed',
+        scoreResult: expect.objectContaining({
+          smile: expect.objectContaining({
+            score: expect.any(Number),
+            total: expect.any(Number),
+            accuracy: expect.any(Number),
+            calibration: expect.objectContaining({
+              calibratedOeaScore: expect.any(Number),
+              biasDirection: expect.any(String),
+              level: expect.any(String)
+            })
+          })
+        })
       }),
       { merge: true }
     );
-    expect(sessionDeleteMock).toHaveBeenCalled();
+  });
+
+  it('stores NO smile block when smileAnswers are NOT provided (backward compat)', async () => {
+    // Arrange
+    const payload = validPayload(); // no smileAnswers
+    const assessmentId = 'invited_cand_456';
+    
+    sessionGetMock.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({
+        keys: validKeys,
+        assessmentId,
+        integrityEvents: []
+      }),
+      ref: { delete: sessionDeleteMock }
+    });
+
+    candidateGetMock.mockResolvedValueOnce({
+      exists: true
+    });
+
+    // Act
+    await (submitAssessment as any).run(payload, { auth: null });
+
+    // Assert
+    const callArg = candidateSetMock.mock.calls[candidateSetMock.mock.calls.length - 1][0];
+    expect(callArg.scoreResult.smile).toBeUndefined();
   });
 });
 

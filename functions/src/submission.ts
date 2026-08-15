@@ -1,5 +1,6 @@
 import { ScoringResult, WleisAnswer, evaluateCandidate } from './psychometrics';
 import { SessionKey, ItemBank } from './session';
+import { SmileAnswer, validateSmileAnswers, SmileTrialConfig } from './smile';
 
 export interface AssessmentSubmission {
   sessionId: string;
@@ -8,6 +9,7 @@ export interface AssessmentSubmission {
     selectedIndex: number | null;
   }[];
   wleisAnswers: WleisAnswer[];
+  smileAnswers?: SmileAnswer[];
 }
 
 export class SubmissionError extends Error {
@@ -25,10 +27,10 @@ export function candidateDocId(sessionId: string): string {
 export function validateSubmission(payload: any, bank: ItemBank) {
   if (!payload || typeof payload !== 'object') throw new SubmissionError('Invalid payload');
   if (!payload.sessionId) throw new SubmissionError('Missing sessionId');
-  
+
   if (!Array.isArray(payload.icar) || payload.icar.length !== 16) throw new SubmissionError('Invalid icar array');
   if (!Array.isArray(payload.wleis) || payload.wleis.length !== 16) throw new SubmissionError('Invalid wleis array');
-  
+
   const icarIds = new Set<string>();
   const normalizedIcar: { itemId: string; selectedIndex: number | null }[] = [];
   for (const item of payload.icar) {
@@ -58,18 +60,32 @@ export function validateSubmission(payload: any, bank: ItemBank) {
     if (item.value !== null && (!Number.isInteger(item.value) || item.value < 1 || item.value > 7)) {
       throw new SubmissionError(`Invalid likert value for ${item.itemId}`);
     }
-    normalizedWleis.push({ 
-      itemId: item.itemId, 
+    normalizedWleis.push({
+      itemId: item.itemId,
       value: item.value || 4, // default to neutral if null
-      subscale: bankItem.subscale as 'SEA'|'OEA'|'UOE'|'ROE', 
-      reverse: bankItem.reverse 
+      subscale: bankItem.subscale as 'SEA' | 'OEA' | 'UOE' | 'ROE',
+      reverse: bankItem.reverse
     });
+  }
+
+  let smileAnswers: SmileAnswer[] | undefined = undefined;
+  const rawSmile = payload.smileAnswers || payload.smile;
+  if (rawSmile !== undefined) {
+    if (!Array.isArray(rawSmile)) throw new SubmissionError('Invalid smileAnswers array');
+    const smileTrials: SmileTrialConfig[] = (bank.smileTask?.trials || []).map((t: any) => ({
+      trialId: t.trialId,
+      start: t.start,
+      end: t.end,
+      groundTruth: (t.groundTruth === 'fake' ? 'fake' : 'genuine') as 'genuine' | 'fake',
+    }));
+    smileAnswers = validateSmileAnswers(rawSmile, smileTrials);
   }
 
   return {
     sessionId: payload.sessionId,
     icar: normalizedIcar,
-    wleis: normalizedWleis
+    wleis: normalizedWleis,
+    ...(smileAnswers !== undefined ? { smileAnswers } : {}),
   };
 }
 

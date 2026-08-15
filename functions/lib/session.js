@@ -96,10 +96,20 @@ function resolveSession(assessmentId, bank, rng) {
         prompt: item.item,
         options: ['1', '2', '3', '4', '5', '6', '7']
     }));
-    // (To avoid modifying resolveSession's return type heavily, we'll attach a non-enumerable property or just return it in a parallel array)
-    // Let's modify resolveSession to return `keys` alongside items
+    const smileTask = bank.smileTask
+        ? {
+            videoId: bank.smileTask.videoId,
+            videoUrl: bank.smileTask.videoUrl,
+            totalTrials: bank.smileTask.totalTrials || bank.smileTask.trials?.length || 20,
+            trials: (bank.smileTask.trials || []).map(t => ({
+                trialId: t.trialId,
+                start: t.start,
+                end: t.end
+            }))
+        }
+        : undefined;
     const sessionId = `${assessmentId}_sess_${Math.random().toString(36).substring(2, 9)}`;
-    return { sessionId, items, wleisItems, keys };
+    return { sessionId, items, wleisItems, keys, smileTask };
 }
 function buildSessionKeys(session, bank, _rng) {
     const keys = [];

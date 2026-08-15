@@ -5,6 +5,7 @@ exports.candidateDocId = candidateDocId;
 exports.validateSubmission = validateSubmission;
 exports.processSubmission = processSubmission;
 const psychometrics_1 = require("./psychometrics");
+const smile_1 = require("./smile");
 class SubmissionError extends Error {
     constructor(message) {
         super(message);
@@ -65,10 +66,24 @@ function validateSubmission(payload, bank) {
             reverse: bankItem.reverse
         });
     }
+    let smileAnswers = undefined;
+    const rawSmile = payload.smileAnswers || payload.smile;
+    if (rawSmile !== undefined) {
+        if (!Array.isArray(rawSmile))
+            throw new SubmissionError('Invalid smileAnswers array');
+        const smileTrials = (bank.smileTask?.trials || []).map((t) => ({
+            trialId: t.trialId,
+            start: t.start,
+            end: t.end,
+            groundTruth: (t.groundTruth === 'fake' ? 'fake' : 'genuine'),
+        }));
+        smileAnswers = (0, smile_1.validateSmileAnswers)(rawSmile, smileTrials);
+    }
     return {
         sessionId: payload.sessionId,
         icar: normalizedIcar,
-        wleis: normalizedWleis
+        wleis: normalizedWleis,
+        ...(smileAnswers !== undefined ? { smileAnswers } : {}),
     };
 }
 function processSubmission(submission, sessionKeys) {

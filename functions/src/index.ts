@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import { resolveSession, buildSessionKeys, SessionKey } from "./session";
 import { validateSubmission, processSubmission, AssessmentSubmission } from "./submission";
+import { scoreSmileTask, SmileTrialConfig } from "./smile";
 import { bank } from "./data/presift-bank";
 import * as nodemailer from "nodemailer";
 import PDFDocument from "pdfkit";
@@ -10,9 +11,9 @@ import PDFDocument from "pdfkit";
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.sendgrid.net",
   port: parseInt(process.env.SMTP_PORT || "587"),
-  auth: { 
-    user: process.env.SMTP_USER || "apikey", 
-    pass: process.env.SMTP_PASS || "SG.production_key_mock" 
+  auth: {
+    user: process.env.SMTP_USER || "apikey",
+    pass: process.env.SMTP_PASS || "SG.production_key_mock"
   },
 });
 
@@ -49,7 +50,7 @@ export const generateB2BInvoice = functions.https.onCall(async (data, _context) 
   const doc = new PDFDocument();
   const buffers: Buffer[] = [];
   doc.on('data', buffers.push.bind(buffers));
-  
+
   return new Promise((resolve, reject) => {
     doc.on('end', () => {
       const pdfData = Buffer.concat(buffers);
@@ -57,7 +58,7 @@ export const generateB2BInvoice = functions.https.onCall(async (data, _context) 
       resolve({ receiptUrl: `data:application/pdf;base64,${base64Pdf}` });
     });
     doc.on('error', reject);
-    
+
     doc.fontSize(25).text('PreSift B2B Invoice', { align: 'center' });
     doc.moveDown();
     doc.fontSize(14).text(`Transaction ID: ${transactionId}`);
@@ -66,7 +67,7 @@ export const generateB2BInvoice = functions.https.onCall(async (data, _context) 
     if (amount) doc.text(`Amount: $${amount}`);
     doc.moveDown();
     doc.text('Thank you for your business!');
-    
+
     doc.end();
   });
 });
@@ -91,7 +92,7 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
   const { roleTitle, candidateName, candidateEmail } = data;
   if (!roleTitle) throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
-  
+
   const recruiterId = _context.auth?.uid || "demo_recruiter";
   const recruiterRef = admin.firestore().collection("users").doc(recruiterId);
   const doc = await recruiterRef.get();
@@ -165,27 +166,27 @@ export const updateCandidateStatus = functions.https.onCall(async (data, _contex
 export const updateCandidate = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
   const { candidateId, name, email, appliedRole } = data || {};
-  
+
   if (!candidateId || typeof candidateId !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
   }
 
   const updates: Record<string, string> = {};
-  
+
   if (name !== undefined) {
     if (typeof name !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid name");
     const trimmed = name.trim();
     if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "Name cannot be empty");
     updates.name = trimmed;
   }
-  
+
   if (email !== undefined) {
     if (typeof email !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid email");
     const trimmed = email.trim();
     if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "Email cannot be empty");
     updates.email = trimmed;
   }
-  
+
   if (appliedRole !== undefined) {
     if (typeof appliedRole !== "string") throw new functions.https.HttpsError("invalid-argument", "Invalid appliedRole");
     const trimmed = appliedRole.trim();
@@ -202,18 +203,18 @@ export const updateCandidate = functions.https.onCall(async (data, _context) => 
   if (Object.keys(updates).length > 0) {
     await candRef.update(updates);
   }
-  
+
   return { success: true };
 });
 
 export const bulkDeleteCandidates = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
   const { candidateIds } = data || {};
-  
+
   if (!Array.isArray(candidateIds) || candidateIds.length === 0 || candidateIds.length > 100) {
     throw new functions.https.HttpsError("invalid-argument", "candidateIds must be an array of length 1-100");
   }
-  
+
   for (const id of candidateIds) {
     if (typeof id !== "string" || !id.trim()) {
       throw new functions.https.HttpsError("invalid-argument", "Invalid candidate ID in array");
@@ -225,13 +226,13 @@ export const bulkDeleteCandidates = functions.https.onCall(async (data, _context
   }
 
   const db = admin.firestore();
-  
+
   const refs = candidateIds.map(id => db.collection("candidates").doc(id));
   const docs = await db.getAll(...refs);
-  
+
   const existingIds: string[] = [];
   const missingIds: string[] = [];
-  
+
   docs.forEach((doc, i) => {
     if (doc.exists) {
       existingIds.push(candidateIds[i]);
@@ -239,7 +240,7 @@ export const bulkDeleteCandidates = functions.https.onCall(async (data, _context
       missingIds.push(candidateIds[i]);
     }
   });
-  
+
   if (existingIds.length > 0) {
     const batch = db.batch();
     for (const id of existingIds) {
@@ -247,7 +248,7 @@ export const bulkDeleteCandidates = functions.https.onCall(async (data, _context
     }
     await batch.commit();
   }
-  
+
   return { deleted: existingIds.length, missing: missingIds };
 });
 
@@ -305,7 +306,7 @@ export const startSession = functions.https.onCall(async (data, _context) => {
     });
 
     // Return the safe items and token to the client (never _keys)
-    return { sessionId: session.sessionId, items: session.items, wleisItems: session.wleisItems, sessionToken };
+    return { sessionId: session.sessionId, items: session.items, wleisItems: session.wleisItems, sessionToken, smileTask: session.smileTask };
   } catch (error) {
     if (error instanceof functions.https.HttpsError) throw error;
     console.error("Session generation error:", error);
@@ -318,7 +319,7 @@ import { candidateDocId } from "./submission";
 export const submitAssessment = functions.https.onCall(async (data, _context) => {
   try {
     const validData = validateSubmission(data, bank);
-    
+
     const sessionDoc = await admin.firestore().collection("sessions").doc(validData.sessionId).get();
     if (!sessionDoc.exists) {
       throw new functions.https.HttpsError("not-found", "This test session has expired or already been submitted.");
@@ -337,17 +338,38 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
     const submission: AssessmentSubmission = {
       sessionId: validData.sessionId,
       answers: validData.icar,
-      wleisAnswers: validData.wleis
+      wleisAnswers: validData.wleis,
+      smileAnswers: validData.smileAnswers,
     };
 
     const scoreResult = processSubmission(submission, keys);
+
+    let smileScoringResult = null;
+    if (validData.smileAnswers && bank.smileTask?.trials) {
+      // WLEIS OEA is a sum of 4 items (each 1-7), so mean is 1-7.
+      const rawOea1to7 = scoreResult.wleis?.rawScores?.OEA !== undefined ? (scoreResult.wleis.rawScores.OEA / 4) : 4.0;
+      // Convert the 1-7 OEA mean to the 1-5 calibration scale.
+      // scoreResult.smile.calibration.rawOea will now reflect this 1-5 scale.
+      const rawOea = 1 + ((rawOea1to7 - 1) / 6) * 4;
+      const smileTrials: SmileTrialConfig[] = bank.smileTask.trials.map((t: any) => ({
+        trialId: t.trialId,
+        start: t.start,
+        end: t.end,
+        groundTruth: (t.groundTruth === 'fake' ? 'fake' : 'genuine') as 'genuine' | 'fake',
+      }));
+      smileScoringResult = scoreSmileTask(validData.smileAnswers, smileTrials, rawOea);
+    }
 
     let fitBadge = "🔴 Low Fit";
     if (scoreResult.icar.percentile >= 80) fitBadge = "🟢 Strong Fit";
     else if (scoreResult.icar.percentile >= 50) fitBadge = "🟡 Conditional Fit";
 
     const resultPayload = {
-      scoreResult,
+      scoreResult: {
+        ...scoreResult,
+        ...(smileScoringResult ? { smile: smileScoringResult } : {}),
+      },
+      ...(smileScoringResult ? { smileResult: smileScoringResult } : {}),
       fitBadge,
       status: "Completed",
       completedAt: FieldValue.serverTimestamp(),
@@ -385,7 +407,7 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
     // Mark session as used or delete it
     await sessionDoc.ref.delete();
 
-    return { success: true };
+    return { success: true, scoreResult: resultPayload.scoreResult };
   } catch (error) {
     if (error instanceof functions.https.HttpsError) throw error;
     console.error("Submission error:", error);
@@ -395,18 +417,18 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
 
 export const checkAbandonedSessions = functions.pubsub.schedule("every 24 hours").onRun(async (_context) => {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  
+
   const snapshot = await admin.firestore().collection("candidates")
     .where("status", "==", "In Progress")
     .where("createdAt", "<", cutoff)
     .get();
 
   const batch = admin.firestore().batch();
-  
+
   for (const docSnapshot of snapshot.docs) {
     const candidateData = docSnapshot.data();
     batch.update(docSnapshot.ref, { status: "Abandoned" });
-    
+
     let answersLength = 0;
     const sessionId = docSnapshot.id.startsWith("cand_") ? docSnapshot.id.substring(5) : null;
     if (sessionId) {
@@ -418,10 +440,10 @@ export const checkAbandonedSessions = functions.pubsub.schedule("every 24 hours"
     }
 
     if (answersLength < 3 && candidateData.recruiterId) {
-       const recruiterRef = admin.firestore().collection("users").doc(candidateData.recruiterId);
-       batch.update(recruiterRef, {
-         credits: FieldValue.increment(1)
-       });
+      const recruiterRef = admin.firestore().collection("users").doc(candidateData.recruiterId);
+      batch.update(recruiterRef, {
+        credits: FieldValue.increment(1)
+      });
     }
 
     if (candidateData.email) {

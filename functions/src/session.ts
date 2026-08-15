@@ -13,6 +13,19 @@ export interface SessionKey {
   irt: IrtParams;
 }
 
+export interface SmileClientTrial {
+  trialId: string;
+  start: number;
+  end: number;
+}
+
+export interface SmileClientTask {
+  videoId: string;
+  videoUrl: string;
+  totalTrials: number;
+  trials: SmileClientTrial[];
+}
+
 export interface ItemBank {
   cognitive: {
     items: Array<{
@@ -46,9 +59,20 @@ export interface ItemBank {
       reverse: boolean;
     }>;
   };
+  smileTask?: {
+    videoId: string;
+    videoUrl: string;
+    totalTrials?: number;
+    trials: Array<{
+      trialId: string;
+      start: number;
+      end: number;
+      groundTruth?: string;
+    }>;
+  };
 }
 
-export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () => number): { sessionId: string; items: ResolvedSessionItem[]; wleisItems: ResolvedSessionItem[]; keys: SessionKey[] } {
+export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () => number): { sessionId: string; items: ResolvedSessionItem[]; wleisItems: ResolvedSessionItem[]; keys: SessionKey[]; smileTask?: SmileClientTask } {
   if (!assessmentId) throw new Error("Missing assessmentId");
   if (!bank || !bank.cognitive || !bank.cognitive.items || bank.cognitive.items.length === 0) {
     throw new Error("Invalid or empty bank");
@@ -69,7 +93,7 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
         attempts++;
         const vars: Record<string, number> = {};
         let validVariables = true;
-        
+
         for (const rule of item.parameterization.rules) {
           if (rule.type === 'integer') {
             if (rule.range) {
@@ -80,19 +104,19 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
               const index = Math.floor(random() * rule.enum.length);
               vars[rule.variable] = rule.enum[index];
             }
-            
+
             // Very simple constraint check (if constraint exists)
             if (rule.constraint) {
-               // Only handling the specific constraint for ICAR-N-01 as a hack, or using Function
-               try {
-                 const constraintFn = new Function(...Object.keys(vars), `return ${rule.constraint};`);
-                 if (!constraintFn(...Object.values(vars))) {
-                   validVariables = false;
-                   break;
-                 }
-               } catch {
-                 // ignore
-               }
+              // Only handling the specific constraint for ICAR-N-01 as a hack, or using Function
+              try {
+                const constraintFn = new Function(...Object.keys(vars), `return ${rule.constraint};`);
+                if (!constraintFn(...Object.values(vars))) {
+                  validVariables = false;
+                  break;
+                }
+              } catch {
+                // ignore
+              }
             }
           }
         }
@@ -101,9 +125,9 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
 
         try {
           const evalExpr = (expr: string) => {
-             const cleanExpr = expr.replace(/{{|}}/g, '');
-             const fn = new Function(...Object.keys(vars), `return ${cleanExpr};`);
-             return String(fn(...Object.values(vars)));
+            const cleanExpr = expr.replace(/{{|}}/g, '');
+            const fn = new Function(...Object.keys(vars), `return ${cleanExpr};`);
+            return String(fn(...Object.values(vars)));
           };
 
           const newPrompt = item.promptTemplate.replace(/{{[^}]+}}/g, (match: string) => evalExpr(match));
@@ -156,15 +180,26 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
     options: ['1', '2', '3', '4', '5', '6', '7']
   }));
 
-  // (To avoid modifying resolveSession's return type heavily, we'll attach a non-enumerable property or just return it in a parallel array)
-  // Let's modify resolveSession to return `keys` alongside items
+  const smileTask: SmileClientTask | undefined = bank.smileTask
+    ? {
+        videoId: bank.smileTask.videoId,
+        videoUrl: bank.smileTask.videoUrl,
+        totalTrials: bank.smileTask.totalTrials || bank.smileTask.trials?.length || 20,
+        trials: (bank.smileTask.trials || []).map(t => ({
+          trialId: t.trialId,
+          start: t.start,
+          end: t.end
+        }))
+      }
+    : undefined;
+
   const sessionId = `${assessmentId}_sess_${Math.random().toString(36).substring(2, 9)}`;
-  return { sessionId, items, wleisItems, keys };
+  return { sessionId, items, wleisItems, keys, smileTask };
 }
 
 export function buildSessionKeys(session: { items: ResolvedSessionItem[], keys?: SessionKey[] }, bank: ItemBank, _rng?: () => number): SessionKey[] {
   const keys: SessionKey[] = [];
-  
+
   if (session.keys) {
     return session.keys;
   }
@@ -192,6 +227,6 @@ export function buildSessionKeys(session: { items: ResolvedSessionItem[], keys?:
       irt: bankItem.irt
     });
   }
-  
+
   return keys;
 }

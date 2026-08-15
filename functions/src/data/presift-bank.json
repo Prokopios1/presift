@@ -442,5 +442,32 @@
       { "id": "WLEIS-ROE-03", "subscale": "ROE", "item": "I can calm down quickly when I am very angry.", "reverse": false },
       { "id": "WLEIS-ROE-04", "subscale": "ROE", "item": "I lose control of my emotions when under pressure.", "reverse": true }
     ]
+  },
+  "smileTask": {
+    "videoId": "smile-4-presift.mp4",
+    "videoUrl": "/assets/video/smile-4-presift.mp4",
+    "totalTrials": 20,
+    "trials": [
+      { "trialId": "smile_01", "start": 0.00, "end": 3.88, "groundTruth": "genuine" },
+      { "trialId": "smile_02", "start": 3.88, "end": 7.80, "groundTruth": "fake" },
+      { "trialId": "smile_03", "start": 7.80, "end": 12.16, "groundTruth": "fake" },
+      { "trialId": "smile_04", "start": 12.16, "end": 16.08, "groundTruth": "fake" },
+      { "trialId": "smile_05", "start": 16.08, "end": 20.72, "groundTruth": "genuine" },
+      { "trialId": "smile_06", "start": 20.72, "end": 24.72, "groundTruth": "genuine" },
+      { "trialId": "smile_07", "start": 24.72, "end": 29.72, "groundTruth": "fake" },
+      { "trialId": "smile_08", "start": 29.72, "end": 33.44, "groundTruth": "genuine" },
+      { "trialId": "smile_09", "start": 33.44, "end": 36.84, "groundTruth": "fake" },
+      { "trialId": "smile_10", "start": 36.84, "end": 40.84, "groundTruth": "genuine" },
+      { "trialId": "smile_11", "start": 40.84, "end": 43.96, "groundTruth": "genuine" },
+      { "trialId": "smile_12", "start": 43.96, "end": 48.24, "groundTruth": "fake" },
+      { "trialId": "smile_13", "start": 48.24, "end": 52.04, "groundTruth": "fake" },
+      { "trialId": "smile_14", "start": 52.04, "end": 57.60, "groundTruth": "fake" },
+      { "trialId": "smile_15", "start": 57.60, "end": 62.36, "groundTruth": "genuine" },
+      { "trialId": "smile_16", "start": 62.36, "end": 66.52, "groundTruth": "genuine" },
+      { "trialId": "smile_17", "start": 66.52, "end": 70.16, "groundTruth": "genuine" },
+      { "trialId": "smile_18", "start": 70.16, "end": 73.88, "groundTruth": "fake" },
+      { "trialId": "smile_19", "start": 73.88, "end": 77.32, "groundTruth": "genuine" },
+      { "trialId": "smile_20", "start": 77.32, "end": 80.81, "groundTruth": "fake" }
+    ]
   }
 }

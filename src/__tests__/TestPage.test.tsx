@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { httpsCallable } from 'firebase/functions';
 import { TestPage } from '../pages/TestPage';
 
 const renderTest = () =>
@@ -57,5 +58,34 @@ describe('TestPage pre-test gate', () => {
     
     expect(screen.getByText('00:67')).toBeTruthy();
     vi.useRealTimers();
+  });
+
+  it('renders Smile Stage A instructions after completing ICAR and WLEIS', async () => {
+    vi.mocked(httpsCallable).mockReturnValueOnce((() => Promise.resolve({
+      data: {
+        sessionId: 'sess_smile_123',
+        items: [], // Skip to end of ICAR
+        wleisItems: [], // Skip to end of WLEIS
+        smileTask: {
+          videoId: 'smile.mp4',
+          videoUrl: 'http://example.com/smile.mp4',
+          totalTrials: 1,
+          trials: [{ trialId: 's1', start: 0, end: 1, groundTruth: 'genuine' }]
+        }
+      }
+    })) as any);
+
+    renderTest();
+    
+    const checkbox = await screen.findByRole('checkbox');
+    const btn = await screen.findByRole('button', { name: /Begin Assessment/i });
+    
+    fireEvent.click(checkbox);
+    fireEvent.click(btn);
+    
+    expect(await screen.findByText(/Stage 3: Smile Perception Assessment/i)).toBeTruthy();
+    expect(screen.getAllByText(/Genuine/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Fake/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Start Smile Assessment/i })).toBeTruthy();
   });
 });
