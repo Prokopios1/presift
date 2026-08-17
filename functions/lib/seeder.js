@@ -94,6 +94,12 @@ function buildDemoData() {
     return { recruiter, owner, assessments, candidates };
 }
 exports.seedDemoData = functions.https.onCall(async (_data, _context) => {
+    // Destructive seeder: it batch-deletes every candidate for demo_recruiter
+    // before writing demo rows. It must NEVER be able to run against production,
+    // so refuse to execute unless running inside the local Firestore emulator.
+    if (process.env.FUNCTIONS_EMULATOR !== "true") {
+        throw new functions.https.HttpsError("failed-precondition", "seedDemoData is disabled outside the local emulator.");
+    }
     const db = admin.firestore();
     const demo = buildDemoData();
     const recruiterId = "demo_recruiter";
@@ -108,7 +114,7 @@ exports.seedDemoData = functions.https.onCall(async (_data, _context) => {
     oldCandidates.docs.forEach(doc => batch.delete(doc.ref));
     demo.candidates.forEach((c, i) => {
         const docRef = db.collection("candidates").doc(`demo_cand_${i}`);
-        batch.set(docRef, { ...c, recruiterId });
+        batch.set(docRef, { ...c, recruiterId, clientIds: [recruiterId] });
     });
     await batch.commit();
     return { success: true, count: demo.candidates.length };

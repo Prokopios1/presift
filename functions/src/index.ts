@@ -464,6 +464,163 @@ export const checkAbandonedSessions = functions.pubsub.schedule("every 24 hours"
   console.log(`Abandoned ${snapshot.size} sessions.`);
 });
 
+// ---------------------------------------------------------------------------
+// Owner callables — many-to-many candidate↔client management
+// ---------------------------------------------------------------------------
+
+export const updateCandidateClients = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+
+  const { candidateId, clientIds } = data || {};
+
+  // --- Validate candidateId ---
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "candidateId must be a non-empty string");
+  }
+
+  // --- Validate clientIds array ---
+  if (!Array.isArray(clientIds)) {
+    throw new functions.https.HttpsError("invalid-argument", "clientIds must be an array");
+  }
+  if (clientIds.length < 1 || clientIds.length > 50) {
+    throw new functions.https.HttpsError("invalid-argument", "clientIds must contain between 1 and 50 entries");
+  }
+  for (const id of clientIds) {
+    if (typeof id !== "string" || !id.trim()) {
+      throw new functions.https.HttpsError("invalid-argument", "Each clientId must be a non-empty string");
+    }
+  }
+  if (new Set(clientIds).size !== clientIds.length) {
+    throw new functions.https.HttpsError("invalid-argument", "clientIds must not contain duplicates");
+  }
+
+  const db = admin.firestore();
+
+  // --- Confirm candidate doc exists ---
+  const candRef = db.collection("candidates").doc(candidateId);
+  const candDoc = await candRef.get();
+  if (!candDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+
+  // --- Verify every clientId exists in users/ ---
+  const userRefs = clientIds.map((id: string) => db.collection("users").doc(id));
+  const userDocs = await db.getAll(...userRefs);
+  const unknownIds = clientIds.filter((_id: string, i: number) => !userDocs[i].exists);
+  if (unknownIds.length > 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Unknown clientIds: ${unknownIds.join(", ")}`
+    );
+  }
+
+  // --- Update candidate (do NOT touch recruiterId) ---
+  await candRef.update({ clientIds, updatedAt: FieldValue.serverTimestamp() });
+
+  return { candidateId, clientIds };
+});
+
+export const updateClient = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+
+  const { clientId, companyName, email, vatId } = data || {};
+
+  // --- Validate clientId ---
+  if (!clientId || typeof clientId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "clientId must be a non-empty string");
+  }
+
+  // --- At least one editable field must be provided ---
+  if (companyName === undefined && email === undefined && vatId === undefined) {
+    throw new functions.https.HttpsError("invalid-argument", "At least one of companyName, email, or vatId must be provided");
+  }
+
+  const updates: Record<string, string> = {};
+
+  if (companyName !== undefined) {
+    if (typeof companyName !== "string") {
+      throw new functions.https.HttpsError("invalid-argument", "companyName must be a string");
+    }
+    const trimmed = companyName.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "companyName cannot be empty");
+    updates.companyName = trimmed;
+  }
+
+  if (email !== undefined) {
+    if (typeof email !== "string") {
+      throw new functions.https.HttpsError("invalid-argument", "email must be a string");
+    }
+    const trimmed = email.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "email cannot be empty");
+    if (!/^\S+@\S+\.\S+$/.test(trimmed)) {
+      throw new functions.https.HttpsError("invalid-argument", "email format is invalid");
+    }
+    updates.email = trimmed;
+  }
+
+  if (vatId !== undefined) {
+    if (typeof vatId !== "string") {
+      throw new functions.https.HttpsError("invalid-argument", "vatId must be a string");
+    }
+    const trimmed = vatId.trim();
+    if (!trimmed) throw new functions.https.HttpsError("invalid-argument", "vatId cannot be empty");
+    updates.vatId = trimmed;
+  }
+
+  // --- Confirm client doc exists ---
+  const clientRef = admin.firestore().collection("users").doc(clientId);
+  const clientDoc = await clientRef.get();
+  if (!clientDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Client not found");
+  }
+
+  // --- Apply update (updatedAt only; never credits, totalSpent, role, createdAt, archived) ---
+  await clientRef.update({ ...updates, updatedAt: FieldValue.serverTimestamp() });
+
+  const updated = await clientRef.get();
+  const d = updated.data() || {};
+  return {
+    clientId,
+    companyName: d.companyName ?? null,
+    email: d.email ?? null,
+    vatId: d.vatId ?? null,
+    updatedAt: d.updatedAt ?? null,
+  };
+});
+
+export const archiveClient = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+
+  const { clientId, archived } = data || {};
+
+  // --- Validate clientId ---
+  if (!clientId || typeof clientId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "clientId must be a non-empty string");
+  }
+
+  // --- Validate archived is boolean ---
+  if (typeof archived !== "boolean") {
+    throw new functions.https.HttpsError("invalid-argument", "archived must be a boolean");
+  }
+
+  // --- Confirm client doc exists ---
+  const clientRef = admin.firestore().collection("users").doc(clientId);
+  const clientDoc = await clientRef.get();
+  if (!clientDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Client not found");
+  }
+
+  // --- Soft-archive or unarchive ---
+  await clientRef.update({
+    archived,
+    archivedAt: archived ? FieldValue.serverTimestamp() : FieldValue.delete(),
+  });
+
+  return { clientId, archived };
+});
+
+// ---------------------------------------------------------------------------
+
 export const integrity = functions.https.onRequest(async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
