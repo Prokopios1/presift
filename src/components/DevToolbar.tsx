@@ -9,12 +9,16 @@ export const DevToolbar = () => {
   const isSubmitting = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const searchParams = new URLSearchParams(location.search);
-  const isDemo = searchParams.get('demo') === 'true' || import.meta.env.MODE === 'development';
+
+  // Dev/test-only test kit. In production builds this guard is constant-folded
+  // by the bundler and the entire toolbar is dropped from the bundle. The old
+  // `?demo=true` escape hatch is removed — production can never show this
+  // toolbar or reach its seeder / mock-login / auto-submit buttons.
+  if (import.meta.env.MODE === 'production') return null;
+
   const isPublicRoute = location.pathname === '/' || location.pathname === '/pricing';
 
-  if (!isDemo || isPublicRoute) return null;
+  if (isPublicRoute) return null;
 
   const handleMockRecruiterLogin = () => {
     localStorage.setItem('presift_demo_session', JSON.stringify({

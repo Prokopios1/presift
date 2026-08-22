@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.integrity = exports.archiveClient = exports.updateClient = exports.updateCandidateClients = exports.checkAbandonedSessions = exports.submitAssessment = exports.startSession = exports.bulkDeleteCandidates = exports.updateCandidate = exports.updateCandidateStatus = exports.deleteCandidate = exports.createAssessmentLink = exports.topUpCredits = exports.generateB2BInvoice = void 0;
+exports.integrity = exports.archiveCandidate = exports.archiveClient = exports.updateClient = exports.updateCandidateClients = exports.checkAbandonedSessions = exports.submitAssessment = exports.startSession = exports.bulkDeleteCandidates = exports.updateCandidate = exports.updateCandidateStatus = exports.deleteCandidate = exports.createAssessmentLink = exports.topUpCredits = exports.generateB2BInvoice = exports.registerRecruiter = void 0;
 const admin = __importStar(require("firebase-admin"));
 const firestore_1 = require("firebase-admin/firestore");
 const functions = __importStar(require("firebase-functions"));
@@ -75,6 +75,113 @@ function demoConfig() {
 const allowAnonDemo = () => process.env.FUNCTIONS_EMULATOR === "true" || demoConfig().allow_anon === "true";
 __exportStar(require("./seeder"), exports);
 __exportStar(require("./stripe"), exports);
+exports.registerRecruiter = functions.https.onCall(async (data, _context) => {
+    if (!_context.auth && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
+    }
+    const { name, email, companyName, vatId, billingAddress, uid: clientUid } = data || {};
+    // Validate name
+    if (!name || typeof name !== "string" || !name.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Full name is required");
+    }
+    const trimmedName = name.trim();
+    // Validate email
+    if (!email || typeof email !== "string" || !email.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Business email is required");
+    }
+    const trimmedEmail = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+        throw new functions.https.HttpsError("invalid-argument", "Invalid email format");
+    }
+    // Validate companyName
+    if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Company name is required");
+    }
+    const trimmedCompanyName = companyName.trim();
+    // Optional fields validation
+    if (vatId !== undefined && typeof vatId !== "string") {
+        throw new functions.https.HttpsError("invalid-argument", "Invalid vatId");
+    }
+    const trimmedVatId = typeof vatId === "string" ? vatId.trim() : "";
+    if (billingAddress !== undefined && typeof billingAddress !== "string") {
+        throw new functions.https.HttpsError("invalid-argument", "Invalid billingAddress");
+    }
+    const trimmedBillingAddress = typeof billingAddress === "string" ? billingAddress.trim() : "";
+    // Resolve UID (caller-provided, context auth uid, or newly generated)
+    let uid = "";
+    if (clientUid !== undefined) {
+        if (typeof clientUid !== "string" || !clientUid.trim()) {
+            throw new functions.https.HttpsError("invalid-argument", "Invalid uid");
+        }
+        uid = clientUid.trim();
+    }
+    else if (_context.auth?.uid) {
+        uid = _context.auth.uid;
+    }
+    else {
+        uid = crypto.randomUUID();
+    }
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    if (userDoc.exists) {
+        const existingData = userDoc.data() || {};
+        const updates = {
+            name: trimmedName,
+            email: trimmedEmail,
+            companyName: trimmedCompanyName,
+            vatId: trimmedVatId,
+            billingAddress: trimmedBillingAddress,
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        };
+        if (!existingData.role) {
+            updates.role = "recruiter";
+        }
+        await userRef.set(updates, { merge: true });
+        const profile = {
+            uid,
+            name: trimmedName,
+            email: trimmedEmail,
+            companyName: trimmedCompanyName,
+            vatId: trimmedVatId,
+            billingAddress: trimmedBillingAddress,
+            credits: existingData.credits ?? 0,
+            totalSpent: existingData.totalSpent ?? 0,
+            totalPurchased: existingData.totalPurchased ?? 0,
+            role: existingData.role || "recruiter",
+        };
+        return { uid, created: false, profile };
+    }
+    else {
+        const newUserData = {
+            name: trimmedName,
+            email: trimmedEmail,
+            companyName: trimmedCompanyName,
+            vatId: trimmedVatId,
+            billingAddress: trimmedBillingAddress,
+            role: "recruiter",
+            credits: 0,
+            totalSpent: 0,
+            totalPurchased: 0,
+            createdAt: firestore_1.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        };
+        await userRef.set(newUserData);
+        const profile = {
+            uid,
+            name: trimmedName,
+            email: trimmedEmail,
+            companyName: trimmedCompanyName,
+            vatId: trimmedVatId,
+            billingAddress: trimmedBillingAddress,
+            credits: 0,
+            totalSpent: 0,
+            totalPurchased: 0,
+            role: "recruiter",
+        };
+        return { uid, created: true, profile };
+    }
+});
 exports.generateB2BInvoice = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo()) {
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
@@ -296,6 +403,10 @@ exports.startSession = functions.https.onCall(async (data, _context) => {
             const candDoc = await admin.firestore().collection("candidates").doc(assessmentId).get();
             if (candDoc.exists) {
                 const c = candDoc.data();
+                // --- Archived gate: block new sessions for archived candidates ---
+                if (c.archived === true) {
+                    throw new functions.https.HttpsError("failed-precondition", "This candidate is archived and cannot start a new assessment session.");
+                }
                 identity = {
                     candidateName: c.name || "",
                     candidateEmail: c.email || "",
@@ -305,6 +416,10 @@ exports.startSession = functions.https.onCall(async (data, _context) => {
             }
         }
         catch (err) {
+            // Re-throw intentional gate errors (e.g. archived candidate); swallow
+            // only genuine read failures so the session still starts in that case.
+            if (err instanceof functions.https.HttpsError)
+                throw err;
             // Best-effort capture: if the candidate read fails (e.g. the link was
             // created against a different database/emulator), the session still
             // starts; submitAssessment will then fail loudly instead of producing an
@@ -585,6 +700,31 @@ exports.archiveClient = functions.https.onCall(async (data, _context) => {
         archivedAt: archived ? firestore_1.FieldValue.serverTimestamp() : firestore_1.FieldValue.delete(),
     });
     return { clientId, archived };
+});
+exports.archiveCandidate = functions.https.onCall(async (data, _context) => {
+    if (!_context.auth && !allowAnonDemo())
+        throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+    const { candidateId, archived } = data || {};
+    // --- Validate candidateId ---
+    if (!candidateId || typeof candidateId !== "string") {
+        throw new functions.https.HttpsError("invalid-argument", "candidateId must be a non-empty string");
+    }
+    // --- Validate archived is boolean ---
+    if (typeof archived !== "boolean") {
+        throw new functions.https.HttpsError("invalid-argument", "archived must be a boolean");
+    }
+    // --- Confirm candidate doc exists ---
+    const candRef = admin.firestore().collection("candidates").doc(candidateId);
+    const candDoc = await candRef.get();
+    if (!candDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Candidate not found");
+    }
+    // --- Soft-archive or unarchive (never touch status/recruiterId/clientIds/scores/sessions/results) ---
+    await candRef.update({
+        archived,
+        archivedAt: archived ? firestore_1.FieldValue.serverTimestamp() : firestore_1.FieldValue.delete(),
+    });
+    return { candidateId, archived };
 });
 // ---------------------------------------------------------------------------
 exports.integrity = functions.https.onRequest(async (req, res) => {

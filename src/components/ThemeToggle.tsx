@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">(
@@ -14,12 +15,17 @@ export function ThemeToggle() {
   }, [theme]);
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-    >
-      {theme === "light" ? "🌙 Dark" : "☀️ Light"}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        >
+          {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Toggle light / dark theme</TooltipContent>
+    </Tooltip>
   );
 }

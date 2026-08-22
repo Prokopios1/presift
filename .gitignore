@@ -27,3 +27,6 @@ dist-ssr
 .codegraph
 test-results/
 .firebase
+
+# Backup artifacts
+*.bak-*

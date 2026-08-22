@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const DemoPage = () => {
   const [loading, setLoading] = useState(false);
@@ -46,10 +47,13 @@ export const DemoPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <Badge className="bg-red-100 text-red-700 border-none">Development Only</Badge>
-          <h1 className="text-3xl font-bold tracking-tight">Dev Mode Test Kit</h1>
-          <p className="text-slate-500">Instantly bootstrap test data and bypass authentication.</p>
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <Badge className="bg-red-100 text-red-700 border-none">Development Only</Badge>
+            <h1 className="text-3xl font-bold tracking-tight">Dev Mode Test Kit</h1>
+            <p className="text-slate-500">Instantly bootstrap test data and bypass authentication.</p>
+          </div>
+          <ThemeToggle />
         </div>
 
         <div className="grid gap-4">

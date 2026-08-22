@@ -70,10 +70,40 @@ exports.createCheckoutSession = functions.https.onCall(async (data, _context) =>
     const origin = typeof data?.origin === "string" && /^https?:\/\//.test(data.origin)
         ? data.origin.replace(/\/$/, "")
         : "http://localhost:5173";
+    // Auto-wire identity from caller input or registered recruiter profile
+    let resolvedEmail = typeof data?.email === "string" && data.email.includes("@") ? data.email.trim() : undefined;
+    let resolvedCompanyName = typeof data?.companyName === "string" && data.companyName.trim() ? data.companyName.trim() : undefined;
+    let resolvedVatId = typeof data?.vatId === "string" && data.vatId.trim()
+        ? data.vatId.trim()
+        : (typeof data?.vat === "string" && data.vat.trim() ? data.vat.trim() : undefined);
+    let resolvedBillingAddress = typeof data?.billingAddress === "string" && data.billingAddress.trim() ? data.billingAddress.trim() : undefined;
+    if (recipient) {
+        try {
+            const userDoc = await admin.firestore().collection("users").doc(recipient).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data() || {};
+                if (!resolvedEmail && typeof userData.email === "string" && userData.email.includes("@")) {
+                    resolvedEmail = userData.email.trim();
+                }
+                if (!resolvedCompanyName && typeof userData.companyName === "string" && userData.companyName.trim()) {
+                    resolvedCompanyName = userData.companyName.trim();
+                }
+                if (!resolvedVatId && typeof userData.vatId === "string" && userData.vatId.trim()) {
+                    resolvedVatId = userData.vatId.trim();
+                }
+                if (!resolvedBillingAddress && typeof userData.billingAddress === "string" && userData.billingAddress.trim()) {
+                    resolvedBillingAddress = userData.billingAddress.trim();
+                }
+            }
+        }
+        catch (err) {
+            console.warn("createCheckoutSession: profile lookup error for", recipient, err);
+        }
+    }
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
         mode: "payment",
-        customer_email: typeof data?.email === "string" && data.email.includes("@") ? data.email : undefined,
+        customer_email: resolvedEmail,
         line_items: [
             {
                 quantity: 1,
@@ -87,7 +117,14 @@ exports.createCheckoutSession = functions.https.onCall(async (data, _context) =>
         success_url: `${origin}/dashboard?payment=success`,
         cancel_url: `${origin}/?payment=cancelled`,
         client_reference_id: recipient,
-        metadata: { uid: recipient, credits: String(quantity), quantity: String(quantity) },
+        metadata: {
+            uid: recipient,
+            credits: String(quantity),
+            quantity: String(quantity),
+            companyName: resolvedCompanyName || "",
+            vatId: resolvedVatId || "",
+            email: resolvedEmail || "",
+        },
     });
     return { url: session.url };
 });

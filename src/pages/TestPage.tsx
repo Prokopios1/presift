@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { httpsCallable } from 'firebase/functions';
 import { functions, db } from '@/lib/firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -364,9 +365,14 @@ export const TestPage = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full h-12 text-lg" disabled={!consent} onClick={startTest}>
-              Begin Assessment
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button className="w-full h-12 text-lg" disabled={!consent} onClick={startTest}>
+                  Begin Assessment
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Start timed assessment session</TooltipContent>
+            </Tooltip>
           </CardFooter>
         </Card>
       </div>
@@ -404,12 +410,17 @@ export const TestPage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button
-                className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-                onClick={() => setSmileStage('trials')}
-              >
-                Start Smile Assessment ({totalSmileTrials} Trials)
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+                    onClick={() => setSmileStage('trials')}
+                  >
+                    Start Smile Assessment ({totalSmileTrials} Trials)
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Begin video perception trials</TooltipContent>
+              </Tooltip>
             </CardFooter>
           </Card>
         </div>
@@ -438,12 +449,17 @@ export const TestPage = () => {
                 className="w-full h-full object-cover"
               />
               {!isPlaying && !isPausedAtCut && (
-                <button
-                  onClick={replayTrial}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white hover:bg-black/40 transition-all"
-                >
-                  <span className="px-6 py-3 bg-emerald-600 rounded-lg text-lg font-semibold shadow-lg">Play Video Clip</span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={replayTrial}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 text-white hover:bg-black/40 transition-all"
+                    >
+                      <span className="px-6 py-3 bg-emerald-600 rounded-lg text-lg font-semibold shadow-lg">Play Video Clip</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Play video clip</TooltipContent>
+                </Tooltip>
               )}
             </div>
 
@@ -454,31 +470,46 @@ export const TestPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4 w-full">
-                <Button
-                  variant="outline"
-                  className="h-16 text-xl border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
-                  onClick={() => handleSmileChoice('genuine')}
-                >
-                  Genuine Smile
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-16 text-xl border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
+                      onClick={() => handleSmileChoice('genuine')}
+                    >
+                      Genuine Smile
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Judge smile as authentic emotion</TooltipContent>
+                </Tooltip>
 
-                <Button
-                  variant="outline"
-                  className="h-16 text-xl border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
-                  onClick={() => handleSmileChoice('fake')}
-                >
-                  Fake / Posed Smile
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-16 text-xl border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
+                      onClick={() => handleSmileChoice('fake')}
+                    >
+                      Fake / Posed Smile
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Judge smile as posed or social</TooltipContent>
+                </Tooltip>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-400 hover:text-slate-200 text-xs"
-                onClick={replayTrial}
-              >
-                ↺ Replay Video Clip
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-400 hover:text-slate-200 text-xs"
+                    onClick={replayTrial}
+                  >
+                    ↺ Replay Video Clip
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Replay the current video clip from start</TooltipContent>
+              </Tooltip>
             </div>
           </main>
         </div>
@@ -552,15 +583,20 @@ export const TestPage = () => {
               )}
             </CardContent>
             <CardFooter>
-              <Button
-                className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-                onClick={() => {
-                  clearLocalStorage();
-                  navigate('/');
-                }}
-              >
-                Complete & Return to Dashboard
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+                    onClick={() => {
+                      clearLocalStorage();
+                      navigate('/');
+                    }}
+                  >
+                    Complete & Return to Dashboard
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Submit results and return home</TooltipContent>
+              </Tooltip>
             </CardFooter>
           </Card>
         </div>

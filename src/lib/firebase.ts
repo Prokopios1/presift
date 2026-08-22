@@ -19,5 +19,5 @@ export const db = getFirestore(app);
 // Connect to local emulator during development and tests only
 if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectFirestoreEmulator(db, "127.0.0.1", 8081);
 }

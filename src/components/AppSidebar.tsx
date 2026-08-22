@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export const AppSidebar = () => {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   const navItems = [
-    { label: 'Recruiter Dashboard', href: '/dashboard' },
-    { label: 'Owner / Admin', href: '/admin' },
-    { label: 'Buy Credits', href: '/pricing' },
-    { label: 'Home / Landing', href: '/' },
+    { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments' },
+    { label: 'Owner / Admin', href: '/admin', tooltip: 'Global overview of all client accounts' },
+    { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits' },
+    { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage' },
   ];
 
   return (
@@ -21,18 +22,22 @@ export const AppSidebar = () => {
         {navItems.map((item) => {
           const isActive = currentPath === item.href;
           return (
-            <Button
-              key={item.href}
-              variant={isActive ? 'secondary' : 'ghost'}
-              className={`w-full justify-start text-base h-12 ${
-                isActive ? 'font-bold bg-slate-200 dark:bg-slate-800' : ''
-              }`}
-              onClick={() => {
-                window.location.href = item.href;
-              }}
-            >
-              {item.label}
-            </Button>
+            <Tooltip key={item.href}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  className={`w-full justify-start text-base h-12 ${
+                    isActive ? 'font-bold bg-slate-200 dark:bg-slate-800' : ''
+                  }`}
+                  onClick={() => {
+                    window.location.href = item.href;
+                  }}
+                >
+                  {item.label}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.tooltip}</TooltipContent>
+            </Tooltip>
           );
         })}
       </nav>

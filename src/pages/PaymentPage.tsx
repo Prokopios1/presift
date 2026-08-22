@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/firebase';
+import { functions, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { AppSidebar } from '@/components/AppSidebar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const UNIT_PRICE = 5; // €5.00 per credit
+
+interface RegisteredProfile {
+  name?: string;
+  email?: string;
+  companyName?: string;
+  uid: string;
+}
 
 export const PaymentPage = () => {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -18,8 +28,77 @@ export const PaymentPage = () => {
   const [email, setEmail] = useState('');
   const [vat, setVat] = useState('');
   const [billingAddress, setBillingAddress] = useState('');
+  const [registeredProfile, setRegisteredProfile] = useState<RegisteredProfile | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const uid = localStorage.getItem('presift_uid');
+      if (!uid) return;
+
+      try {
+        const userRef = doc(db, 'users', uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const data = snap.data() || {};
+          if (data.companyName) setCompanyName(data.companyName);
+          if (data.email) setEmail(data.email);
+          if (data.vatId || data.vat) setVat(data.vatId || data.vat);
+          if (data.billingAddress) setBillingAddress(data.billingAddress);
+
+          setRegisteredProfile({
+            uid,
+            name: data.name || '',
+            email: data.email || '',
+            companyName: data.companyName || '',
+          });
+        } else {
+          // Fallback to local session storage if available
+          const sessionRaw = localStorage.getItem('presift_demo_session');
+          if (sessionRaw) {
+            try {
+              const session = JSON.parse(sessionRaw);
+              if (session.companyName) setCompanyName(session.companyName);
+              if (session.email) setEmail(session.email);
+              if (session.vatId) setVat(session.vatId);
+              if (session.billingAddress) setBillingAddress(session.billingAddress);
+              setRegisteredProfile({
+                uid,
+                name: session.name || '',
+                email: session.email || '',
+                companyName: session.companyName || '',
+              });
+            } catch (err) {
+              console.error('Failed parsing presift_demo_session:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed fetching user profile on PaymentPage:', err);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   const totalPrice = credits * UNIT_PRICE;
+
+  const getDisplayName = () => {
+    if (!registeredProfile) return '';
+    const name = registeredProfile.name?.trim();
+    const profileEmail = registeredProfile.email?.trim();
+    const company = registeredProfile.companyName?.trim();
+
+    if (name) {
+      return profileEmail ? `${name} (${profileEmail})` : name;
+    }
+    if (company) {
+      return profileEmail ? `${company} (${profileEmail})` : company;
+    }
+    if (profileEmail) {
+      return profileEmail;
+    }
+    return `Recruiter (${registeredProfile.uid})`;
+  };
 
   const handleCheckout = async () => {
     if (credits < 1) return;
@@ -57,14 +136,36 @@ export const PaymentPage = () => {
         <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-4 sticky top-0 z-40">
           <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <Link to="/" className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 PreSift
-              </div>
+              </Link>
             </div>
           <div className="flex gap-3 items-center">
-            <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>Dashboard</Button>
-            <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>Admin</Button>
-            <Link to="/" className="text-sm underline">Back to Home</Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>Dashboard</Button>
+              </TooltipTrigger>
+              <TooltipContent>Open recruiter dashboard</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" onClick={() => (window.location.href = '/register')}>Register</Button>
+              </TooltipTrigger>
+              <TooltipContent>Register recruiter account</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>Admin</Button>
+              </TooltipTrigger>
+              <TooltipContent>Open admin portal</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link to="/" className="text-sm underline">Back to Home</Link>
+              </TooltipTrigger>
+              <TooltipContent>Return to homepage</TooltipContent>
+            </Tooltip>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
@@ -95,8 +196,18 @@ export const PaymentPage = () => {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Number of Credits</Label>
                 <div className="flex items-center gap-3">
-                  <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-5)} disabled={credits <= 1}>−5</Button>
-                  <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-1)} disabled={credits <= 1}>−</Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-5)} disabled={credits <= 1}>−5</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Decrease by 5 credits</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-1)} disabled={credits <= 1}>−</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Decrease by 1 credit</TooltipContent>
+                  </Tooltip>
                   <Input
                     type="number"
                     min={1}
@@ -108,8 +219,18 @@ export const PaymentPage = () => {
                     }}
                     className="text-center text-xl font-bold h-12 w-24"
                   />
-                  <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(1)}>+</Button>
-                  <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(5)}>+5</Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(1)}>+</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Increase by 1 credit</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(5)}>+5</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Increase by 5 credits</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -121,7 +242,24 @@ export const PaymentPage = () => {
 
               {/* B2B Invoicing */}
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-semibold text-sm text-slate-500 uppercase tracking-wider">B2B Invoicing Details</h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h4 className="font-semibold text-sm text-slate-500 uppercase tracking-wider">B2B Invoicing Details</h4>
+                  {registeredProfile ? (
+                    <div
+                      data-testid="signed-in-badge"
+                      className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs px-2.5 py-1 rounded-md max-w-full overflow-hidden"
+                    >
+                      <span className="font-semibold shrink-0">Signed in as</span>
+                      <span className="truncate max-w-[220px]" title={getDisplayName()}>
+                        {getDisplayName()}
+                      </span>
+                    </div>
+                  ) : (
+                    <Link to="/register" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                      Register account →
+                    </Link>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5 col-span-2">
                     <Label className="text-xs">Company Name</Label>
@@ -143,9 +281,14 @@ export const PaymentPage = () => {
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-3">
-              <Button className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md" onClick={handleCheckout} disabled={purchaseLoading}>
-                {purchaseLoading ? 'Redirecting to Stripe...' : `Checkout — €${totalPrice.toFixed(2)}`}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md" onClick={handleCheckout} disabled={purchaseLoading}>
+                    {purchaseLoading ? 'Redirecting to Stripe...' : `Checkout — €${totalPrice.toFixed(2)}`}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Proceed to secure Stripe checkout</TooltipContent>
+              </Tooltip>
               <div className="flex items-center gap-4 text-[11px] text-slate-400">
                 <span>💳 Credit Cards</span>
                 <span>🏦 SEPA</span>

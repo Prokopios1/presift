@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { AppSidebar } from '@/components/AppSidebar';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const LandingPage = () => {
   return (
@@ -15,49 +17,78 @@ export const LandingPage = () => {
                 PreSift
               </div>
             </div>
-          <div className="flex gap-3 items-center">
-            <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>
-              Dashboard
-            </Button>
-            <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>
-              Admin
-            </Button>
-            <Link
-              to="/pricing"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 px-4 py-2 rounded-md"
-            >
-              Pricing
-            </Link>
+            <div className="flex gap-3 items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>
+                    Dashboard
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Open recruiter dashboard</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" onClick={() => (window.location.href = '/register')}>
+                    Register
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Register recruiter account</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>
+                    Admin
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Open admin portal</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/pricing"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 px-4 py-2 rounded-md"
+                  >
+                    Pricing
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>View pricing and credit packages</TooltipContent>
+              </Tooltip>
+              <ThemeToggle />
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      {/* Hero Section */}
-      <main className="max-w-6xl mx-auto px-6 py-20 md:py-28">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
-            Stop interviewing candidates who look good on paper but{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              fail under pressure.
-            </span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Screen fluid intelligence &amp; stress resilience in 10 minutes. Reduce bad hires by filtering candidates objectively before the first interview.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
-            <Link
-              to="/pricing"
-              className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 rounded-md flex items-center justify-center"
-            >
-              Get Started
-            </Link>
+        {/* Hero Section */}
+        <main className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+          <div className="max-w-3xl mx-auto text-center space-y-8">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
+              Stop interviewing candidates who look good on paper but{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                fail under pressure.
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Screen fluid intelligence &amp; stress resilience in 10 minutes. Reduce bad hires by filtering candidates objectively before the first interview.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/pricing"
+                    className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 rounded-md flex items-center justify-center"
+                  >
+                    Get Started
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Purchase credits and start screening</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/60 dark:border-slate-800/60 py-8 text-center text-sm text-slate-400">
-        <p>© {new Date().getFullYear()} PreSift. All rights reserved. GDPR Compliant.</p>
+        {/* Footer */}
+        <footer className="border-t border-slate-200/60 dark:border-slate-800/60 py-8 text-center text-sm text-slate-400">
+          <p>© {new Date().getFullYear()} PreSift. All rights reserved. GDPR Compliant.</p>
         </footer>
       </main>
     </div>

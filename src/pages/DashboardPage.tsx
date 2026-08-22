@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Edit, Copy, Trash2 } from 'lucide-react';
+import { Search, Edit, Copy, Trash2, Archive, ArchiveRestore } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,15 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, Dr
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppSidebar } from '@/components/AppSidebar';
 
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 const RECRUITER_ID = 'demo_recruiter';
 
@@ -63,8 +65,10 @@ export const DashboardPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [balance, setBalance] = useState<number>(0);
+const [recruiterIdentifier, setRecruiterIdentifier] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [createLinkDialogOpen, setCreateLinkDialogOpen] = useState(false);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [editCandidateDialog, setEditCandidateDialog] = useState<any>(null);
@@ -73,6 +77,7 @@ export const DashboardPage = () => {
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
   const filteredCandidates = candidates.filter(c => {
+    if (!showArchived && c.archived) return false;
     const q = searchQuery.toLowerCase();
     return (
       (c.name || '').toLowerCase().includes(q) ||
@@ -95,7 +100,17 @@ export const DashboardPage = () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', RECRUITER_ID));
         if (userDoc.exists()) {
-          setBalance(userDoc.data().credits || 0);
+          const data = userDoc.data();
+          setBalance(data.credits || 0);
+          let identifier = '';
+          if (data.name && data.name.trim()) {
+            identifier = data.name.trim();
+          } else if (data.companyName && data.companyName.trim()) {
+            identifier = data.companyName.trim();
+          } else if (data.email) {
+            identifier = data.email.split('@')[0];
+          }
+          setRecruiterIdentifier(identifier);
         }
 
         const q = query(collection(db, 'candidates'), where('recruiterId', '==', RECRUITER_ID));
@@ -103,7 +118,7 @@ export const DashboardPage = () => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCandidates(list);
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
+        console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
       }
@@ -135,13 +150,14 @@ export const DashboardPage = () => {
         setCandidates(prev => prev.filter(c => !selectedCandidateIds.has(c.id)));
         setSelectedCandidateIds(new Set());
       } catch (e) {
-        alert("Failed to delete candidates.");
+        alert('Failed to delete candidates.');
         console.error(e);
       }
     }
   };
 
-  const handleCopyLink = async (id: string) => {
+  const handleCopyLink = async (id: string, archived: boolean) => {
+    if (archived) return;
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/assessment/${id}`);
       setCopiedId(id);
@@ -170,13 +186,13 @@ export const DashboardPage = () => {
       }
       setEditCandidateDialog(null);
     } catch(e) {
-      alert("Failed to edit candidate.");
+      alert('Failed to edit candidate.');
       console.error(e);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.")) {
+    if (confirm('Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.')) {
       try {
         const deleteCandidate = httpsCallable(functions, 'deleteCandidate');
         await deleteCandidate({ candidateId: id });
@@ -188,9 +204,24 @@ export const DashboardPage = () => {
         });
         if (selectedCandidate?.id === id) setSelectedCandidate(null);
       } catch (e) {
-        alert("Failed to delete candidate.");
+        alert('Failed to delete candidate.');
         console.error(e);
       }
+    }
+  };
+
+  const handleArchiveCandidate = async (c: any) => {
+    const newArchived = !c.archived;
+    try {
+      const archiveCandidate = httpsCallable(functions, 'archiveCandidate');
+      await archiveCandidate({ candidateId: c.id, archived: newArchived });
+      setCandidates(prev => prev.map(x => x.id === c.id ? { ...x, archived: newArchived } : x));
+      if (selectedCandidate?.id === c.id) {
+        setSelectedCandidate((prev: any) => prev ? { ...prev, archived: newArchived } : null);
+      }
+    } catch (e) {
+      alert('Failed to archive/unarchive candidate.');
+      console.error(e);
     }
   };
 
@@ -202,7 +233,7 @@ export const DashboardPage = () => {
       setCandidates(prev => prev.map(c => c.id === selectedCandidate.id ? { ...c, status } : c));
       setSelectedCandidate({ ...selectedCandidate, status });
     } catch (e) {
-      alert("Failed to update status");
+      alert('Failed to update status');
       console.error(e);
     }
   };
@@ -211,14 +242,13 @@ export const DashboardPage = () => {
     if (!c?.scoreResult?.wleis?.rawScores) return [];
     const { SEA = 0, OEA = 0, UOE = 0, ROE = 0 } = c.scoreResult.wleis.rawScores;
     let prompts = [];
-    if (SEA < 20) prompts.push("Can you describe a time you felt overwhelmed and how you recognized it?");
-    if (OEA < 20) prompts.push("Tell me about a situation where you had to read the room and adjust your approach.");
-    if (UOE < 20) prompts.push("Describe a time when you motivated yourself to complete a tedious task.");
-    if (ROE < 20) prompts.push("How do you handle working with someone who is extremely stressed or frustrated?");
-    if (c.scoreResult?.icar?.percentile < 30) prompts.push("Can you walk me through your step-by-step process for solving a completely new problem?");
-    
+    if (SEA < 20) prompts.push('Can you describe a time you felt overwhelmed and how you recognized it?');
+    if (OEA < 20) prompts.push('Tell me about a situation where you had to read the room and adjust your approach.');
+    if (UOE < 20) prompts.push('Describe a time when you motivated yourself to complete a tedious task.');
+    if (ROE < 20) prompts.push('How do you handle working with someone who is extremely stressed or frustrated?');
+    if (c.scoreResult?.icar?.percentile < 30) prompts.push('Can you walk me through your step-by-step process for solving a completely new problem?');
     if (prompts.length === 0) {
-      prompts.push("Your scores indicate balanced emotional intelligence and cognitive skills. How do you plan to leverage these strengths in this role?");
+      prompts.push('Your scores indicate balanced emotional intelligence and cognitive skills. How do you plan to leverage these strengths in this role?');
     }
     return prompts.slice(0, 3);
   };
@@ -233,6 +263,7 @@ export const DashboardPage = () => {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
                 <p className="text-slate-500">Manage assessments and review candidates.</p>
+<p className="text-slate-500">Recruiter: {recruiterIdentifier}</p>
               </div>
             </div>
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
@@ -240,18 +271,23 @@ export const DashboardPage = () => {
             <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
             <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
           </div>
-          <Button onClick={async () => {
-            const amount = prompt("How many credits to top up?");
-            if (!amount || isNaN(parseInt(amount))) return;
-            try {
-              const topUp = httpsCallable(functions, 'topUpCredits');
-              await topUp({ amount: parseInt(amount) });
-              setBalance(b => b + parseInt(amount));
-            } catch (e) {
-              console.error(e);
-              alert("Failed to top up.");
-            }
-          }}>Top Up Credits</Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={async () => {
+                const amount = prompt('How many credits to top up?');
+                if (!amount || isNaN(parseInt(amount))) return;
+                try {
+                  const topUp = httpsCallable(functions, 'topUpCredits');
+                  await topUp({ amount: parseInt(amount) });
+                  setBalance(b => b + parseInt(amount));
+                } catch (e) {
+                  console.error(e);
+                  alert('Failed to top up.');
+                }
+              }}>Top Up Credits</Button>
+            </TooltipTrigger>
+            <TooltipContent>Add more assessment credits to your account</TooltipContent>
+          </Tooltip>
           <ThemeToggle />
         </div>
       </header>
@@ -264,10 +300,19 @@ export const DashboardPage = () => {
             className="pl-9" 
             placeholder="Search candidates by name, role, or status..." 
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button onClick={() => setCreateLinkDialogOpen(true)}>Create New Link</Button>
+        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <Switch id="show-archived-dash" checked={showArchived} onCheckedChange={setShowArchived} />
+          <Label htmlFor="show-archived-dash">Show archived</Label>
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button onClick={() => setCreateLinkDialogOpen(true)}>Create New Link</Button>
+          </TooltipTrigger>
+          <TooltipContent>Generate a new assessment link for a candidate</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -280,7 +325,12 @@ export const DashboardPage = () => {
             {selectedCandidateIds.size > 0 && (
               <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 px-4 py-2 rounded-lg border border-red-200 dark:border-red-800">
                 <span className="text-sm font-medium">{selectedCandidateIds.size} selected</span>
-                <Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-2" /> Delete selected</Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-2" /> Delete selected</Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Permanently delete selected candidates</TooltipContent>
+                </Tooltip>
               </div>
             )}
           </CardHeader>
@@ -291,7 +341,7 @@ export const DashboardPage = () => {
                   <TableHead className="w-[50px]">
                     <Checkbox 
                       ref={headerCheckboxRef as any}
-                      checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
+                      checked={isAllSelected ? true : isSomeSelected ? 'indeterminate' : false}
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all"
                     />
@@ -307,7 +357,7 @@ export const DashboardPage = () => {
               </TableHeader>
               <TableBody>
                 {filteredCandidates.map((c) => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={c.archived ? 'opacity-50' : ''}>
                     <TableCell>
                       <Checkbox 
                         checked={selectedCandidateIds.has(c.id)}
@@ -315,17 +365,22 @@ export const DashboardPage = () => {
                         aria-label={`Select ${c.name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-2">
+                        {c.name}
+                        {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">Archived</Badge>}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-slate-500">{c.roleTitle || c.appliedRole}</TableCell>
                     <TableCell>{c.status || 'Pending'}</TableCell>
                     <TableCell className="text-slate-500 text-sm">{c.completionDate ? new Date(c.completionDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={
-                        (c.fitBadge || c.fit || "").includes("Strong") ? "bg-green-50 text-green-700 border-green-200" :
-                        (c.fitBadge || c.fit || "").includes("Conditional") ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
-                        "bg-red-50 text-red-700 border-red-200"
+                        (c.fitBadge || c.fit || '').includes('Strong') ? 'bg-green-50 text-green-700 border-green-200' :
+                        (c.fitBadge || c.fit || '').includes('Conditional') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                        'bg-red-50 text-red-700 border-red-200'
                       }>
-                        {c.fitBadge || c.fit || "Unknown"}
+                        {c.fitBadge || c.fit || 'Unknown'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -336,29 +391,59 @@ export const DashboardPage = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleCopyLink(c.id)} 
-                        title={copiedId === c.id ? "Copied!" : "Copy assessment link"}
-                        aria-label={`Copy link for ${c.name}`}
-                      >
-                        {copiedId === c.id ? (
-                          <span className="text-xs font-semibold text-green-600">Copied</span>
-                        ) : (
-                          <Copy className="w-4 h-4 text-slate-500" />
-                        )}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setEditCandidateDialog({ id: c.id, name: c.name || '', email: c.email || '', appliedRole: c.roleTitle || c.appliedRole || '' })} 
-                        title="Edit candidate"
-                        aria-label={`Edit ${c.name}`}
-                      >
-                        <Edit className="w-4 h-4 text-slate-500" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleCopyLink(c.id, !!c.archived)} 
+                            disabled={!!c.archived}
+                            aria-label={`Copy link for ${c.name}`}
+                          >
+                            {copiedId === c.id ? (
+                              <span className="text-xs font-semibold text-green-600">Copied</span>
+                            ) : (
+                              <Copy className="w-4 h-4 text-slate-500" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{c.archived ? 'Cannot copy link for archived candidate' : 'Copy assessment link'}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setEditCandidateDialog({ id: c.id, name: c.name || '', email: c.email || '', appliedRole: c.roleTitle || c.appliedRole || '' })} 
+                            aria-label={`Edit ${c.name}`}
+                          >
+                            <Edit className="w-4 h-4 text-slate-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit candidate details</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleArchiveCandidate(c)}
+                            aria-label={c.archived ? `Unarchive ${c.name}` : `Archive ${c.name}`}
+                          >
+                            {c.archived
+                              ? <ArchiveRestore className="w-4 h-4 text-slate-500" />
+                              : <Archive className="w-4 h-4 text-slate-500" />
+                            }
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{c.archived ? 'Unarchive this candidate' : 'Archive this candidate — hides from active list'}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View candidate profile and scores</TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -378,7 +463,7 @@ export const DashboardPage = () => {
                 <CartesianGrid />
                 <XAxis type="number" dataKey="icar" name="ICAR Percentile" unit="%ile" domain={[0, 100]} />
                 <YAxis type="number" dataKey="wleis" name="WLEIS Score" domain={[16, 112]} />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
@@ -391,7 +476,9 @@ export const DashboardPage = () => {
                   }
                   return null;
                 }} />
-                <Scatter name="Candidates" data={chartData} fill="#3b82f6" />
+                <Scatter name="Candidates" data={chartData} fill="#3b82f6">
+  <LabelList dataKey="name" position="top" className="text-xs fill-current text-gray-700 dark:text-gray-300" />
+</Scatter>
               </ScatterChart>
             </ResponsiveContainer>
           </CardContent>
@@ -413,9 +500,24 @@ export const DashboardPage = () => {
                 )}
                 
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant={selectedCandidate?.status === "Shortlisted" ? "default" : "outline"} onClick={() => updateStatus("Shortlisted")}>Shortlist</Button>
-                  <Button size="sm" variant={selectedCandidate?.status === "Interviewing" ? "default" : "outline"} onClick={() => updateStatus("Interviewing")}>Interview</Button>
-                  <Button size="sm" variant={selectedCandidate?.status === "Rejected" ? "default" : "outline"} onClick={() => updateStatus("Rejected")}>Reject</Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant={selectedCandidate?.status === 'Shortlisted' ? 'default' : 'outline'} onClick={() => updateStatus('Shortlisted')}>Shortlist</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move to Shortlisted status</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant={selectedCandidate?.status === 'Interviewing' ? 'default' : 'outline'} onClick={() => updateStatus('Interviewing')}>Interview</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move to Interviewing status</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant={selectedCandidate?.status === 'Rejected' ? 'default' : 'outline'} onClick={() => updateStatus('Rejected')}>Reject</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move to Rejected status</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               
@@ -509,8 +611,18 @@ export const DashboardPage = () => {
               </div>
             </div>
             <DrawerFooter className="flex-row gap-4">
-              <Button className="flex-1" onClick={() => window.print()}>Export PDF</Button>
-              <Button variant="destructive" className="flex-1" onClick={() => selectedCandidate && handleDelete(selectedCandidate.id)}>Delete Data (GDPR)</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button className="flex-1" onClick={() => window.print()}>Export PDF</Button>
+                </TooltipTrigger>
+                <TooltipContent>Print or save this candidate report as PDF</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="destructive" className="flex-1" onClick={() => selectedCandidate && handleDelete(selectedCandidate.id)}>Delete Data (GDPR)</Button>
+                </TooltipTrigger>
+                <TooltipContent>Permanently delete all candidate data (GDPR hard delete)</TooltipContent>
+              </Tooltip>
               <DrawerClose asChild>
                 <Button variant="outline" className="flex-1">Close</Button>
               </DrawerClose>
@@ -548,21 +660,21 @@ export const DashboardPage = () => {
               const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
               const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
               const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
-              if (!roleTitle) return alert("Enter a role title");
+              if (!roleTitle) return alert('Enter a role title');
               try {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
                 const res = await createLink({ roleTitle, candidateName, candidateEmail });
                 const data = res.data as any;
                 setBalance(b => b - 1);
                 navigator.clipboard.writeText(data.url);
-                alert("Link created and copied to clipboard!\n" + data.url);
+                alert('Link created and copied to clipboard!\n' + data.url);
                 setCreateLinkDialogOpen(false);
               } catch (e) {
                 console.error(e);
-                alert("Failed to create link.");
+                alert('Failed to create link.');
               }
             }}>
-              {balance <= 0 ? "Out of Credits - Top Up to Create" : "Generate Assessment Link"}
+              {balance <= 0 ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -580,7 +692,7 @@ export const DashboardPage = () => {
                 <Label>Candidate Name</Label>
                 <Input 
                   value={editCandidateDialog?.name || ''} 
-                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, name: e.target.value })}
+                  onChange={e => setEditCandidateDialog({ ...editCandidateDialog, name: e.target.value })}
                   required
                 />
               </div>
@@ -589,14 +701,14 @@ export const DashboardPage = () => {
                 <Input 
                   type="email"
                   value={editCandidateDialog?.email || ''} 
-                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, email: e.target.value })}
+                  onChange={e => setEditCandidateDialog({ ...editCandidateDialog, email: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Applied Role</Label>
                 <Input 
                   value={editCandidateDialog?.appliedRole || ''} 
-                  onChange={(e) => setEditCandidateDialog({ ...editCandidateDialog, appliedRole: e.target.value })}
+                  onChange={e => setEditCandidateDialog({ ...editCandidateDialog, appliedRole: e.target.value })}
                   required
                 />
               </div>

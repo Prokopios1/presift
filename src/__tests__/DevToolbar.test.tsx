@@ -11,25 +11,29 @@ const renderToolbar = (path: string) =>
   );
 
 describe('DevToolbar', () => {
-  it('renders nothing when not in dev mode', () => {
-    // Arrange
-    // Act
-    const { container } = renderToolbar('/dashboard');
-    // Assert
-    expect(container).toBeEmptyDOMElement();
+  it('renders in dev/test mode on app routes — no ?demo=true escape hatch needed', () => {
+    // Vitest runs in MODE=test; the toolbar is dev/test-only by construction.
+    renderToolbar('/dashboard');
+    expect(screen.getByText(/Dev Mode/)).toBeTruthy();
+    expect(screen.getByText(/Seed Demo Data/)).toBeTruthy();
   });
 
-  it('renders when ?demo=true is present', () => {
-    // Act
-    renderToolbar('/dashboard?demo=true');
-    // Assert
-    expect(screen.getByText(/Dev Mode/)).toBeTruthy();
+  it('never renders on public routes', () => {
+    for (const path of ['/', '/pricing']) {
+      const { container } = renderToolbar(path);
+      expect(container).toBeEmptyDOMElement();
+    }
   });
 
   it('shows the Auto-Fill & Submit button only on test pages', () => {
-    // Act
-    renderToolbar('/test/assess_1?demo=true');
-    // Assert
+    renderToolbar('/test/assess_1');
     expect(screen.getByText(/Auto-Fill & Submit Test/)).toBeTruthy();
+  });
+
+  it('hides seeder/login buttons on test pages', () => {
+    renderToolbar('/test/assess_1');
+    expect(screen.queryByText(/Recruiter Login/)).toBeNull();
+    expect(screen.queryByText(/Owner Login/)).toBeNull();
+    expect(screen.queryByText(/Seed Demo Data/)).toBeNull();
   });
 });

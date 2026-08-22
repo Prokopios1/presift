@@ -3,14 +3,17 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { TestPage } from '../pages/TestPage';
+import { TooltipProvider } from '../components/ui/tooltip';
 
 const renderTest = () =>
   render(
-    <MemoryRouter initialEntries={['/test/assess_1']}>
-      <Routes>
-        <Route path="/test/:assessmentId" element={<TestPage />} />
-      </Routes>
-    </MemoryRouter>
+    <TooltipProvider>
+      <MemoryRouter initialEntries={['/test/assess_1']}>
+        <Routes>
+          <Route path="/test/:assessmentId" element={<TestPage />} />
+        </Routes>
+      </MemoryRouter>
+    </TooltipProvider>
   );
 
 describe('TestPage pre-test gate', () => {

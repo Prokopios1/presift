@@ -19,6 +19,15 @@
       ]
     }
   ],
+  "emulators": {
+    "firestore": {
+      "port": 8081
+    },
+    "functions": {
+      "port": 5001
+    },
+    "singleProjectMode": true
+  },
   "hosting": {
     "public": "dist",
     "ignore": [

@@ -28,9 +28,33 @@ async function answerAllQuestions(page: Page, totalQuestions: number): Promise<s
 }
 
 test.describe('Assessment session (candidate flow)', () => {
-  test('full test: consent → answer → auto-submit → back home', async ({ page }) => {
-    // Arrange
-    await page.goto('/test/e2e-full');
+  test('full test: create link → consent → answer → auto-submit → back home', async ({ page, request }) => {
+    // Arrange — create a REAL candidate link through the callable (doc-less
+    // links now fail loudly by design), then drive the candidate UI on it.
+    const base = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5174';
+    const isLocal = /localhost|127\.0\.0\.1/.test(base);
+    const functionsOrigin = isLocal
+      ? 'http://127.0.0.1:5001/presift'
+      : 'https://us-central1-presift.cloudfunctions.net';
+
+    // Local emulator only: a fresh emulator DB has no demo_recruiter user, so
+    // top up credits first (live has real credits — never touched here).
+    if (isLocal) {
+      const topup = await request.post(`${functionsOrigin}/topUpCredits`, {
+        data: { data: { amount: 5 } },
+      });
+      expect(topup.ok()).toBeTruthy();
+    }
+
+    const created = await request.post(`${functionsOrigin}/createAssessmentLink`, {
+      data: { data: { roleTitle: 'E2E Engineer', candidateName: 'E2E Candidate', candidateEmail: 'e2e@example.com' } },
+    });
+    expect(created.ok()).toBeTruthy();
+    const createdBody = await created.json();
+    const candidateId = createdBody?.result?.candidateId;
+    expect(candidateId).toBeTruthy();
+
+    await page.goto(`/assessment/${candidateId}`);
 
     // Act
     // 1. Start screen: tick mandatory GDPR consent, begin.

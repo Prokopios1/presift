@@ -18,7 +18,7 @@ const renderToolbar = (path: string) =>
 describe('DevToolbar wiring (iteration 7)', () => {
   it('Mock Recruiter Login writes the demo session', () => {
     // Arrange
-    renderToolbar('/dashboard?demo=true');
+    renderToolbar('/dashboard');
     // Act
     fireEvent.click(screen.getByText(/Recruiter Login/));
     // Assert
@@ -33,7 +33,7 @@ describe('DevToolbar wiring (iteration 7)', () => {
 
   it('Mock Owner Login writes the owner session', () => {
     // Arrange
-    renderToolbar('/dashboard?demo=true');
+    renderToolbar('/dashboard');
     // Act
     fireEvent.click(screen.getByText(/Owner Login/));
     // Assert
@@ -46,7 +46,7 @@ describe('DevToolbar wiring (iteration 7)', () => {
 
   it('Seed Demo Data calls the seedDemoData callable', async () => {
     // Arrange
-    renderToolbar('/dashboard?demo=true');
+    renderToolbar('/dashboard');
     // Act
     fireEvent.click(screen.getByText(/Seed Demo Data/));
     // Assert
