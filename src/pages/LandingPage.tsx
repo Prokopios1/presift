@@ -83,13 +83,13 @@ export const LandingPage = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to={pricingLink}
+                    to="/register"
                     className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 rounded-md flex items-center justify-center"
                   >
-                    Get Started
+                    Start Now
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent>Purchase credits and start screening</TooltipContent>
+                <TooltipContent>Register as a recruiter and start screening</TooltipContent>
               </Tooltip>
             </div>
           </div>

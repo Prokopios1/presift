@@ -25,7 +25,7 @@ describe('LandingPage', () => {
     expect(screen.getByText(/Stop interviewing candidates/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Register/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Pricing/i })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Get Started/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Start Now/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /View Demo Dashboard/i })).toBeNull();
     // Footer
     expect(screen.getByText(/All rights reserved/i)).toBeTruthy();
