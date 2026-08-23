@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download } from 'lucide-react';
+import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download, ArrowLeft, ArrowRight } from 'lucide-react';
 import {
   collection, getDocs, query, where, doc, getDoc, updateDoc, addDoc, serverTimestamp,
 } from 'firebase/firestore';
@@ -434,6 +434,13 @@ export const AdminClientPage = () => {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppSidebar />
       <main className="flex-1 w-full pl-0 md:pl-60">
+        <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+          </div>
+          <ThemeToggle />
+        </nav>
         <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
 
           {/* Header */}
@@ -482,7 +489,6 @@ export const AdminClientPage = () => {
                   </TooltipTrigger>
                   <TooltipContent>{client.archived ? 'Restore this client' : 'Archive this client — hides it from the list'}</TooltipContent>
                 </Tooltip>
-                <ThemeToggle />
               </div>
             </div>
             <p className="text-slate-500 text-sm">{client.email}{client.vatId ? ` • VAT: ${client.vatId}` : ''} • {client.credits ?? 0} credits</p>

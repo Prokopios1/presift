@@ -1,14 +1,43 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 export const AppSidebar = () => {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const uid = localStorage.getItem('presift_uid');
+        if (uid) {
+          const userDoc = await getDoc(doc(db, 'users', uid));
+          if (userDoc.exists()) {
+            setRole(userDoc.data()?.role || 'recruiter');
+            return;
+          }
+        }
+        
+        const demoSession = localStorage.getItem('presift_demo_session');
+        if (demoSession) {
+          const parsed = JSON.parse(demoSession);
+          setRole(parsed.role || 'recruiter');
+        }
+      } catch (err) {
+        console.error('Role check failed:', err);
+      }
+    };
+    checkRole();
+  }, []);
 
   const navItems = [
-    { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments' },
-    { label: 'Owner / Admin', href: '/admin', tooltip: 'Global overview of all client accounts' },
-    { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits' },
-    { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage' },
+    { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments', show: true },
+    { label: 'Owner / Admin', href: '/admin', tooltip: 'Global overview of all client accounts', show: role === 'admin' || role === 'owner' },
+    { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits', show: true },
+    { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage', show: true },
   ];
 
   return (
@@ -19,7 +48,7 @@ export const AppSidebar = () => {
         </div>
       </div>
       <nav className="flex flex-col gap-2 p-4 flex-1">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.show).map((item) => {
           const isActive = currentPath === item.href;
           return (
             <Tooltip key={item.href}>

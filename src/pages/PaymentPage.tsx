@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +24,7 @@ interface RegisteredProfile {
 }
 
 export const PaymentPage = () => {
+  const navigate = useNavigate();
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [credits, setCredits] = useState(5);
   const [companyName, setCompanyName] = useState('');
@@ -80,7 +83,8 @@ export const PaymentPage = () => {
     loadProfile();
   }, []);
 
-  const totalPrice = credits * UNIT_PRICE;
+  const isPromo = credits === 1;
+  const totalPrice = isPromo ? 1 : credits * UNIT_PRICE;
 
   const getDisplayName = () => {
     if (!registeredProfile) return '';
@@ -114,6 +118,7 @@ export const PaymentPage = () => {
         vatId: vat || undefined,
         billingAddress: billingAddress || undefined,
         origin: window.location.origin,
+        isPromo, // Pass promo flag to stripe callable
       }) as any;
       window.location.href = res.data.url;
     } catch (e) {
@@ -133,13 +138,16 @@ export const PaymentPage = () => {
       <AppSidebar />
       <main className="flex-1 w-full pl-0 md:pl-60">
         {/* Navigation */}
-        <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-4 sticky top-0 z-40">
-          <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                PreSift
-              </Link>
+        <nav className="border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
+            <Link to="/" className="hidden md:block font-bold text-xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              PreSift
+            </Link>
+          </div>
           <div className="flex gap-3 items-center">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -167,8 +175,7 @@ export const PaymentPage = () => {
             </Tooltip>
             <ThemeToggle />
           </div>
-        </div>
-      </nav>
+        </nav>
 
       {/* Pricing Section */}
       <section className="max-w-6xl mx-auto px-6 py-20">
@@ -185,10 +192,19 @@ export const PaymentPage = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Unit Price Badge */}
-              <div className="flex items-center justify-center">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full px-6 py-3 text-center">
-                  <span className="text-3xl font-bold">€{UNIT_PRICE}</span>
-                  <span className="text-blue-100 ml-1">/credit</span>
+              <div className="flex items-center justify-center relative">
+                {isPromo && (
+                  <div className="absolute -top-3 px-3 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full uppercase tracking-widest shadow-sm animate-pulse">
+                    Limited Time Offer
+                  </div>
+                )}
+                <div className={`rounded-full px-6 py-3 text-center transition-colors ${isPromo ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'}`}>
+                  {isPromo ? (
+                    <span className="text-3xl font-bold">€1.00</span>
+                  ) : (
+                    <span className="text-3xl font-bold">€{UNIT_PRICE}</span>
+                  )}
+                  <span className="text-white/80 ml-1">/credit</span>
                 </div>
               </div>
 
@@ -235,9 +251,12 @@ export const PaymentPage = () => {
               </div>
 
               {/* Dynamic Total */}
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 flex justify-between items-center border">
-                <span className="text-slate-600 dark:text-slate-400 font-medium">Total</span>
-                <span className="text-3xl font-bold tracking-tight">€{totalPrice.toFixed(2)}</span>
+              <div className={`rounded-lg p-4 flex justify-between items-center border transition-colors ${isPromo ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-900/50'}`}>
+                <div className="flex flex-col">
+                  <span className={`font-medium ${isPromo ? 'text-green-700 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'}`}>Total</span>
+                  {isPromo && <span className="text-xs text-green-600 dark:text-green-500 font-medium mt-0.5">Trial discount applied!</span>}
+                </div>
+                <span className={`text-3xl font-bold tracking-tight ${isPromo ? 'text-green-600 dark:text-green-400' : ''}`}>€{totalPrice.toFixed(2)}</span>
               </div>
 
               {/* B2B Invoicing */}
@@ -283,7 +302,7 @@ export const PaymentPage = () => {
             <CardFooter className="flex-col gap-3">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md" onClick={handleCheckout} disabled={purchaseLoading}>
+                  <Button className={`w-full h-12 text-base text-white shadow-md transition-colors ${isPromo ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'}`} onClick={handleCheckout} disabled={purchaseLoading}>
                     {purchaseLoading ? 'Redirecting to Stripe...' : `Checkout — €${totalPrice.toFixed(2)}`}
                   </Button>
                 </TooltipTrigger>

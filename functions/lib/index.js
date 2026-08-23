@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.integrity = exports.archiveCandidate = exports.archiveClient = exports.updateClient = exports.updateCandidateClients = exports.checkAbandonedSessions = exports.submitAssessment = exports.startSession = exports.bulkDeleteCandidates = exports.updateCandidate = exports.updateCandidateStatus = exports.deleteCandidate = exports.createAssessmentLink = exports.topUpCredits = exports.generateB2BInvoice = exports.registerRecruiter = void 0;
+exports.integrity = exports.archiveCandidate = exports.archiveClient = exports.updateClient = exports.updateCandidateClients = exports.checkAbandonedSessions = exports.submitAssessment = exports.startSession = exports.bulkDeleteCandidates = exports.updateCandidate = exports.updateCandidateStatus = exports.deleteCandidate = exports.createAssessmentLink = exports.topUpCredits = exports.generateB2BInvoice = exports.createClient = exports.registerRecruiter = void 0;
 const admin = __importStar(require("firebase-admin"));
 const firestore_1 = require("firebase-admin/firestore");
 const functions = __importStar(require("firebase-functions"));
@@ -181,6 +181,46 @@ exports.registerRecruiter = functions.https.onCall(async (data, _context) => {
         };
         return { uid, created: true, profile };
     }
+});
+exports.createClient = functions.https.onCall(async (data, _context) => {
+    if (!_context.auth && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
+    }
+    const { companyName, email, vatId, credits, reason } = data || {};
+    if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Company name is required");
+    }
+    if (!email || typeof email !== "string" || !email.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Email is required");
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+        throw new functions.https.HttpsError("invalid-argument", "Invalid email format");
+    }
+    if (typeof credits !== "number" || credits < 0) {
+        throw new functions.https.HttpsError("invalid-argument", "Credits must be a non-negative number");
+    }
+    const db = admin.firestore();
+    const trimmedVatId = typeof vatId === "string" ? vatId.trim() : "";
+    const trimmedReason = typeof reason === "string" ? reason.trim() : "Promo / testing";
+    const userData = {
+        companyName: companyName.trim(),
+        email: email.trim(),
+        vatId: trimmedVatId,
+        credits,
+        totalSpent: 0,
+        role: "recruiter",
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+    };
+    const userRef = await db.collection("users").add(userData);
+    await userRef.collection("creditAuditLog").add({
+        amount: credits,
+        reason: trimmedReason,
+        adjustedBy: "admin",
+        previousBalance: 0,
+        newBalance: credits,
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { id: userRef.id };
 });
 exports.generateB2BInvoice = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo()) {
@@ -491,6 +531,7 @@ exports.submitAssessment = functions.https.onCall(async (data, _context) => {
             ...(smileScoringResult ? { smileResult: smileScoringResult } : {}),
             fitBadge,
             status: "Completed",
+            reportStatus: "completed",
             completedAt: firestore_1.FieldValue.serverTimestamp(),
             completionDate: new Date().toISOString(),
             integrityEvents: integrityEvents || [],

@@ -114,15 +114,15 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     );
 
     // Act
-    const header = container.querySelector('header');
+    const nav = container.querySelector('main nav');
     const themeButtons = screen.getAllByRole('button', { name: /🌙 Dark|☀️ Light/i });
     const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
 
     // Assert
     expect(fixedOverlay).toBeNull();
     expect(themeButtons.length).toBe(1);
-    expect(header).not.toBeNull();
-    expect(header?.contains(themeButtons[0])).toBe(true);
+    expect(nav).not.toBeNull();
+    expect(nav?.contains(themeButtons[0])).toBe(true);
   });
 
   it('renders ThemeToggle in AdminPage header in normal flow', () => {
@@ -136,15 +136,15 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     );
 
     // Act
-    const header = container.querySelector('header');
+    const nav = container.querySelector('main nav');
     const themeButtons = screen.getAllByRole('button', { name: /🌙 Dark|☀️ Light/i });
     const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
 
     // Assert
     expect(fixedOverlay).toBeNull();
     expect(themeButtons.length).toBe(1);
-    expect(header).not.toBeNull();
-    expect(header?.contains(themeButtons[0])).toBe(true);
+    expect(nav).not.toBeNull();
+    expect(nav?.contains(themeButtons[0])).toBe(true);
   });
 
   it('renders ThemeToggle in AdminClientPage header in normal flow', async () => {
@@ -161,14 +161,14 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
 
     // Act
     const themeButtons = await screen.findAllByRole('button', { name: /🌙 Dark|☀️ Light/i });
-    const header = container.querySelector('header');
+    const nav = container.querySelector('main nav');
     const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
 
     // Assert
     expect(fixedOverlay).toBeNull();
     expect(themeButtons.length).toBe(1);
-    expect(header).not.toBeNull();
-    expect(header?.contains(themeButtons[0])).toBe(true);
+    expect(nav).not.toBeNull();
+    expect(nav?.contains(themeButtons[0])).toBe(true);
   });
 
   it('renders ThemeToggle in DemoPage in normal flow', () => {

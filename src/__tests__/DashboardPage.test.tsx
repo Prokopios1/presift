@@ -58,7 +58,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     where: vi.fn(),
     getDocs: vi.fn(() => Promise.resolve({ docs: docs.map(d => ({ id: d.id, data: () => d })) })),
     doc: vi.fn(),
-    getDoc: vi.fn(() => Promise.resolve({ exists: () => true, data: () => ({ credits: 10, companyName: 'Acme Recruiter' }) })),
+    getDoc: vi.fn(() => Promise.resolve({ exists: () => true, data: () => ({ credits: 10, companyName: 'Acme Recruiter', role: 'admin' }) })),
     updateDoc: vi.fn(),
     deleteDoc: vi.fn(),
   };
@@ -124,6 +124,7 @@ describe('DashboardPage Core Rendering & Navigation', () => {
     originalLocation = window.location;
     delete (window as any).location;
     window.location = { ...originalLocation, href: '' } as any;
+    localStorage.setItem('presift_uid', 'test-uid');
   });
 
   afterEach(() => {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
@@ -326,7 +327,13 @@ export const TestPage = () => {
   if (!started) {
     const totalQuestions = sessionData.items.length + sessionData.wleisItems.length + (sessionData.smileTask ? sessionData.smileTask.trials.length : 0);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-slate-950 relative">
+        <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+          </div>
+        </nav>
         <Card className="max-w-2xl w-full shadow-lg border-t-4 border-t-slate-800">
           <CardHeader>
             <CardTitle className="text-3xl">Psychometric Assessment</CardTitle>
@@ -388,7 +395,13 @@ export const TestPage = () => {
 
     if (smileStage === 'instructions') {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
+          <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            </div>
+          </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl text-emerald-400">Stage 3: Smile Perception Assessment</CardTitle>
@@ -431,8 +444,14 @@ export const TestPage = () => {
       return (
         <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col select-none">
           <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
-            <div className="font-mono text-sm text-slate-400">
-              Smile Perception: Trial <span className="text-emerald-400 font-bold">{smileTrialIndex + 1}</span> of {totalSmileTrials}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              </div>
+              <div className="font-mono text-sm text-slate-400">
+                Smile Perception: Trial <span className="text-emerald-400 font-bold">{smileTrialIndex + 1}</span> of {totalSmileTrials}
+              </div>
             </div>
             <Progress value={((smileTrialIndex + 1) / totalSmileTrials) * 100} className="w-1/3 h-2 bg-slate-800" />
           </header>
@@ -521,7 +540,13 @@ export const TestPage = () => {
       const calibration = smileRes?.calibration;
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
+          <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            </div>
+          </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-2xl">
             <CardHeader className="text-center border-b border-slate-800 pb-6">
               <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono mb-2">
@@ -616,8 +641,14 @@ export const TestPage = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col select-none">
       <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-        <div className="font-mono text-sm text-slate-400">
-          Question {currentQuestion + 1} of {totalQuestions}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+          </div>
+          <div className="font-mono text-sm text-slate-400">
+            Question {currentQuestion + 1} of {totalQuestions}
+          </div>
         </div>
         <div className={`font-mono text-xl ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
           00:{timeLeft.toString().padStart(2, '0')}

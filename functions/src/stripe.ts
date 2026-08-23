@@ -28,8 +28,9 @@ export const createCheckoutSession = functions.https.onCall(async (data, _contex
     throw new functions.https.HttpsError("invalid-argument", "Valid quantity required (1-200)");
   }
   
-  const amountCents = quantity * 500; // €5.00 = 500 cents
-  const label = `${quantity} Candidate Credits`;
+  const isPromo = data?.isPromo === true && quantity === 1;
+  const amountCents = isPromo ? 100 : quantity * 500; // €1.00 for promo, else €5.00/credit
+  const label = isPromo ? '1 Candidate Credit (Promo)' : `${quantity} Candidate Credits`;
 
   const recipient = typeof data?.uid === "string" && data.uid.trim() ? data.uid.trim() : "demo_user";
   const origin = typeof data?.origin === "string" && /^https?:\/\//.test(data.origin)

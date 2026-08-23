@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
@@ -158,6 +159,13 @@ export const AdminPage = () => {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppSidebar />
       <main className="flex-1 w-full pl-0 md:pl-60">
+        <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+          </div>
+          <ThemeToggle />
+        </nav>
         <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
             <div className="flex items-center gap-3">
@@ -190,7 +198,6 @@ export const AdminPage = () => {
               </TooltipTrigger>
               <TooltipContent>Create a new customer account</TooltipContent>
             </Tooltip>
-            <ThemeToggle />
           </div>
         </header>
 

@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminPage } from '../pages/AdminPage';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { addDoc, getDocs } from 'firebase/firestore';
+import { getDocs } from 'firebase/firestore';
 
 // ─── Hoisted fixtures ────────────────────────────────────────────────────────
 const { docs, mockNavigate, mockHttpsCallableFn } = vi.hoisted(() => ({

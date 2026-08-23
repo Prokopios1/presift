@@ -551,6 +551,7 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
       ...(smileScoringResult ? { smileResult: smileScoringResult } : {}),
       fitBadge,
       status: "Completed",
+      reportStatus: "completed",
       completedAt: FieldValue.serverTimestamp(),
       completionDate: new Date().toISOString(),
       integrityEvents: integrityEvents || [],
