@@ -156,6 +156,57 @@ export const registerRecruiter = functions.https.onCall(async (data, _context) =
   }
 });
 
+export const createClient = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
+  }
+
+  const { companyName, email, vatId, credits, reason } = data || {};
+
+  if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "Company name is required");
+  }
+
+  if (!email || typeof email !== "string" || !email.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "Email is required");
+  }
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid email format");
+  }
+
+  if (typeof credits !== "number" || credits < 0) {
+    throw new functions.https.HttpsError("invalid-argument", "Credits must be a non-negative number");
+  }
+
+  const db = admin.firestore();
+
+  const trimmedVatId = typeof vatId === "string" ? vatId.trim() : "";
+  const trimmedReason = typeof reason === "string" ? reason.trim() : "Promo / testing";
+
+  const userData = {
+    companyName: companyName.trim(),
+    email: email.trim(),
+    vatId: trimmedVatId,
+    credits,
+    totalSpent: 0,
+    role: "recruiter",
+    createdAt: FieldValue.serverTimestamp(),
+  };
+
+  const userRef = await db.collection("users").add(userData);
+
+  await userRef.collection("creditAuditLog").add({
+    amount: credits,
+    reason: trimmedReason,
+    adjustedBy: "admin",
+    previousBalance: 0,
+    newBalance: credits,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { id: userRef.id };
+});
+
 export const generateB2BInvoice = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in");

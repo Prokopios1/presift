@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { collection, getDocs, query, where, getCountFromServer, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
+import { db, functions } from '@/lib/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -115,25 +116,26 @@ export const AdminPage = () => {
     if (!newCompany.trim() || !newEmail.trim() || newCredits < 0) return;
     setAddingClient(true);
     try {
+      const createClient = httpsCallable(functions, 'createClient');
+      const response = await createClient({
+        companyName: newCompany.trim(),
+        email: newEmail.trim(),
+        vatId: newVat.trim(),
+        credits: newCredits,
+        reason: newReason.trim() || 'Promo / testing'
+      });
+      const data = response.data as { id: string };
+
       const userData = {
         companyName: newCompany.trim(),
         email: newEmail.trim(),
         vatId: newVat.trim(),
         credits: newCredits,
         totalSpent: 0,
-        role: 'recruiter',
-        createdAt: serverTimestamp()
+        role: 'recruiter'
       };
-      const userRef = await addDoc(collection(db, 'users'), userData);
-      await addDoc(collection(db, 'users', userRef.id, 'creditAuditLog'), {
-        amount: newCredits,
-        reason: newReason.trim() || 'Promo / testing',
-        adjustedBy: 'admin',
-        previousBalance: 0,
-        newBalance: newCredits,
-        createdAt: serverTimestamp()
-      });
-      setRecruiters(prev => [...prev, { id: userRef.id, ...userData } as RecruiterAccount]);
+
+      setRecruiters(prev => [...prev, { id: data.id, ...userData } as RecruiterAccount]);
       setAddClientDialog(false);
       setNewCompany('');
       setNewEmail('');

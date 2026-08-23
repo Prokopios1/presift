@@ -6,12 +6,22 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import { addDoc, getDocs } from 'firebase/firestore';
 
 // ─── Hoisted fixtures ────────────────────────────────────────────────────────
-const { docs, mockNavigate } = vi.hoisted(() => ({
+const { docs, mockNavigate, mockHttpsCallableFn } = vi.hoisted(() => ({
   docs: [
     { id: 'user_1', companyName: 'Acme Corp', email: 'hello@acme.com', credits: 10, totalSpent: 0, vatId: 'DE123' },
   ],
   mockNavigate: vi.fn(),
+  mockHttpsCallableFn: vi.fn(() => Promise.resolve({ data: { id: 'new_user_123' } })),
 }));
+
+// ─── firebase/functions mock ─────────────────────────────────────────────────
+vi.mock('firebase/functions', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual as any,
+    httpsCallable: vi.fn(() => mockHttpsCallableFn),
+  };
+});
 
 // ─── react-router-dom mock for navigation ───────────────────────────────────
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -113,9 +123,16 @@ describe('AdminPage List & Add Client Flow', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.click(submitBtn);
 
-    // Assert — 1 call for user, 1 for creditAuditLog
+    // Assert — 1 call for createClient callable
     await waitFor(() => {
-      expect(addDoc).toHaveBeenCalledTimes(2);
+      expect(mockHttpsCallableFn).toHaveBeenCalledTimes(1);
+      expect(mockHttpsCallableFn).toHaveBeenCalledWith({
+        companyName: 'New Test Corp',
+        email: 'test@example.com',
+        vatId: '',
+        credits: 5,
+        reason: 'Promo / testing'
+      });
     });
 
     // Assert — newly added client row appears in table
