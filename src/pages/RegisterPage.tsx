@@ -6,13 +6,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -85,7 +86,8 @@ export const RegisterPage = () => {
         })
       );
 
-      navigate('/dashboard');
+      const next = searchParams.get('next') || '/dashboard';
+      navigate(next);
     } catch (err: any) {
       console.error('Registration failed:', err);
       setServerError(err.message || 'Registration failed. Please verify your details and try again.');

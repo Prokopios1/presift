@@ -7,6 +7,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
+  const isRegistered = !!localStorage.getItem('presift_uid') || !!localStorage.getItem('presift_demo_session');
+  const pricingLink = isRegistered ? '/pricing' : '/register?next=/pricing';
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-950 text-slate-900 dark:text-slate-50 selection:bg-blue-200">
@@ -52,7 +54,7 @@ export const LandingPage = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to="/pricing"
+                    to={pricingLink}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 px-4 py-2 rounded-md"
                   >
                     Pricing
@@ -81,7 +83,7 @@ export const LandingPage = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to="/pricing"
+                    to={pricingLink}
                     className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 rounded-md flex items-center justify-center"
                   >
                     Get Started
