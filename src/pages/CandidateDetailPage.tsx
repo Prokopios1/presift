@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,8 +14,20 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 export const CandidateDetailPage = () => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { fromAdmin?: boolean; clientId?: string } | null;
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleBack = () => {
+    if (state?.fromAdmin && state?.clientId) {
+      navigate(`/admin/clients/${state.clientId}`);
+    } else if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -86,7 +98,7 @@ export const CandidateDetailPage = () => {
       <main className="flex-1 w-full pl-0 md:pl-60">
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={handleBack}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
             <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <ThemeToggle />

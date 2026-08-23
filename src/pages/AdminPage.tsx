@@ -77,6 +77,7 @@ export const AdminPage = () => {
 
   // Add Client state
   const [addClientDialog, setAddClientDialog] = useState(false);
+  const [newName, setNewName] = useState('');
   const [newCompany, setNewCompany] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newVat, setNewVat] = useState('');
@@ -116,11 +117,12 @@ export const AdminPage = () => {
   }, []);
 
   const handleAddClient = async () => {
-    if (!newCompany.trim() || !newEmail.trim() || newCredits < 0) return;
+    if (!newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0) return;
     setAddingClient(true);
     try {
       const createClient = httpsCallable(functions, 'createClient');
       const response = await createClient({
+        name: newName.trim(),
         companyName: newCompany.trim(),
         email: newEmail.trim(),
         vatId: newVat.trim(),
@@ -130,6 +132,7 @@ export const AdminPage = () => {
       const data = response.data as { id: string };
 
       const userData = {
+        name: newName.trim(),
         companyName: newCompany.trim(),
         email: newEmail.trim(),
         vatId: newVat.trim(),
@@ -140,6 +143,7 @@ export const AdminPage = () => {
 
       setRecruiters(prev => [...prev, { id: data.id, ...userData } as RecruiterAccount]);
       setAddClientDialog(false);
+      setNewName('');
       setNewCompany('');
       setNewEmail('');
       setNewVat('');
@@ -188,12 +192,6 @@ export const AdminPage = () => {
               />
               <Label htmlFor="show-archived">Show archived</Label>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>← Recruiter View</Button>
-              </TooltipTrigger>
-              <TooltipContent>Switch to recruiter dashboard</TooltipContent>
-            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button onClick={() => setAddClientDialog(true)}>Add Client</Button>
@@ -270,6 +268,10 @@ export const AdminPage = () => {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
+                <Label>Full Name (required)</Label>
+                <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Jane Doe" />
+              </div>
+              <div className="space-y-2">
                 <Label>Company Name (required)</Label>
                 <Input value={newCompany} onChange={e => setNewCompany(e.target.value)} placeholder="e.g. Acme Corp" />
               </div>
@@ -294,7 +296,7 @@ export const AdminPage = () => {
               <Button variant="outline" onClick={() => setAddClientDialog(false)}>Cancel</Button>
               <Button
                 onClick={handleAddClient}
-                disabled={addingClient || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
+                disabled={addingClient || !newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
               >
                 {addingClient ? 'Saving...' : 'Create Client'}
               </Button>

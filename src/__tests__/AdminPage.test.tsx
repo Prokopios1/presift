@@ -94,7 +94,14 @@ describe('AdminPage List & Add Client Flow', () => {
     const submitBtn = screen.getByRole('button', { name: /Create Client/i });
     expect(submitBtn).toBeDisabled();
 
-    // Act — fill company only
+    // Act — fill name
+    const nameInput = screen.getByPlaceholderText('e.g. Jane Doe');
+    fireEvent.change(nameInput, { target: { value: 'Test Name' } });
+
+    // Assert - still disabled (no company/email)
+    expect(submitBtn).toBeDisabled();
+
+    // Act — fill company
     const companyInput = screen.getByPlaceholderText('e.g. Acme Corp');
     fireEvent.change(companyInput, { target: { value: 'New Test Corp' } });
 
@@ -116,9 +123,12 @@ describe('AdminPage List & Add Client Flow', () => {
     fireEvent.click(addButton);
 
     // Act
-    const companyInput = await screen.findByPlaceholderText('e.g. Acme Corp');
+    const nameInput = await screen.findByPlaceholderText('e.g. Jane Doe');
+    const companyInput = screen.getByPlaceholderText('e.g. Acme Corp');
     const emailInput = screen.getByPlaceholderText('hello@acme.com');
     const submitBtn = screen.getByRole('button', { name: /Create Client/i });
+    
+    fireEvent.change(nameInput, { target: { value: 'Test Name' } });
     fireEvent.change(companyInput, { target: { value: 'New Test Corp' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.click(submitBtn);
@@ -127,6 +137,7 @@ describe('AdminPage List & Add Client Flow', () => {
     await waitFor(() => {
       expect(mockHttpsCallableFn).toHaveBeenCalledTimes(1);
       expect(mockHttpsCallableFn).toHaveBeenCalledWith({
+        name: 'Test Name',
         companyName: 'New Test Corp',
         email: 'test@example.com',
         vatId: '',

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download, ArrowLeft, ArrowRight, FileText } from 'lucide-react';
 import {
   collection, getDocs, query, where, doc, getDoc, updateDoc, addDoc, serverTimestamp,
 } from 'firebase/firestore';
@@ -487,7 +487,7 @@ export const AdminClientPage = () => {
                       }
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{client.archived ? 'Restore this client' : 'Archive this client — hides it from the list'}</TooltipContent>
+                  <TooltipContent>{client.archived ? 'Restore this client' : 'Soft Delete (Archive) this client'}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -719,6 +719,19 @@ export const AdminClientPage = () => {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Mark as Shortlisted</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => navigate(`/candidate/${c.id}`, { state: { fromAdmin: true, clientId: client.id } })}
+                                  aria-label={`View report for ${c.name}`}
+                                >
+                                  <FileText className="w-4 h-4 text-blue-500" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View Candidate Report</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>

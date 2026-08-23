@@ -60,6 +60,7 @@ describe('createClient', () => {
 
   it('validates input and creates user and audit log', async () => {
     const data = {
+      name: 'Test Name',
       companyName: 'Test Corp',
       email: 'test@example.com',
       vatId: '123',
@@ -79,6 +80,7 @@ describe('createClient', () => {
     
     // First add is for the user
     expect(addMock).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      name: 'Test Name',
       companyName: 'Test Corp',
       email: 'test@example.com',
       vatId: '123',
@@ -97,12 +99,12 @@ describe('createClient', () => {
   });
 
   it('throws on invalid credits', async () => {
-    const data = { companyName: 'Test', email: 'test@test.com', credits: -5, reason: 'test' };
+    const data = { name: 'Test Name', companyName: 'Test', email: 'test@test.com', credits: -5, reason: 'test' };
     await expect(createClient(data, {} as any)).rejects.toThrow('Credits must be a non-negative number');
   });
 
   it('throws on missing required fields', async () => {
-    const data = { companyName: '', email: 'test@test.com', credits: 5, reason: 'test' };
+    const data = { name: 'Test Name', companyName: '', email: 'test@test.com', credits: 5, reason: 'test' };
     await expect(createClient(data, {} as any)).rejects.toThrow('Company name is required');
   });
 });

@@ -186,7 +186,10 @@ exports.createClient = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo()) {
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
     }
-    const { companyName, email, vatId, credits, reason } = data || {};
+    const { name, companyName, email, vatId, credits, reason } = data || {};
+    if (!name || typeof name !== "string" || !name.trim()) {
+        throw new functions.https.HttpsError("invalid-argument", "Full name is required");
+    }
     if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
         throw new functions.https.HttpsError("invalid-argument", "Company name is required");
     }
@@ -203,6 +206,7 @@ exports.createClient = functions.https.onCall(async (data, _context) => {
     const trimmedVatId = typeof vatId === "string" ? vatId.trim() : "";
     const trimmedReason = typeof reason === "string" ? reason.trim() : "Promo / testing";
     const userData = {
+        name: name.trim(),
         companyName: companyName.trim(),
         email: email.trim(),
         vatId: trimmedVatId,
