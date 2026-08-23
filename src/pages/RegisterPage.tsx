@@ -86,7 +86,9 @@ export const RegisterPage = () => {
         })
       );
 
-      const next = searchParams.get('next') || '/dashboard';
+      const ALLOWED_NEXT = new Set(['/pricing', '/dashboard']);
+      const rawNext = searchParams.get('next');
+      const next = rawNext && ALLOWED_NEXT.has(rawNext) ? rawNext : '/dashboard';
       navigate(next);
     } catch (err: any) {
       console.error('Registration failed:', err);
