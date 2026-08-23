@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DashboardPage, toggleSelectAll, toggleSelectRow, getSelectionState } from '../pages/DashboardPage';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { getDocs } from 'firebase/firestore';
+import { getDocs, where, doc } from 'firebase/firestore';
 
 // ─── Hoisted fixtures ────────────────────────────────────────────────────────
 const { docs, mockArchiveCandidate } = vi.hoisted(() => ({
@@ -139,6 +139,39 @@ describe('DashboardPage Core Rendering & Navigation', () => {
     expect(await screen.findByText('Alice Strong')).toBeInTheDocument();
     expect(await screen.findByText('Harry Flag')).toBeInTheDocument();
     expect(await screen.findByText(/10\s*Credits/i)).toBeInTheDocument();
+  });
+
+  it('scopes all Firestore reads to the presift_uid in localStorage', async () => {
+    // Arrange — a distinct recruiter identity, not the demo account
+    localStorage.setItem('presift_uid', 'scoped-uid-123');
+    setCandidateDocs(docs.map(d => ({ id: d.id, data: () => d as any })));
+
+    // Act
+    renderDashboard();
+    expect(await screen.findByText('Alice Strong')).toBeInTheDocument();
+
+    // Assert — user doc and both queries (candidates + campaigns) use the
+    // logged-in uid, never the hardcoded demo id
+    expect(doc).toHaveBeenCalledWith(expect.anything(), 'users', 'scoped-uid-123');
+    expect(where).toHaveBeenCalledWith('recruiterId', '==', 'scoped-uid-123');
+    expect(where).not.toHaveBeenCalledWith('recruiterId', '==', 'demo_recruiter');
+  });
+
+  it('aborts fetch when no presift_uid exists', async () => {
+    // Arrange — no identity in localStorage
+    localStorage.removeItem('presift_uid');
+    setCandidateDocs(docs.map(d => ({ id: d.id, data: () => d as any })));
+
+    // Act
+    renderDashboard();
+
+    // Give it a moment to complete the useEffect
+    await waitFor(() => {
+      expect(where).not.toHaveBeenCalled();
+    });
+
+    // Assert — demo fallback is no longer used
+    expect(where).not.toHaveBeenCalledWith('recruiterId', '==', 'demo_recruiter');
   });
 
   it('sidebar links are visible and navigate properly', async () => {

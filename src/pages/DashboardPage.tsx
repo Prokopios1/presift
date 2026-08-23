@@ -19,7 +19,10 @@ import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList } from 'recharts';
 
-const RECRUITER_ID = 'demo_recruiter';
+// Identity: the logged-in recruiter's uid — same source as the route guards in
+// App.tsx. Read at call time (not module load) so fresh registrations/session
+// switches take effect without a reload.
+const getRecruiterId = () => localStorage.getItem('presift_uid') || '';
 
 export const toggleSelectAll = (
   currentSelected: Set<string>,
@@ -98,8 +101,13 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      const uid = getRecruiterId();
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
       try {
-        const userDoc = await getDoc(doc(db, 'users', RECRUITER_ID));
+        const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
           setBalance(data.credits || 0);
@@ -114,12 +122,12 @@ export const DashboardPage = () => {
           setRecruiterIdentifier(identifier);
         }
 
-        const q = query(collection(db, 'candidates'), where('recruiterId', '==', RECRUITER_ID));
+        const q = query(collection(db, 'candidates'), where('recruiterId', '==', uid));
         const snap = await getDocs(q);
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCandidates(list);
 
-        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', RECRUITER_ID));
+        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', uid));
         const campaignsSnap = await getDocs(campaignsQ);
         const camps = campaignsSnap.docs.reduce((acc, d) => {
           acc[d.id] = d.data();

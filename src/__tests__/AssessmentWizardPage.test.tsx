@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AssessmentWizardPage } from '../pages/AssessmentWizardPage';
 import { TooltipProvider } from '../components/ui/tooltip';
+import { doc } from 'firebase/firestore';
 
 const createCampaignMock = vi.fn();
 const createAssessmentLinkMock = vi.fn();
@@ -26,12 +27,48 @@ describe('AssessmentWizardPage', () => {
     createCampaignMock.mockReset();
     createAssessmentLinkMock.mockReset();
     getDocMock.mockReset();
+    vi.mocked(doc).mockClear();
     
     // Set a high balance for most tests
     getDocMock.mockResolvedValue({
       exists: () => true,
       data: () => ({ credits: 10 }),
     });
+    
+    // Set a default identity for tests to prevent early returns
+    localStorage.setItem('presift_uid', 'default-test-uid');
+  });
+
+  it('reads the recruiter balance for the presift_uid in localStorage', async () => {
+    localStorage.setItem('presift_uid', 'wizard-uid-1');
+    render(
+      <TooltipProvider>
+        <MemoryRouter>
+          <AssessmentWizardPage />
+        </MemoryRouter>
+      </TooltipProvider>
+    );
+
+    await waitFor(() => {
+      expect(doc).toHaveBeenCalledWith(expect.anything(), 'users', 'wizard-uid-1');
+    });
+    expect(doc).not.toHaveBeenCalledWith(expect.anything(), 'users', 'demo_recruiter');
+  });
+
+  it('aborts fetch when no presift_uid is set', async () => {
+    localStorage.removeItem('presift_uid');
+    render(
+      <TooltipProvider>
+        <MemoryRouter>
+          <AssessmentWizardPage />
+        </MemoryRouter>
+      </TooltipProvider>
+    );
+
+    await waitFor(() => {
+      expect(doc).not.toHaveBeenCalled();
+    });
+    expect(doc).not.toHaveBeenCalledWith(expect.anything(), 'users', 'demo_recruiter');
   });
 
   it('validates Step 1 and requires positionTitle', async () => {

@@ -12,7 +12,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 
-const RECRUITER_ID = 'demo_recruiter';
+// Identity: the logged-in recruiter's uid — same source as the route guards in
+// App.tsx. Read at call time so fresh registrations/session switches take
+// effect without a reload.
+const getRecruiterId = () => localStorage.getItem('presift_uid') || '';
 
 export const AssessmentWizardPage = () => {
   const navigate = useNavigate();
@@ -29,8 +32,10 @@ export const AssessmentWizardPage = () => {
 
   useEffect(() => {
     const fetchBalance = async () => {
+      const uid = getRecruiterId();
+      if (!uid) return;
       try {
-        const userDoc = await getDoc(doc(db, 'users', RECRUITER_ID));
+        const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
           setBalance(userDoc.data()?.credits || 0);
         }
