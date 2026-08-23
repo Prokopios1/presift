@@ -73,6 +73,7 @@ export const DashboardPage = () => {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [editCandidateDialog, setEditCandidateDialog] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [campaigns, setCampaigns] = useState<Record<string, any>>({});
 
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
@@ -117,6 +118,14 @@ export const DashboardPage = () => {
         const snap = await getDocs(q);
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCandidates(list);
+
+        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', RECRUITER_ID));
+        const campaignsSnap = await getDocs(campaignsQ);
+        const camps = campaignsSnap.docs.reduce((acc, d) => {
+          acc[d.id] = d.data();
+          return acc;
+        }, {} as Record<string, any>);
+        setCampaigns(camps);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
@@ -268,9 +277,9 @@ export const DashboardPage = () => {
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick={() => setCreateLinkDialogOpen(true)}>Create New Link</Button>
+            <Button onClick={() => navigate('/assessments/new')}>+ Create New Assessment</Button>
           </TooltipTrigger>
-          <TooltipContent>Generate a new assessment link for a candidate</TooltipContent>
+          <TooltipContent>Start a new campaign wizard to assess candidates</TooltipContent>
         </Tooltip>
       </div>
 
@@ -306,7 +315,7 @@ export const DashboardPage = () => {
                     />
                   </TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Campaign / Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Fit Score</TableHead>
@@ -330,7 +339,11 @@ export const DashboardPage = () => {
                         {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">Archived</Badge>}
                       </span>
                     </TableCell>
-                    <TableCell className="text-slate-500">{c.roleTitle || c.appliedRole}</TableCell>
+                    <TableCell className="text-slate-500">
+                      {c.campaignId && campaigns[c.campaignId] 
+                        ? campaigns[c.campaignId].positionTitle 
+                        : (c.roleTitle || c.appliedRole)}
+                    </TableCell>
                     <TableCell>{c.status || 'Pending'}</TableCell>
                     <TableCell className="text-slate-500 text-sm">{c.completionDate ? new Date(c.completionDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>

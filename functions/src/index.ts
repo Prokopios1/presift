@@ -257,9 +257,48 @@ export const topUpCredits = functions.https.onCall(async (data, _context) => {
   return { success: true };
 });
 
+export const createCampaign = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  }
+  const { positionTitle, department, moduleIds } = data || {};
+  
+  if (!positionTitle || typeof positionTitle !== "string" || !positionTitle.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "Missing positionTitle");
+  }
+  
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "moduleIds must be a non-empty array");
+  }
+  
+  const allowedModules = ['icar16', 'wleis16'];
+  for (const mod of moduleIds) {
+    if (!allowedModules.includes(mod)) {
+      throw new functions.https.HttpsError("invalid-argument", `invalid moduleId: ${mod}`);
+    }
+  }
+
+  const recruiterId = _context.auth?.uid || "demo_recruiter";
+  const db = admin.firestore();
+  const campaignRef = db.collection("campaigns").doc();
+  
+  await campaignRef.set({
+    id: campaignRef.id,
+    recruiterId,
+    positionTitle: positionTitle.trim(),
+    department: typeof department === "string" ? department.trim() : "",
+    moduleIds,
+    status: "open",
+    createdAt: FieldValue.serverTimestamp(),
+    candidateCount: 0
+  });
+
+  return { id: campaignRef.id };
+});
+
 export const createAssessmentLink = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  const { roleTitle, candidateName, candidateEmail } = data;
+  const { roleTitle, candidateName, candidateEmail, campaignId } = data;
   if (!roleTitle) throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
 
   const recruiterId = _context.auth?.uid || "demo_recruiter";
@@ -283,6 +322,7 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
     status: "Invited",
     createdAt: FieldValue.serverTimestamp(),
     recruiterId,
+    ...(campaignId ? { campaignId } : {})
   });
 
   // Return the URL for the recruiter to copy (config-driven origin; set with

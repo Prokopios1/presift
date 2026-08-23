@@ -35,6 +35,7 @@ export const AppSidebar = () => {
 
   const navItems = [
     { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments', show: true },
+    { label: 'Campaigns', href: '/assessments', tooltip: 'Manage assessment campaigns', show: true },
     { label: 'Owner / Admin', href: '/admin', tooltip: 'Global overview of all client accounts', show: role === 'admin' || role === 'owner' },
     { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits', show: true },
     { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage', show: true },

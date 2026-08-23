@@ -18,8 +18,6 @@ export const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [vatId, setVatId] = useState('');
-  const [billingAddress, setBillingAddress] = useState('');
 
   const [errors, setErrors] = useState<{ name?: string; email?: string; companyName?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -65,8 +63,6 @@ export const RegisterPage = () => {
         name: name.trim(),
         email: email.trim(),
         companyName: companyName.trim(),
-        vatId: vatId.trim() || undefined,
-        billingAddress: billingAddress.trim() || undefined,
       }) as any;
 
       const resData = res.data || {};
@@ -79,8 +75,6 @@ export const RegisterPage = () => {
           name: name.trim(),
           email: email.trim(),
           companyName: companyName.trim(),
-          vatId: vatId.trim(),
-          billingAddress: billingAddress.trim(),
           role: 'recruiter',
           credits: resData.profile?.credits ?? 0,
         })
@@ -232,28 +226,6 @@ export const RegisterPage = () => {
                     {errors.companyName && (
                       <p className="text-xs text-red-500 font-medium">{errors.companyName}</p>
                     )}
-                  </div>
-
-                  {/* VAT / Tax ID */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="vatId">VAT / Tax ID (Optional)</Label>
-                    <Input
-                      id="vatId"
-                      placeholder="DE123456789"
-                      value={vatId}
-                      onChange={(e) => setVatId(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Billing Address */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingAddress">Billing Address (Optional)</Label>
-                    <Input
-                      id="billingAddress"
-                      placeholder="123 Business Way, Berlin, Germany"
-                      value={billingAddress}
-                      onChange={(e) => setBillingAddress(e.target.value)}
-                    />
                   </div>
                 </CardContent>
 

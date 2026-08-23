@@ -4,6 +4,8 @@ import { LandingPage } from './pages/LandingPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { CampaignsPage } from './pages/CampaignsPage';
+import { AssessmentWizardPage } from './pages/AssessmentWizardPage';
 import { TestPage } from './pages/TestPage';
 import { DemoPage } from './pages/DemoPage';
 import { AdminPage } from './pages/AdminPage';
@@ -62,6 +64,8 @@ function App() {
           <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
           <Route path="/admin/clients/:clientId" element={<AdminGuard><AdminClientPage /></AdminGuard>} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/assessments" element={<CampaignsPage />} />
+          <Route path="/assessments/new" element={<AssessmentWizardPage />} />
           <Route path="/candidate/:candidateId" element={<CandidateDetailPage />} />
           <Route path="/test/:assessmentId" element={<TestPage />} />
           <Route path="/assessment/:assessmentId" element={<TestPage />} />

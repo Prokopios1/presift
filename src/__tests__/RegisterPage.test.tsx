@@ -39,8 +39,6 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/Full Name/i)).toBeTruthy();
     expect(screen.getByLabelText(/Business Email/i)).toBeTruthy();
     expect(screen.getByLabelText(/Company Name/i)).toBeTruthy();
-    expect(screen.getByLabelText(/VAT \/ Tax ID/i)).toBeTruthy();
-    expect(screen.getByLabelText(/Billing Address/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Register as Recruiter/i })).toBeTruthy();
   });
 
@@ -90,8 +88,6 @@ describe('RegisterPage', () => {
           name: 'Sarah Connor',
           email: 'sarah@skynet-defence.com',
           companyName: 'Skynet Defence Inc',
-          vatId: 'US987654321',
-          billingAddress: '100 Cyberdyne Way, LA',
           credits: 0,
         },
       },
@@ -108,8 +104,6 @@ describe('RegisterPage', () => {
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Sarah Connor' } });
     fireEvent.change(screen.getByLabelText(/Business Email/i), { target: { value: 'sarah@skynet-defence.com' } });
     fireEvent.change(screen.getByLabelText(/Company Name/i), { target: { value: 'Skynet Defence Inc' } });
-    fireEvent.change(screen.getByLabelText(/VAT \/ Tax ID/i), { target: { value: 'US987654321' } });
-    fireEvent.change(screen.getByLabelText(/Billing Address/i), { target: { value: '100 Cyberdyne Way, LA' } });
 
     fireEvent.click(screen.getByRole('button', { name: /Register as Recruiter/i }));
 
@@ -119,8 +113,6 @@ describe('RegisterPage', () => {
           name: 'Sarah Connor',
           email: 'sarah@skynet-defence.com',
           companyName: 'Skynet Defence Inc',
-          vatId: 'US987654321',
-          billingAddress: '100 Cyberdyne Way, LA',
         })
       );
     });
