@@ -89,7 +89,9 @@ export const AdminPage = () => {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'users'));
-        const loaded: RecruiterAccount[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as RecruiterAccount));
+        const loaded: RecruiterAccount[] = snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as RecruiterAccount & { role?: string }))
+          .filter(u => u.role !== 'admin');
         setRecruiters(loaded);
 
         // Candidate count per non-archived client
