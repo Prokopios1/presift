@@ -277,59 +277,11 @@ export const topUpCredits = functions.https.onCall(async (data, _context) => {
   return { success: true };
 });
 
-export const createCampaign = functions.https.onCall(async (data, _context) => {
-  if (!_context.auth && !allowAnonDemo()) {
-    throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  }
-  const { positionTitle, department, moduleIds, recruiterId: payloadRecruiterId } = data || {};
 
-  if (!positionTitle || typeof positionTitle !== "string" || !positionTitle.trim()) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing positionTitle");
-  }
-
-  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
-    throw new functions.https.HttpsError("invalid-argument", "moduleIds must be a non-empty array");
-  }
-
-  const allowedModules = ['icar16', 'wleis16'];
-  for (const mod of moduleIds) {
-    if (!allowedModules.includes(mod)) {
-      throw new functions.https.HttpsError("invalid-argument", `invalid moduleId: ${mod}`);
-    }
-  }
-
-  const recruiterId = await resolveRecruiterId(_context, payloadRecruiterId);
-
-  const db = admin.firestore();
-
-  const recruiterRef = db.collection("users").doc(recruiterId);
-  const recruiterDoc = await recruiterRef.get();
-  if (!recruiterDoc.exists) {
-    throw new functions.https.HttpsError("not-found", "Recruiter not found");
-  }
-  if (recruiterDoc.data()?.role === "admin") {
-    throw new functions.https.HttpsError("invalid-argument", "Admins cannot create campaigns directly");
-  }
-
-  const campaignRef = db.collection("campaigns").doc();
-
-  await campaignRef.set({
-    id: campaignRef.id,
-    recruiterId,
-    positionTitle: positionTitle.trim(),
-    department: typeof department === "string" ? department.trim() : "",
-    moduleIds,
-    status: "open",
-    createdAt: FieldValue.serverTimestamp(),
-    candidateCount: 0
-  });
-
-  return { id: campaignRef.id };
-});
 
 export const createAssessmentLink = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  const { roleTitle, candidateName, candidateEmail, campaignId, recruiterId: payloadRecruiterId } = data || {};
+  const { roleTitle, candidateName, candidateEmail, recruiterId: payloadRecruiterId } = data || {};
   if (!roleTitle) throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
 
   const recruiterId = await resolveRecruiterId(_context, payloadRecruiterId);
@@ -359,8 +311,7 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
     email: candidateEmail || "",
     status: "Invited",
     createdAt: FieldValue.serverTimestamp(),
-    recruiterId,
-    ...(campaignId ? { campaignId } : {})
+    recruiterId
   });
 
   // Return the URL for the recruiter to copy (config-driven origin; set with
@@ -678,12 +629,13 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
           "This assessment link is invalid — no candidate record was found for it. Please contact the recruiter to receive a new link."
         );
       }
-      await admin.firestore().collection("candidates").doc(candidateDocId(validData.sessionId)).set({
+      await candRef.set({
         assessmentId,
         name: candidateName || "",
         email: candidateEmail || "",
         appliedRole: appliedRole || "",
         recruiterId: candidateRecruiterId,
+        createdAt: FieldValue.serverTimestamp(),
         ...resultPayload,
       }, { merge: true });
     }

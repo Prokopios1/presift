@@ -62,7 +62,7 @@ export const getSelectionState = (
 };
 
 export const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { targetId } = useImpersonation();
   const recruiterId = targetId || user?.uid || '';
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ export const DashboardPage = () => {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [editCandidateDialog, setEditCandidateDialog] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [campaigns, setCampaigns] = useState<Record<string, any>>({});
+
 
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
@@ -126,13 +126,6 @@ export const DashboardPage = () => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCandidates(list);
 
-        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', recruiterId));
-        const campaignsSnap = await getDocs(campaignsQ);
-        const camps = campaignsSnap.docs.reduce((acc, d) => {
-          acc[d.id] = d.data();
-          return acc;
-        }, {} as Record<string, any>);
-        setCampaigns(camps);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
@@ -254,29 +247,31 @@ export const DashboardPage = () => {
 <p className="text-slate-500">Recruiter: {recruiterIdentifier}</p>
               </div>
             </div>
-        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
-          <div className="flex flex-col">
-            <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
-            <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button onClick={async () => {
-                const amount = prompt('How many credits to top up?');
-                if (!amount || isNaN(parseInt(amount))) return;
-                try {
-                  const topUp = httpsCallable(functions, 'topUpCredits');
-                  await topUp({ amount: parseInt(amount), recruiterId });
-                  setBalance(b => b + parseInt(amount));
-                } catch (e) {
-                  console.error(e);
-                  alert('Failed to top up.');
-                }
-              }}>Top Up Credits</Button>
-            </TooltipTrigger>
-            <TooltipContent>Add more assessment credits to your account</TooltipContent>
+        {role !== 'admin' && (
+          <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
+              <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={async () => {
+                  const amount = prompt('How many credits to top up?');
+                  if (!amount || isNaN(parseInt(amount))) return;
+                  try {
+                    const topUp = httpsCallable(functions, 'topUpCredits');
+                    await topUp({ amount: parseInt(amount), recruiterId });
+                    setBalance(b => b + parseInt(amount));
+                  } catch (e) {
+                    console.error(e);
+                    alert('Failed to top up.');
+                  }
+                }}>Top Up Credits</Button>
+              </TooltipTrigger>
+              <TooltipContent>Add more assessment credits to your account</TooltipContent>
             </Tooltip>
           </div>
+        )}
         </header>
       
       {/* Toolbar */}
@@ -296,9 +291,9 @@ export const DashboardPage = () => {
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick={() => navigate('/assessments/new')}>+ Create New Assessment</Button>
+            <Button onClick={() => setCreateLinkDialogOpen(true)}>+ Create New Assessment</Button>
           </TooltipTrigger>
-          <TooltipContent>Start a new campaign wizard to assess candidates</TooltipContent>
+          <TooltipContent>Create an assessment link to send to candidates</TooltipContent>
         </Tooltip>
       </div>
 
@@ -334,7 +329,7 @@ export const DashboardPage = () => {
                     />
                   </TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Campaign / Role</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Fit Score</TableHead>
@@ -359,9 +354,7 @@ export const DashboardPage = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-slate-500">
-                      {c.campaignId && campaigns[c.campaignId] 
-                        ? campaigns[c.campaignId].positionTitle 
-                        : (c.roleTitle || c.appliedRole)}
+                      {c.roleTitle || c.appliedRole}
                     </TableCell>
                     <TableCell>{c.status || 'Pending'}</TableCell>
                     <TableCell className="text-slate-500 text-sm">{c.completionDate ? new Date(c.completionDate).toLocaleDateString() : '-'}</TableCell>

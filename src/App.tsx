@@ -7,8 +7,6 @@ import { PaymentPage } from './pages/PaymentPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { CampaignsPage } from './pages/CampaignsPage';
-import { AssessmentWizardPage } from './pages/AssessmentWizardPage';
 import { TestPage } from './pages/TestPage';
 import { DemoPage } from './pages/DemoPage';
 import { AdminPage } from './pages/AdminPage';
@@ -57,8 +55,6 @@ function App() {
               <Route path="/admin/clients/:clientId" element={<AdminGuard><AdminClientPage /></AdminGuard>} />
               <Route path="/dashboard" element={<RecruiterGuard><DashboardPage /></RecruiterGuard>} />
               <Route path="/profile" element={<RecruiterGuard><ProfilePage /></RecruiterGuard>} />
-              <Route path="/assessments" element={<RecruiterGuard><CampaignsPage /></RecruiterGuard>} />
-              <Route path="/assessments/new" element={<RecruiterGuard><AssessmentWizardPage /></RecruiterGuard>} />
               <Route path="/candidate/:candidateId" element={<CandidateDetailPage />} />
               <Route path="/test/:assessmentId" element={<TestPage />} />
               <Route path="/assessment/:assessmentId" element={<TestPage />} />

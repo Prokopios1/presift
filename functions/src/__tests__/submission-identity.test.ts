@@ -122,7 +122,7 @@ describe('submitAssessment orphan handling', () => {
     const res: any = await (submitAssessment as any).run(validPayload(session.sessionId), {});
     expect(res.success).toBe(true);
 
-    const resultDoc = holder.fs._store.get(`candidates/cand_${session.sessionId}`);
+    const resultDoc = holder.fs._store.get(`candidates/${assessmentId}`);
     expect(resultDoc).toBeTruthy();
     expect(resultDoc.name).toBe('Prokopios');
     expect(resultDoc.email).toBe('p@example.com');
