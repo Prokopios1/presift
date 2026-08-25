@@ -10,6 +10,15 @@ const renderToolbar = (path: string) =>
     </MemoryRouter>
   );
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('DevToolbar', () => {
   it('renders in dev/test mode on app routes — no ?demo=true escape hatch needed', () => {
     // Vitest runs in MODE=test; the toolbar is dev/test-only by construction.

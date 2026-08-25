@@ -4,6 +4,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { LandingPage } from '../pages/LandingPage';
 import { TooltipProvider } from '../components/ui/tooltip';
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('LandingPage', () => {
   beforeEach(() => {
     localStorage.clear();

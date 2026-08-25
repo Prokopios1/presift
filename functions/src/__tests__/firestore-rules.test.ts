@@ -34,7 +34,7 @@ describe('firestore.rules production hardening', () => {
 
   it('candidates: create/update/delete locked to functions; read stays available for the dashboard', () => {
     const candidates = blockFor('/candidates/\\{candidateId\\}');
-    expect(candidates).toContain('allow read: if true;');
+    expect(candidates).toContain('allow read: if isOwner(resource.data.recruiterId) || isAdmin();');
     expect(candidates).toContain('allow create, update, delete: if false;');
   });
 
@@ -45,7 +45,7 @@ describe('firestore.rules production hardening', () => {
 
   it('users and assessments: reads allowed, writes functions-only', () => {
     const users = blockFor('/users/\\{userId\\}');
-    expect(users).toContain('allow read: if true;');
+    expect(users).toContain('allow read: if request.auth != null && (request.auth.uid == userId || resource.data.authUid == request.auth.uid || isAdmin());');
     expect(users).toContain('allow write: if false;');
 
     const assessments = blockFor('/assessments/\\{assessmentId\\}');

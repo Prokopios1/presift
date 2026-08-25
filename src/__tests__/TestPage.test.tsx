@@ -16,6 +16,15 @@ const renderTest = () =>
     </TooltipProvider>
   );
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('TestPage pre-test gate', () => {
   afterEach(() => {
     localStorage.clear();

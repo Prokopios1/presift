@@ -243,8 +243,8 @@ export const TestPage = () => {
       }
     } catch (err: any) {
       isSubmitting.current = false;
-      if (err?.code === 'not-found' || err?.code === 'functions/not-found') {
-        alert('This test session has expired — please start a new assessment.');
+      if (err?.code === 'not-found' || err?.code === 'functions/not-found' || err?.message?.includes('not found')) {
+        alert('This test session has expired or is invalid — please start a new assessment.');
         clearLocalStorage();
         navigate('/');
       } else {

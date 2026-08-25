@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download, ArrowLeft, ArrowRight, FileText } from 'lucide-react';
+import { Edit, Copy, Trash2, Archive, ArchiveRestore, Users, Download, ArrowLeft, ArrowRight, FileText, UserPlus } from 'lucide-react';
 import {
-  collection, getDocs, query, where, doc, getDoc, updateDoc, addDoc, serverTimestamp,
+  collection, getDocs, query, where, doc, getDoc
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '@/lib/firebase';
@@ -20,6 +20,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { buildCandidatesCsv } from './AdminPage';
 import { toggleSelectAll, toggleSelectRow, getSelectionState } from './DashboardPage';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 interface RecruiterAccount {
   id: string;
@@ -63,6 +64,7 @@ const callUpdateClient = httpsCallable(functions, 'updateClient');
 const callArchiveClient = httpsCallable(functions, 'archiveClient');
 const callUpdateCandidateClients = httpsCallable(functions, 'updateCandidateClients');
 const callArchiveCandidate = httpsCallable(functions, 'archiveCandidate');
+const callAdjustClientCredits = httpsCallable(functions, 'adjustClientCredits');
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -71,6 +73,7 @@ function slugify(text: string): string {
 export const AdminClientPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  const { setTargetId } = useImpersonation();
 
   const [client, setClient] = useState<RecruiterAccount | null>(null);
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
@@ -218,16 +221,23 @@ export const AdminClientPage = () => {
     }
   };
 
+  const handleImpersonate = () => {
+    if (!client) return;
+    
+    setTargetId(client.id);
+    navigate('/dashboard');
+  };
+
   const handleCreditAdjust = async () => {
     if (!client || creditAmount === 0 || !creditReason.trim()) return;
     setCreditSaving(true);
     try {
-      const newBal = Math.max(0, (client.credits || 0) + creditAmount);
-      await updateDoc(doc(db, 'users', client.id), { credits: newBal });
-      await addDoc(collection(db, 'users', client.id, 'creditAuditLog'), {
-        amount: creditAmount, reason: creditReason.trim(), adjustedBy: 'admin',
-        previousBalance: client.credits || 0, newBalance: newBal, createdAt: serverTimestamp(),
+      await callAdjustClientCredits({
+        clientId: client.id,
+        amount: creditAmount,
+        reason: creditReason.trim(),
       });
+      const newBal = Math.max(0, (client.credits || 0) + creditAmount);
       setClient(prev => prev ? { ...prev, credits: newBal } : prev);
       const newEntry: AuditEntry = {
         id: `local_${Date.now()}`,
@@ -471,6 +481,14 @@ export const AdminClientPage = () => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Edit client details</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" onClick={handleImpersonate}>
+                      <UserPlus className="w-4 h-4 mr-1" />Impersonate
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Log in as this recruiter to troubleshoot</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>

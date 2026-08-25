@@ -11,14 +11,15 @@ import { ArrowLeft, ArrowRight, Plus, Trash2, CheckCircle2, Loader2, Copy } from
 import { doc, getDoc } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-
-// Identity: the logged-in recruiter's uid — same source as the route guards in
-// App.tsx. Read at call time so fresh registrations/session switches take
-// effect without a reload.
-const getRecruiterId = () => localStorage.getItem('presift_uid') || '';
+import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 export const AssessmentWizardPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { targetId } = useImpersonation();
+  const recruiterId = targetId || user?.uid || '';
+  
   const [step, setStep] = useState(1);
   const [balance, setBalance] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
@@ -32,10 +33,9 @@ export const AssessmentWizardPage = () => {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const uid = getRecruiterId();
-      if (!uid) return;
+      if (!recruiterId) return;
       try {
-        const userDoc = await getDoc(doc(db, 'users', uid));
+        const userDoc = await getDoc(doc(db, 'users', recruiterId));
         if (userDoc.exists()) {
           setBalance(userDoc.data()?.credits || 0);
         }
@@ -44,7 +44,7 @@ export const AssessmentWizardPage = () => {
       }
     };
     fetchBalance();
-  }, []);
+  }, [recruiterId]);
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
@@ -81,7 +81,8 @@ export const AssessmentWizardPage = () => {
       const campaignRes = await createCampaign({
         positionTitle: positionTitle.trim(),
         department: department.trim(),
-        moduleIds: selectedModules
+        moduleIds: selectedModules,
+        ...(recruiterId && { recruiterId })
       });
       const campaignId = (campaignRes.data as any).id;
 
@@ -94,7 +95,8 @@ export const AssessmentWizardPage = () => {
           roleTitle: positionTitle.trim(),
           candidateName: cand.name.trim(),
           candidateEmail: cand.email.trim(),
-          campaignId
+          campaignId,
+          ...(recruiterId && { recruiterId })
         });
         links.push({
           name: cand.name.trim() || 'Generic Candidate',

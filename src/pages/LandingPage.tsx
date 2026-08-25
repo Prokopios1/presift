@@ -4,10 +4,12 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
-  const isRegistered = !!localStorage.getItem('presift_uid') || !!localStorage.getItem('presift_demo_session');
+  const { user } = useAuth();
+  const isRegistered = !!user;
   const pricingLink = isRegistered ? '/pricing' : '/register?next=/pricing';
 
   return (

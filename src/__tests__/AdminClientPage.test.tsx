@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AdminClientPage } from '../pages/AdminClientPage';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { getDoc, getDocs, updateDoc, addDoc } from 'firebase/firestore';
+import { getDoc, getDocs } from 'firebase/firestore';
 
 // ─── Hoisted fixtures ────────────────────────────────────────────────────────
 const {
@@ -14,6 +14,7 @@ const {
   mockArchiveClient,
   mockArchiveCandidate,
   mockUpdateCandidateClients,
+  mockAdjustClientCredits,
 } = vi.hoisted(() => ({
   mockClientData: {
     id: 'client_123',
@@ -63,6 +64,7 @@ const {
   mockArchiveClient: vi.fn((..._args: any[]) => Promise.resolve({ data: {} })),
   mockArchiveCandidate: vi.fn((..._args: any[]) => Promise.resolve({ data: {} })),
   mockUpdateCandidateClients: vi.fn((..._args: any[]) => Promise.resolve({ data: {} })),
+  mockAdjustClientCredits: vi.fn((..._args: any[]) => Promise.resolve({ data: {} })),
 }));
 
 // ─── firebase/functions mock ─────────────────────────────────────────────────
@@ -74,6 +76,7 @@ vi.mock('firebase/functions', () => ({
     if (name === 'archiveClient') return mockArchiveClient;
     if (name === 'archiveCandidate') return mockArchiveCandidate;
     if (name === 'updateCandidateClients') return mockUpdateCandidateClients;
+    if (name === 'adjustClientCredits') return mockAdjustClientCredits;
     return vi.fn(() => Promise.resolve({ data: {} }));
   }),
 }));
@@ -114,6 +117,15 @@ const renderAdminClientPage = (clientId = 'client_123') =>
   );
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('AdminClientPage Loading & Header', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -344,10 +356,13 @@ describe('AdminClientPage Credits & Export CSV', () => {
     const confirmBtn = screen.getByRole('button', { name: /Confirm/i });
     fireEvent.click(confirmBtn);
 
-    // Assert — updateDoc updates client credits, addDoc adds audit entry
+    // Assert — calls adjustClientCredits
     await waitFor(() => {
-      expect(updateDoc).toHaveBeenCalled();
-      expect(addDoc).toHaveBeenCalled();
+      expect(mockAdjustClientCredits).toHaveBeenCalledWith({
+        clientId: 'client_123',
+        amount: 10,
+        reason: 'Bonus campaign credit',
+      });
     });
   });
 

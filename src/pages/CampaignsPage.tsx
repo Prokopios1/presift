@@ -8,28 +8,27 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
-// Identity: the logged-in recruiter's uid — same source as the route guards in
-// App.tsx. Read at call time so fresh registrations/session switches take
-// effect without a reload.
-const getRecruiterId = () => localStorage.getItem('presift_uid') || '';
+import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 export const CampaignsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { targetId } = useImpersonation();
+  const recruiterId = targetId || user?.uid || '';
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCampaigns = async () => {
-      const uid = getRecruiterId();
-      if (!uid) {
+      if (!recruiterId) {
         setLoading(false);
         return;
       }
       try {
         const q = query(
           collection(db, 'campaigns'),
-          where('recruiterId', '==', uid),
+          where('recruiterId', '==', recruiterId),
           orderBy('createdAt', 'desc')
         );
         const snap = await getDocs(q);

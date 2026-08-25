@@ -79,6 +79,15 @@ const setCandidateDocs = (docList: Array<{ id: string; data: () => Record<string
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('Selection Logic Helpers', () => {
   it('toggleSelectAll selects and deselects all filtered ids', () => {
     const initial = new Set<string>();

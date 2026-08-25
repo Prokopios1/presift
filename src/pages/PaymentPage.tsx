@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { httpsCallable } from 'firebase/functions';
+import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { functions, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -24,6 +26,10 @@ interface RegisteredProfile {
 }
 
 export const PaymentPage = () => {
+  const { user } = useAuth();
+  const { targetId } = useImpersonation();
+  const recruiterId = targetId || user?.uid || '';
+
   const navigate = useNavigate();
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [credits, setCredits] = useState(5);
@@ -35,7 +41,7 @@ export const PaymentPage = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const uid = localStorage.getItem('presift_uid');
+      const uid = recruiterId;
       if (!uid) return;
 
       try {
@@ -54,26 +60,6 @@ export const PaymentPage = () => {
             email: data.email || '',
             companyName: data.companyName || '',
           });
-        } else {
-          // Fallback to local session storage if available
-          const sessionRaw = localStorage.getItem('presift_demo_session');
-          if (sessionRaw) {
-            try {
-              const session = JSON.parse(sessionRaw);
-              if (session.companyName) setCompanyName(session.companyName);
-              if (session.email) setEmail(session.email);
-              if (session.vatId) setVat(session.vatId);
-              if (session.billingAddress) setBillingAddress(session.billingAddress);
-              setRegisteredProfile({
-                uid,
-                name: session.name || '',
-                email: session.email || '',
-                companyName: session.companyName || '',
-              });
-            } catch (err) {
-              console.error('Failed parsing presift_demo_session:', err);
-            }
-          }
         }
       } catch (err) {
         console.error('Failed fetching user profile on PaymentPage:', err);
@@ -81,7 +67,7 @@ export const PaymentPage = () => {
     };
 
     loadProfile();
-  }, []);
+  }, [recruiterId]);
 
   const isPromo = credits === 1;
   const totalPrice = isPromo ? 1 : credits * UNIT_PRICE;
@@ -106,19 +92,22 @@ export const PaymentPage = () => {
 
   const handleCheckout = async () => {
     if (credits < 1) return;
+    if (!recruiterId) {
+      alert("Must be logged in to purchase credits.");
+      return;
+    }
     setPurchaseLoading(true);
     try {
       const createSession = httpsCallable(functions, 'createCheckoutSession');
-      const uid = localStorage.getItem('presift_uid') || 'demo_user';
       const res = await createSession({
         quantity: credits,
-        uid,
+        uid: recruiterId,
         email: email || undefined,
         companyName: companyName || undefined,
         vatId: vat || undefined,
         billingAddress: billingAddress || undefined,
         origin: window.location.origin,
-        isPromo, // Pass promo flag to stripe callable
+        isPromo,
       }) as any;
       window.location.href = res.data.url;
     } catch (e) {

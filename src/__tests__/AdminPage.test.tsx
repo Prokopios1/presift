@@ -23,6 +23,15 @@ vi.mock('firebase/functions', async (importOriginal) => {
   };
 });
 
+// ─── react-dom mock for createPortal ─────────────────────────────────────────
+vi.mock('react-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-dom')>();
+  return {
+    ...actual,
+    createPortal: (node: any) => node, // Just render inline for tests
+  };
+});
+
 // ─── react-router-dom mock for navigation ───────────────────────────────────
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
@@ -64,6 +73,15 @@ const setGetDocs = (docList: Array<{ id: string; data: () => Record<string, unkn
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('AdminPage List & Add Client Flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();

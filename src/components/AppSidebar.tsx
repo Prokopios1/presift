@@ -4,38 +4,34 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const AppSidebar = () => {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const { user } = useAuth();
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkRole = async () => {
       try {
-        const uid = localStorage.getItem('presift_uid');
-        if (uid) {
-          const userDoc = await getDoc(doc(db, 'users', uid));
+        if (user?.uid) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             setRole(userDoc.data()?.role || 'recruiter');
             return;
           }
-        }
-        
-        const demoSession = localStorage.getItem('presift_demo_session');
-        if (demoSession) {
-          const parsed = JSON.parse(demoSession);
-          setRole(parsed.role || 'recruiter');
         }
       } catch (err) {
         console.error('Role check failed:', err);
       }
     };
     checkRole();
-  }, []);
+  }, [user]);
 
   const navItems = [
     { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments', show: true },
     { label: 'Campaigns', href: '/assessments', tooltip: 'Manage assessment campaigns', show: true },
+    { label: 'Profile & Billing', href: '/profile', tooltip: 'Manage your profile and view billing history', show: true },
     { label: 'Owner / Admin', href: '/admin', tooltip: 'Global overview of all client accounts', show: role === 'admin' || role === 'owner' },
     { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits', show: true },
     { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage', show: true },

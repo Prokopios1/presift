@@ -15,22 +15,27 @@ service cloud.firestore {
     //    authenticated owners/admins requires wiring Firebase Auth — see
     //    the helpers below (isAdmin/isOwner) which are ready to enable.
     //
-    // Auth helper functions (enable once Firebase Auth is wired to the UI):
-    //   function isAdmin() {
-    //     return request.auth != null
-    //       && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    //   }
-    //   function isOwner(recruiterId) {
-    //     return request.auth != null && request.auth.uid == recruiterId;
-    //   }
+    // Auth helper functions:
+    function isAdmin() {
+      return request.auth != null
+        && (request.auth.token.admin == true
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+            // Legacy pre-migration layout: the owner's profile doc is keyed by the
+            // old localStorage ID (users/owner_prokopios) and links the auth UID via
+            // the `authUid` field (see scripts/bootstrap-admin.mjs).
+            || get(/databases/$(database)/documents/users/owner_prokopios).data.authUid == request.auth.uid);
+    }
+    function isOwner(recruiterId) {
+      return request.auth != null && request.auth.uid == recruiterId;
+    }
     // ──────────────────────────────────────────────────────────────
 
     match /users/{userId} {
-      allow read: if true; // dashboard balance + owner admin list (anonymous app today)
+      allow read: if request.auth != null && (request.auth.uid == userId || resource.data.authUid == request.auth.uid || isAdmin());
       allow write: if false; // only Cloud Functions manage users/credits/audit logs
     }
     match /users/{userId}/creditAuditLog/{logId} {
-      allow read: if true;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow write: if false; // only Cloud Functions write audit logs
     }
 
@@ -40,15 +45,10 @@ service cloud.firestore {
     }
 
     match /candidates/{candidateId} {
-      // Candidate records contain PII (name/email/scores). Reads are open only
-      // because the dashboard is not yet behind Firebase Auth; when Auth ships,
-      // replace with: allow read: if isOwner(resource.data.recruiterId) || isAdmin();
-      allow read: if true;
-      // All mutations happen server-side via callables
-      // (createAssessmentLink, submitAssessment, updateCandidateStatus,
-      //  deleteCandidate) — never directly from the client.
+      allow read: if isOwner(resource.data.recruiterId) || isAdmin();
       allow create, update, delete: if false;
     }
+
 
     match /sessions/{sessionId} {
       // Sessions are server-managed (startSession creates them, submitAssessment

@@ -16,6 +16,15 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: any[]) => getDocMock(...args),
 }));
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('PaymentPage', () => {
   beforeEach(() => {
     createSessionMock.mockReset();

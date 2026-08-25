@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react';
 import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
@@ -68,6 +68,57 @@ export function buildCandidatesCsv(candidates: CandidateRecord[]): string {
   return [headers.join(','), ...rows].join('\n');
 }
 
+const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp: () => void, onDelete: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      setRect(buttonRef.current.getBoundingClientRect());
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleScroll = () => setOpen(false);
+    if (open) {
+      window.addEventListener('scroll', handleScroll, true);
+    }
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [open]);
+
+  return (
+    <>
+      <Button ref={buttonRef} variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => {
+        e.stopPropagation();
+        setOpen(true);
+      }}>
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+      {open && rect && (
+        <div className="fixed inset-0 z-50" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+          <div 
+            className="absolute bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md rounded-md p-1 min-w-[120px] flex flex-col gap-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+            style={{ top: rect.bottom + 4, right: window.innerWidth - rect.right }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onEdit(); }}>
+              <Edit2 className="w-4 h-4 text-slate-500" /> Edit
+            </button>
+            <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onTopUp(); }}>
+              <Plus className="w-4 h-4 text-slate-500" /> Top Up
+            </button>
+            <div className="h-px bg-slate-200 dark:bg-slate-800 my-1" />
+            <button className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm text-left w-full" onClick={() => { setOpen(false); onDelete(); }}>
+              <Trash2 className="w-4 h-4 text-red-500" /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 export const AdminPage = () => {
   const navigate = useNavigate();
   const [recruiters, setRecruiters] = useState<RecruiterAccount[]>([]);
@@ -84,6 +135,18 @@ export const AdminPage = () => {
   const [newCredits, setNewCredits] = useState(5);
   const [newReason, setNewReason] = useState('Promo / testing');
   const [addingClient, setAddingClient] = useState(false);
+
+  // Top Up Client state
+  const [topUpDialog, setTopUpDialog] = useState(false);
+  const [topUpClient, setTopUpClient] = useState<RecruiterAccount | null>(null);
+  const [topUpCredits, setTopUpCredits] = useState(10);
+  const [topUpReason, setTopUpReason] = useState('Admin manual top up');
+  const [toppingUp, setToppingUp] = useState(false);
+
+  // Delete Client state
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteClientTarget, setDeleteClientTarget] = useState<RecruiterAccount | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Load recruiters + candidate counts
   useEffect(() => {
@@ -115,6 +178,42 @@ export const AdminPage = () => {
       finally { setLoading(false); }
     })();
   }, []);
+
+  const handleTopUp = async () => {
+    if (!topUpClient || topUpCredits <= 0) return;
+    setToppingUp(true);
+    try {
+      const adjustCredits = httpsCallable(functions, 'adjustClientCredits');
+      await adjustCredits({
+        clientId: topUpClient.id,
+        amount: topUpCredits,
+        reason: topUpReason
+      });
+      setRecruiters(prev => prev.map(r => r.id === topUpClient.id ? { ...r, credits: (r.credits || 0) + topUpCredits } : r));
+      setTopUpDialog(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to top up credits.');
+    } finally {
+      setToppingUp(false);
+    }
+  };
+
+  const handleDeleteClient = async () => {
+    if (!deleteClientTarget) return;
+    setDeleting(true);
+    try {
+      const deleteCallable = httpsCallable(functions, 'deleteClient');
+      await deleteCallable({ clientId: deleteClientTarget.id });
+      setRecruiters(prev => prev.filter(r => r.id !== deleteClientTarget.id));
+      setDeleteDialog(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete client.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleAddClient = async () => {
     if (!newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0) return;
@@ -227,6 +326,7 @@ export const AdminPage = () => {
                   <TableHead>VAT ID</TableHead><TableHead className="text-right">Credits</TableHead>
                   <TableHead className="text-right">Spent</TableHead>
                   <TableHead className="text-right">Candidates</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {visibleRecruiters.map(r => (
@@ -250,6 +350,13 @@ export const AdminPage = () => {
                       <TableCell className="text-right text-slate-500">€{(r.totalSpent || 0).toFixed(2)}</TableCell>
                       <TableCell className="text-right text-slate-500 text-sm">
                         {r.archived ? '–' : (candidateCounts[r.id] !== undefined ? String(candidateCounts[r.id]) : '…')}
+                      </TableCell>
+                      <TableCell>
+                        <ActionMenu 
+                          onEdit={() => navigate(`/admin/clients/${r.id}`)}
+                          onTopUp={() => { setTopUpClient(r); setTopUpCredits(10); setTopUpReason('Admin manual top up'); setTopUpDialog(true); }}
+                          onDelete={() => { setDeleteClientTarget(r); setDeleteDialog(true); }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -303,6 +410,63 @@ export const AdminPage = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Top Up Dialog */}
+        <Dialog open={topUpDialog} onOpenChange={setTopUpDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Top Up Credits</DialogTitle>
+              <DialogDescription>Add assessment credits to {topUpClient?.companyName || topUpClient?.name}.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Credits to Add</Label>
+                <Input type="number" min="1" value={topUpCredits} onChange={e => setTopUpCredits(parseInt(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Input value={topUpReason} onChange={e => setTopUpReason(e.target.value)} placeholder="e.g. promotional" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTopUpDialog(false)}>Cancel</Button>
+              <Button
+                onClick={handleTopUp}
+                disabled={toppingUp || topUpCredits <= 0}
+              >
+                {toppingUp ? 'Saving...' : 'Top Up'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Dialog */}
+        <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Client Account</DialogTitle>
+              <DialogDescription className="text-red-600 dark:text-red-400 font-medium">
+                Warning: This action is permanent and irreversible.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 text-slate-600 dark:text-slate-400">
+              Are you sure you want to completely delete <strong>{deleteClientTarget?.companyName || deleteClientTarget?.name}</strong>?
+              <br /><br />
+              This will cascade and permanently delete all of their candidates, campaigns, and credit history.
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialog(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteClient}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete Permanently'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         </div>
       </main>
     </div>

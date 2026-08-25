@@ -21,29 +21,11 @@ export const DevToolbar = () => {
   if (isPublicRoute) return null;
 
   const handleMockRecruiterLogin = () => {
-    localStorage.setItem('presift_demo_session', JSON.stringify({
-      email: 'demo_recruiter@presift.app',
-      role: 'recruiter',
-      credits: 5,
-      vatId: 'DE123456789',
-      companyName: 'Acme Corp (Demo)',
-      assessments: ['/assessment/demo1', '/assessment/demo2', '/assessment/demo3'],
-    }));
-    localStorage.setItem('presift_uid', 'demo_recruiter');
-    navigate('/dashboard');
-    window.location.reload();
+    alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
   const handleMockOwnerLogin = () => {
-    localStorage.setItem('presift_demo_session', JSON.stringify({
-      email: 'prokopios@presift.app',
-      role: 'admin',
-      credits: 999,
-      companyName: 'PreSift Admin',
-    }));
-    localStorage.setItem('presift_uid', 'owner_prokopios');
-    navigate('/admin');
-    window.location.reload();
+    alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
   const handleSeedData = async () => {

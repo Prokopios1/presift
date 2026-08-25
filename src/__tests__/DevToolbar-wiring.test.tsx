@@ -15,34 +15,17 @@ const renderToolbar = (path: string) =>
     </MemoryRouter>
   );
 
-describe('DevToolbar wiring (iteration 7)', () => {
-  it('Mock Recruiter Login writes the demo session', () => {
-    // Arrange
-    renderToolbar('/dashboard');
-    // Act
-    fireEvent.click(screen.getByText(/Recruiter Login/));
-    // Assert
-    const session = JSON.parse(localStorage.getItem('presift_demo_session') || '{}');
-    expect(session.email).toBe('demo_recruiter@presift.app');
-    expect(session.role).toBe('recruiter');
-    expect(session.credits).toBe(5);
-    expect(session.vatId).toBeTruthy();
-    expect(session.assessments).toHaveLength(3);
-    expect(localStorage.getItem('presift_uid')).toBe('demo_recruiter');
-  });
 
-  it('Mock Owner Login writes the owner session', () => {
-    // Arrange
-    renderToolbar('/dashboard');
-    // Act
-    fireEvent.click(screen.getByText(/Owner Login/));
-    // Assert
-    const session = JSON.parse(localStorage.getItem('presift_demo_session') || '{}');
-    expect(session.email).toBe('prokopios@presift.app');
-    expect(session.role).toBe('admin');
-    expect(session.credits).toBe(999);
-    expect(localStorage.getItem('presift_uid')).toBe('owner_prokopios');
-  });
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
+describe('DevToolbar wiring (iteration 7)', () => {
+
 
   it('Seed Demo Data calls the seedDemoData callable', async () => {
     // Arrange

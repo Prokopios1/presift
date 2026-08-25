@@ -37,6 +37,7 @@ const allowAnonDemo = (): boolean =>
 
 export * from "./seeder";
 export * from "./stripe";
+import { resolveRecruiterId } from "./utils/auth";
 
 export const registerRecruiter = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) {
@@ -250,12 +251,22 @@ import * as crypto from "crypto";
 
 export const topUpCredits = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  const { amount } = data;
+  const { amount, recruiterId: payloadRecruiterId } = data || {};
   if (!amount || typeof amount !== 'number' || amount <= 0) {
     throw new functions.https.HttpsError("invalid-argument", "Valid amount required");
   }
-  const uid = _context.auth?.uid || "demo_recruiter";
+
+  const uid = await resolveRecruiterId(_context, payloadRecruiterId);
+
   const recruiterRef = admin.firestore().collection("users").doc(uid);
+  const doc = await recruiterRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Recruiter not found");
+  }
+  if (doc.data()?.role === "admin") {
+    throw new functions.https.HttpsError("invalid-argument", "Admins cannot top up credits directly");
+  }
+
   await recruiterRef.set({
     credits: FieldValue.increment(amount)
   }, { merge: true });
@@ -266,7 +277,7 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
   }
-  const { positionTitle, department, moduleIds } = data || {};
+  const { positionTitle, department, moduleIds, recruiterId: payloadRecruiterId } = data || {};
   
   if (!positionTitle || typeof positionTitle !== "string" || !positionTitle.trim()) {
     throw new functions.https.HttpsError("invalid-argument", "Missing positionTitle");
@@ -283,8 +294,19 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
     }
   }
 
-  const recruiterId = _context.auth?.uid || "demo_recruiter";
+  const recruiterId = await resolveRecruiterId(_context, payloadRecruiterId);
+
   const db = admin.firestore();
+  
+  const recruiterRef = db.collection("users").doc(recruiterId);
+  const recruiterDoc = await recruiterRef.get();
+  if (!recruiterDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Recruiter not found");
+  }
+  if (recruiterDoc.data()?.role === "admin") {
+    throw new functions.https.HttpsError("invalid-argument", "Admins cannot create campaigns directly");
+  }
+
   const campaignRef = db.collection("campaigns").doc();
   
   await campaignRef.set({
@@ -303,12 +325,19 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
 
 export const createAssessmentLink = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  const { roleTitle, candidateName, candidateEmail, campaignId } = data;
+  const { roleTitle, candidateName, candidateEmail, campaignId, recruiterId: payloadRecruiterId } = data || {};
   if (!roleTitle) throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
 
-  const recruiterId = _context.auth?.uid || "demo_recruiter";
+  const recruiterId = await resolveRecruiterId(_context, payloadRecruiterId);
+
   const recruiterRef = admin.firestore().collection("users").doc(recruiterId);
   const doc = await recruiterRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Recruiter not found");
+  }
+  if (doc.data()?.role === "admin") {
+    throw new functions.https.HttpsError("invalid-argument", "Admins cannot create assessment links directly");
+  }
   const credits = doc.data()?.credits || 0;
   if (credits <= 0) {
     throw new functions.https.HttpsError("failed-precondition", "Insufficient credits");
@@ -525,7 +554,6 @@ export const startSession = functions.https.onCall(async (data, _context) => {
       sessionToken,
       answers: [],
       integrityEvents: [],
-      recruiterId: "demo_recruiter",
       ...identity,
     });
 
@@ -745,6 +773,56 @@ export const updateCandidateClients = functions.https.onCall(async (data, _conte
   return { candidateId, clientIds };
 });
 
+export const adjustClientCredits = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+
+  const { clientId, amount, reason } = data || {};
+
+  // Validate clientId
+  if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "clientId must be a non-empty string");
+  }
+  const trimmedClientId = clientId.trim();
+
+  // Validate amount
+  if (typeof amount !== "number" || amount === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "amount must be a non-zero number");
+  }
+
+  // Validate reason
+  if (!reason || typeof reason !== "string" || !reason.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "reason must be a non-empty string");
+  }
+  const trimmedReason = reason.trim();
+
+  const db = admin.firestore();
+  const clientRef = db.collection("users").doc(trimmedClientId);
+
+  let newBalance = 0;
+  await db.runTransaction(async (t) => {
+    const doc = await t.get(clientRef);
+    if (!doc.exists) {
+      throw new functions.https.HttpsError("not-found", "Client not found");
+    }
+    const currentCredits = doc.data()?.credits || 0;
+    newBalance = Math.max(0, currentCredits + amount);
+
+    t.update(clientRef, { credits: newBalance, updatedAt: FieldValue.serverTimestamp() });
+
+    const auditRef = clientRef.collection("creditAuditLog").doc();
+    t.set(auditRef, {
+      amount,
+      reason: trimmedReason,
+      adjustedBy: "admin",
+      previousBalance: currentCredits,
+      newBalance,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  });
+
+  return { clientId: trimmedClientId, newBalance };
+});
+
 export const updateClient = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
 
@@ -906,4 +984,70 @@ export const integrity = functions.https.onRequest(async (req, res) => {
     console.error("Integrity log error:", error);
     res.status(500).send('Internal Server Error');
   }
+});
+
+export const getCandidateStatus = functions.https.onCall(async (data, _context) => {
+  const { candidateId } = data || {};
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+  
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+  
+  const cData = doc.data() || {};
+  return {
+    name: cData.name || "",
+    appliedRole: cData.appliedRole || "",
+    status: cData.status || ""
+  };
+});
+
+export const deleteClient = functions.https.onCall(async (data, _context) => {
+  if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  
+  const { clientId } = data || {};
+  if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "clientId must be a non-empty string");
+  }
+
+  // Admin validation
+  const db = admin.firestore();
+  if (_context.auth?.uid) {
+    const callerDoc = await db.collection("users").doc(_context.auth.uid).get();
+    if (callerDoc.data()?.role !== "admin" && callerDoc.data()?.role !== "owner") {
+      throw new functions.https.HttpsError("permission-denied", "Must be an admin to delete a client");
+    }
+  }
+
+  const clientRef = db.collection("users").doc(clientId);
+  const clientDoc = await clientRef.get();
+  if (!clientDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Client not found");
+  }
+
+  const batch = db.batch();
+
+  // Delete campaigns
+  const campaignsSnap = await db.collection("campaigns").where("recruiterId", "==", clientId).get();
+  campaignsSnap.forEach(doc => batch.delete(doc.ref));
+
+  // Delete candidates
+  const candidatesSnap = await db.collection("candidates").where("recruiterId", "==", clientId).get();
+  candidatesSnap.forEach(doc => batch.delete(doc.ref));
+
+  // Delete creditAuditLog
+  const auditSnap = await clientRef.collection("creditAuditLog").get();
+  auditSnap.forEach(doc => batch.delete(doc.ref));
+
+  // Delete client profile
+  batch.delete(clientRef);
+
+  await batch.commit();
+
+  return { success: true, deletedCandidates: candidatesSnap.size, deletedCampaigns: campaignsSnap.size };
 });

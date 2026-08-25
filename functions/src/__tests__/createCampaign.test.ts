@@ -70,6 +70,10 @@ describe('createCampaign', () => {
     vi.clearAllMocks();
     originalEmulatorEnv = process.env.FUNCTIONS_EMULATOR;
     process.env.FUNCTIONS_EMULATOR = 'false';
+    getMock.mockResolvedValue({
+      exists: true,
+      data: () => ({ role: 'recruiter' })
+    });
   });
 
   afterEach(() => {
@@ -79,33 +83,33 @@ describe('createCampaign', () => {
 
   it('rejects unauthenticated calls (when demo bypass is off)', async () => {
     await expect(
-      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: ['icar16'] }, { auth: undefined })
+      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: ['icar16'], recruiterId: 'u1' }, { auth: undefined })
     ).rejects.toMatchObject({ message: 'Must be logged in' });
   });
 
   it('rejects missing or invalid positionTitle', async () => {
     await expect(
-      (createCampaign as any)({ moduleIds: ['icar16'] }, { auth: { uid: 'u1' } })
+      (createCampaign as any)({ moduleIds: ['icar16'], recruiterId: 'u1' }, { auth: { uid: 'u1' } })
     ).rejects.toMatchObject({ message: 'Missing positionTitle' });
     
     await expect(
-      (createCampaign as any)({ positionTitle: '  ', moduleIds: ['icar16'] }, { auth: { uid: 'u1' } })
+      (createCampaign as any)({ positionTitle: '  ', moduleIds: ['icar16'], recruiterId: 'u1' }, { auth: { uid: 'u1' } })
     ).rejects.toMatchObject({ message: 'Missing positionTitle' });
   });
 
   it('rejects missing or empty moduleIds', async () => {
     await expect(
-      (createCampaign as any)({ positionTitle: 'Engineer' }, { auth: { uid: 'u1' } })
+      (createCampaign as any)({ positionTitle: 'Engineer', recruiterId: 'u1' }, { auth: { uid: 'u1' } })
     ).rejects.toMatchObject({ message: 'moduleIds must be a non-empty array' });
     
     await expect(
-      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: [] }, { auth: { uid: 'u1' } })
+      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: [], recruiterId: 'u1' }, { auth: { uid: 'u1' } })
     ).rejects.toMatchObject({ message: 'moduleIds must be a non-empty array' });
   });
 
   it('rejects invalid moduleIds', async () => {
     await expect(
-      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: ['icar16', 'invalid_mod'] }, { auth: { uid: 'u1' } })
+      (createCampaign as any)({ positionTitle: 'Engineer', moduleIds: ['icar16', 'invalid_mod'], recruiterId: 'u1' }, { auth: { uid: 'u1' } })
     ).rejects.toMatchObject({ message: 'invalid moduleId: invalid_mod' });
   });
 
@@ -113,7 +117,8 @@ describe('createCampaign', () => {
     const res = await (createCampaign as any)({
       positionTitle: ' Senior Engineer ',
       department: ' Engineering ',
-      moduleIds: ['icar16', 'wleis16']
+      moduleIds: ['icar16', 'wleis16'],
+      recruiterId: 'u1'
     }, { auth: { uid: 'u1' } });
 
     expect(res.id).toBe('test_doc_id');
@@ -135,7 +140,8 @@ describe('createCampaign', () => {
 
     const res = await (createCampaign as any)({
       positionTitle: 'Demo Position',
-      moduleIds: ['icar16']
+      moduleIds: ['icar16'],
+      recruiterId: 'demo_recruiter'
     }, { auth: undefined });
 
     expect(res.id).toBe('test_doc_id');

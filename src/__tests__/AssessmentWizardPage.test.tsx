@@ -22,6 +22,15 @@ vi.mock('firebase/firestore', () => ({
   getDoc: (...args: any[]) => getDocMock(...args),
 }));
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
+}));
+
+
 describe('AssessmentWizardPage', () => {
   beforeEach(() => {
     createCampaignMock.mockReset();
@@ -199,12 +208,14 @@ describe('AssessmentWizardPage', () => {
         positionTitle: 'Frontend Developer',
         department: 'Engineering',
         moduleIds: ['icar16'],
+        recruiterId: 'default-test-uid',
       });
       expect(createAssessmentLinkMock).toHaveBeenCalledWith({
         roleTitle: 'Frontend Developer',
         candidateName: 'Alice Smith',
         candidateEmail: 'alice@example.com',
         campaignId: 'camp_123',
+        recruiterId: 'default-test-uid',
       });
     });
 

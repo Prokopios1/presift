@@ -37,6 +37,17 @@ vi.mock('firebase/functions', () => ({
   httpsCallable: vi.fn(() => vi.fn(() => Promise.resolve({ data: {} }))),
 }));
 
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } })),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children
+}));
+vi.mock('@/contexts/ImpersonationContext', () => ({
+  useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() })),
+  ImpersonationProvider: ({ children }: { children: React.ReactNode }) => children
+}));
+
+
 describe('ThemeToggle Overlay & Navigation Placement', () => {
   beforeEach(() => {
     localStorage.clear();

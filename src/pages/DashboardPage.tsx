@@ -14,15 +14,12 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppSidebar } from '@/components/AppSidebar';
 
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList } from 'recharts';
-
-// Identity: the logged-in recruiter's uid — same source as the route guards in
-// App.tsx. Read at call time (not module load) so fresh registrations/session
-// switches take effect without a reload.
-const getRecruiterId = () => localStorage.getItem('presift_uid') || '';
 
 export const toggleSelectAll = (
   currentSelected: Set<string>,
@@ -65,6 +62,9 @@ export const getSelectionState = (
 };
 
 export const DashboardPage = () => {
+  const { user } = useAuth();
+  const { targetId } = useImpersonation();
+  const recruiterId = targetId || user?.uid || '';
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState<any[]>([]);
   const [balance, setBalance] = useState<number>(0);
@@ -101,13 +101,12 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const uid = getRecruiterId();
-      if (!uid) {
+      if (!recruiterId) {
         setLoading(false);
         return;
       }
       try {
-        const userDoc = await getDoc(doc(db, 'users', uid));
+        const userDoc = await getDoc(doc(db, 'users', recruiterId));
         if (userDoc.exists()) {
           const data = userDoc.data();
           setBalance(data.credits || 0);
@@ -122,12 +121,12 @@ export const DashboardPage = () => {
           setRecruiterIdentifier(identifier);
         }
 
-        const q = query(collection(db, 'candidates'), where('recruiterId', '==', uid));
+        const q = query(collection(db, 'candidates'), where('recruiterId', '==', recruiterId), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCandidates(list);
 
-        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', uid));
+        const campaignsQ = query(collection(db, 'campaigns'), where('recruiterId', '==', recruiterId));
         const campaignsSnap = await getDocs(campaignsQ);
         const camps = campaignsSnap.docs.reduce((acc, d) => {
           acc[d.id] = d.data();
@@ -220,6 +219,18 @@ export const DashboardPage = () => {
     }
   };
 
+  const handleDeleteCandidate = async (c: any) => {
+    if (!window.confirm(`Are you sure you want to permanently delete candidate ${c.name}?`)) return;
+    try {
+      const deleteCandidateCallable = httpsCallable(functions, 'deleteCandidate');
+      await deleteCandidateCallable({ candidateId: c.id });
+      setCandidates(prev => prev.filter(x => x.id !== c.id));
+    } catch (e) {
+      alert('Failed to delete candidate.');
+      console.error(e);
+    }
+  };
+
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -255,7 +266,7 @@ export const DashboardPage = () => {
                 if (!amount || isNaN(parseInt(amount))) return;
                 try {
                   const topUp = httpsCallable(functions, 'topUpCredits');
-                  await topUp({ amount: parseInt(amount) });
+                  await topUp({ amount: parseInt(amount), recruiterId });
                   setBalance(b => b + parseInt(amount));
                 } catch (e) {
                   console.error(e);
@@ -420,6 +431,19 @@ export const DashboardPage = () => {
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteCandidate(c)}
+                            aria-label={`Delete ${c.name}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete candidate permanently</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/candidate/${c.id}`)}>View</Button>
                         </TooltipTrigger>
                         <TooltipContent>View candidate profile and scores</TooltipContent>
@@ -497,7 +521,7 @@ export const DashboardPage = () => {
               if (!roleTitle) return alert('Enter a role title');
               try {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
-                const res = await createLink({ roleTitle, candidateName, candidateEmail });
+                const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId });
                 const data = res.data as any;
                 setBalance(b => b - 1);
                 navigator.clipboard.writeText(data.url);
