@@ -21,6 +21,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
       if (currentUser) {
         try {
+          const idTokenResult = await currentUser.getIdTokenResult();
+          if (idTokenResult.claims.admin) {
+            setRole('admin');
+            setLoading(false);
+            return;
+          }
+
           // Primary: post-migration profile doc at users/{authUid}
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
