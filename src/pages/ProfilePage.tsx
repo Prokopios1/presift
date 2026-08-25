@@ -24,7 +24,9 @@ interface CreditAuditLog {
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isImpersonating, recruiterId } = useImpersonation();
+  const { targetId } = useImpersonation();
+  const isImpersonating = !!targetId;
+  const recruiterId = targetId;
   const uid = isImpersonating ? recruiterId : user?.uid;
 
   const [loading, setLoading] = useState(true);

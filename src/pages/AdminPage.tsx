@@ -416,7 +416,7 @@ export const AdminPage = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Top Up Credits</DialogTitle>
-              <DialogDescription>Add assessment credits to {topUpClient?.companyName || topUpClient?.name}.</DialogDescription>
+              <DialogDescription>Add assessment credits to {topUpClient?.companyName}.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -450,7 +450,7 @@ export const AdminPage = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 text-slate-600 dark:text-slate-400">
-              Are you sure you want to completely delete <strong>{deleteClientTarget?.companyName || deleteClientTarget?.name}</strong>?
+              Are you sure you want to completely delete <strong>{deleteClientTarget?.companyName}</strong>?
               <br /><br />
               This will cascade and permanently delete all of their candidates, campaigns, and credit history.
             </div>
