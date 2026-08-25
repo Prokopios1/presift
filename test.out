@@ -1,0 +1,271 @@
+
+> presift-web@0.0.0 test
+> vitest run src/__tests__/AdminPage.test.tsx
+
+
+ RUN  v4.1.10 /home/fupazuzi/projects/b2b-assessment-engine
+
+stderr | src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > renders table + Add Client button and tooltips
+An error occurred in the <ActionMenu> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > submit disabled without company/email
+An error occurred in the <ActionMenu> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > valid submit calls addDoc and refreshes table
+An error occurred in the <ActionMenu> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/__tests__/AdminPage.test.tsx > AdminPage Navigation Flow > row click navigates to /admin/clients/:clientId
+An error occurred in the <ActionMenu> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ❯ src/__tests__/AdminPage.test.tsx (6 tests | 5 failed) 4231ms
+     × renders table + Add Client button and tooltips 1045ms
+     × submit disabled without company/email 1085ms
+     × valid submit calls addDoc and refreshes table 1033ms
+     ✓ archived client hidden when Show archived is off (default) 22ms
+     × archived client visible with Archived badge when Show archived is on 35ms
+     × row click navigates to /admin/clients/:clientId 1010ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > renders table + Add Client button and tooltips
+TestingLibraryElementError: Unable to find an element with the text: Acme Corp. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/__tests__/AdminPage.test.tsx:96:25
+     94|
+     95|     // Assert — table headers and row data
+     96|     expect(await screen.findByText('Acme Corp')).toBeInTheDocument();
+       |                         ^
+     97|     expect(screen.getByText('hello@acme.com')).toBeInTheDocument();
+     98|     expect(screen.getByRole('button', { name: /Add Client/i })).toBeIn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > submit disabled without company/email
+TestingLibraryElementError: Unable to find an element with the text: Add New Client. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/__tests__/AdminPage.test.tsx:111:25
+    109|
+    110|     // Assert — dialog open, submit disabled
+    111|     expect(await screen.findByText('Add New Client')).toBeInTheDocumen…
+       |                         ^
+    112|     const submitBtn = screen.getByRole('button', { name: /Create Clien…
+    113|     expect(submitBtn).toBeDisabled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/__tests__/AdminPage.test.tsx > AdminPage List & Add Client Flow > valid submit calls addDoc and refreshes table
+TestingLibraryElementError: Unable to find an element with the placeholder text of: e.g. Jane Doe
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/__tests__/AdminPage.test.tsx:144:36
+    142|
+    143|     // Act
+    144|     const nameInput = await screen.findByPlaceholderText('e.g. Jane Do…
+       |                                    ^
+    145|     const companyInput = screen.getByPlaceholderText('e.g. Acme Corp');
+    146|     const emailInput = screen.getByPlaceholderText('hello@acme.com');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/__tests__/AdminPage.test.tsx > AdminPage Archive Filtering > archived client visible with Archived badge when Show archived is on
+ReferenceError: useRef is not defined
+ ❯ ActionMenu src/pages/AdminPage.tsx:74:21
+     72|   const [open, setOpen] = useState(false);
+     73|   const [rect, setRect] = useState<DOMRect | null>(null);
+     74|   const buttonRef = useRef<HTMLButtonElement>(null);
+       |                     ^
+     75|
+     76|   useEffect(() => {
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/__tests__/AdminPage.test.tsx > AdminPage Navigation Flow > row click navigates to /admin/clients/:clientId
+TestingLibraryElementError: Unable to find an element with the text: Acme Corp. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/__tests__/AdminPage.test.tsx:219:25
+    217|     // Arrange
+    218|     renderAdmin();
+    219|     expect(await screen.findByText('Acme Corp')).toBeInTheDocument();
+       |                         ^
+    220|
+    221|     // Act — click row
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 4 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+ReferenceError: useRef is not defined
+ ❯ ActionMenu src/pages/AdminPage.tsx:74:21
+     72|   const [open, setOpen] = useState(false);
+     73|   const [rect, setRect] = useState<DOMRect | null>(null);
+     74|   const buttonRef = useRef<HTMLButtonElement>(null);
+       |                     ^
+     75|
+     76|   useEffect(() => {
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+This error originated in "src/__tests__/AdminPage.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "renders table + Add Client button and tooltips". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+ReferenceError: useRef is not defined
+ ❯ ActionMenu src/pages/AdminPage.tsx:74:21
+     72|   const [open, setOpen] = useState(false);
+     73|   const [rect, setRect] = useState<DOMRect | null>(null);
+     74|   const buttonRef = useRef<HTMLButtonElement>(null);
+       |                     ^
+     75|
+     76|   useEffect(() => {
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+This error originated in "src/__tests__/AdminPage.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "submit disabled without company/email". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+ReferenceError: useRef is not defined
+ ❯ ActionMenu src/pages/AdminPage.tsx:74:21
+     72|   const [open, setOpen] = useState(false);
+     73|   const [rect, setRect] = useState<DOMRect | null>(null);
+     74|   const buttonRef = useRef<HTMLButtonElement>(null);
+       |                     ^
+     75|
+     76|   useEffect(() => {
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+This error originated in "src/__tests__/AdminPage.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "valid submit calls addDoc and refreshes table". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+ReferenceError: useRef is not defined
+ ❯ ActionMenu src/pages/AdminPage.tsx:74:21
+     72|   const [open, setOpen] = useState(false);
+     73|   const [rect, setRect] = useState<DOMRect | null>(null);
+     74|   const buttonRef = useRef<HTMLButtonElement>(null);
+       |                     ^
+     75|
+     76|   useEffect(() => {
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+This error originated in "src/__tests__/AdminPage.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "row click navigates to /admin/clients/:clientId". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+     Errors  4 errors
+   Start at  11:21:58
+   Duration  5.00s (transform 81ms, setup 59ms, import 240ms, tests 4.23s, environment 384ms)
+

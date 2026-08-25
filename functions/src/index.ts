@@ -162,6 +162,10 @@ export const createClient = functions.https.onCall(async (data, _context) => {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
   }
 
+  if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "Must be an admin to create a client");
+  }
+
   const { name, companyName, email, vatId, credits, reason } = data || {};
 
   if (!name || typeof name !== "string" || !name.trim()) {
@@ -278,15 +282,15 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
   }
   const { positionTitle, department, moduleIds, recruiterId: payloadRecruiterId } = data || {};
-  
+
   if (!positionTitle || typeof positionTitle !== "string" || !positionTitle.trim()) {
     throw new functions.https.HttpsError("invalid-argument", "Missing positionTitle");
   }
-  
+
   if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
     throw new functions.https.HttpsError("invalid-argument", "moduleIds must be a non-empty array");
   }
-  
+
   const allowedModules = ['icar16', 'wleis16'];
   for (const mod of moduleIds) {
     if (!allowedModules.includes(mod)) {
@@ -297,7 +301,7 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
   const recruiterId = await resolveRecruiterId(_context, payloadRecruiterId);
 
   const db = admin.firestore();
-  
+
   const recruiterRef = db.collection("users").doc(recruiterId);
   const recruiterDoc = await recruiterRef.get();
   if (!recruiterDoc.exists) {
@@ -308,7 +312,7 @@ export const createCampaign = functions.https.onCall(async (data, _context) => {
   }
 
   const campaignRef = db.collection("campaigns").doc();
-  
+
   await campaignRef.set({
     id: campaignRef.id,
     recruiterId,
@@ -380,6 +384,13 @@ export const deleteCandidate = functions.https.onCall(async (data, _context) => 
   if (!doc.exists) {
     throw new functions.https.HttpsError("not-found", "Candidate not found");
   }
+
+  const isAdmin = _context.auth?.token?.admin === true;
+  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+  }
+
   await candRef.delete();
   return { success: true };
 });
@@ -402,6 +413,13 @@ export const updateCandidateStatus = functions.https.onCall(async (data, _contex
   if (!doc.exists) {
     throw new functions.https.HttpsError("not-found", "Candidate not found");
   }
+
+  const isAdmin = _context.auth?.token?.admin === true;
+  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+  }
+
   await candRef.update({ status });
   return { success: true };
 });
@@ -443,6 +461,12 @@ export const updateCandidate = functions.https.onCall(async (data, _context) => 
     throw new functions.https.HttpsError("not-found", "Candidate not found");
   }
 
+  const isAdmin = _context.auth?.token?.admin === true;
+  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+  }
+
   if (Object.keys(updates).length > 0) {
     await candRef.update(updates);
   }
@@ -476,8 +500,15 @@ export const bulkDeleteCandidates = functions.https.onCall(async (data, _context
   const existingIds: string[] = [];
   const missingIds: string[] = [];
 
+  const isAdmin = _context.auth?.token?.admin === true;
+  const uid = _context.auth?.uid;
+
   docs.forEach((doc, i) => {
     if (doc.exists) {
+      const isOwner = doc.data()?.recruiterId === uid;
+      if (!isAdmin && !isOwner && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("permission-denied", `You do not own candidate ${candidateIds[i]}`);
+      }
       existingIds.push(candidateIds[i]);
     } else {
       missingIds.push(candidateIds[i]);
@@ -756,6 +787,12 @@ export const updateCandidateClients = functions.https.onCall(async (data, _conte
     throw new functions.https.HttpsError("not-found", "Candidate not found");
   }
 
+  const isAdmin = _context.auth?.token?.admin === true;
+  const isOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+  }
+
   // --- Verify every clientId exists in users/ ---
   const userRefs = clientIds.map((id: string) => db.collection("users").doc(id));
   const userDocs = await db.getAll(...userRefs);
@@ -794,6 +831,11 @@ export const adjustClientCredits = functions.https.onCall(async (data, _context)
     throw new functions.https.HttpsError("invalid-argument", "reason must be a non-empty string");
   }
   const trimmedReason = reason.trim();
+
+  // Admin validation
+  if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "Must be an admin to adjust credits");
+  }
 
   const db = admin.firestore();
   const clientRef = db.collection("users").doc(trimmedClientId);
@@ -991,14 +1033,14 @@ export const getCandidateStatus = functions.https.onCall(async (data, _context) 
   if (!candidateId || typeof candidateId !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
   }
-  
+
   const candRef = admin.firestore().collection("candidates").doc(candidateId);
   const doc = await candRef.get();
-  
+
   if (!doc.exists) {
     throw new functions.https.HttpsError("not-found", "Candidate not found");
   }
-  
+
   const cData = doc.data() || {};
   return {
     name: cData.name || "",
@@ -1009,7 +1051,7 @@ export const getCandidateStatus = functions.https.onCall(async (data, _context) 
 
 export const deleteClient = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  
+
   const { clientId } = data || {};
   if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
     throw new functions.https.HttpsError("invalid-argument", "clientId must be a non-empty string");
@@ -1017,11 +1059,8 @@ export const deleteClient = functions.https.onCall(async (data, _context) => {
 
   // Admin validation
   const db = admin.firestore();
-  if (_context.auth?.uid) {
-    const callerDoc = await db.collection("users").doc(_context.auth.uid).get();
-    if (callerDoc.data()?.role !== "admin" && callerDoc.data()?.role !== "owner") {
-      throw new functions.https.HttpsError("permission-denied", "Must be an admin to delete a client");
-    }
+  if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+    throw new functions.https.HttpsError("permission-denied", "Must be an admin to delete a client");
   }
 
   const clientRef = db.collection("users").doc(clientId);

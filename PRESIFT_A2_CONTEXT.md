@@ -12,10 +12,10 @@ Dev: Vite on `:5174` · Emulators Firestore `:8081`, Functions `:5001` (JDK21). 
 
 ## Current live state
 - HEAD: `8ae5601` (whitelist `?next=` in RegisterPage).
-- Recent commits: `b559c9c` (gate Buy Units behind register), `5b86ad4` (1€ promo tier + RBAC + candidate detail + fwd/back nav + reportStatus), `53a0b1a`, `c0d3d70` (emulators), `b8e29ef`.
+- Recent commits: `7d2d88a` (feat: complete admin dashboard and recruiter management), `b559c9c` (gate Buy Units behind register), `5b86ad4` (1€ promo tier + RBAC + candidate detail + fwd/back nav + reportStatus), `53a0b1a`, `c0d3d70` (emulators), `b8e29ef`.
 - 1€ promo tier exists (`isPromo = credits===1` in PaymentPage + functions/src/stripe.ts). DECISION: keep UNBOUNDED (no per-account gate).
 - Register funnel: Landing Buy Units → `/register?next=/pricing` → `/pricing`. Session keys `presift_uid`/`presift_demo_session` in localStorage — signed-in users skip register (by design).
-- **DONE (A2-verified PASS 2026-08-23):** VAT + Billing Address removed from RegisterPage.tsx + test (working tree, 2 files / 36 deletions). Remaining fields Name/Email/Company only; backend + PaymentPage untouched. Next per workflow: A2 DEPLOYS (firebase, project presift) → human tests after deploy.
+- **DONE (A2-verified PASS 2026-08-25):** AdminPage ActionMenu portal/inline fixes + backend cascading delete endpoints + AuthContext admin custom claim hardening. Production deployed.
 
 ## Tools/harness
 - A2 run auto-invoked every 4 min by cron (preSift ANTG->A2 verify+deploy loop, Slack announce). Fresh isolated session each run.

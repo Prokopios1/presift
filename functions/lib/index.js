@@ -187,6 +187,9 @@ exports.createClient = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo()) {
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in or running in demo mode");
     }
+    if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("permission-denied", "Must be an admin to create a client");
+    }
     const { name, companyName, email, vatId, credits, reason } = data || {};
     if (!name || typeof name !== "string" || !name.trim()) {
         throw new functions.https.HttpsError("invalid-argument", "Full name is required");
@@ -703,6 +706,11 @@ exports.updateCandidateClients = functions.https.onCall(async (data, _context) =
     if (!candDoc.exists) {
         throw new functions.https.HttpsError("not-found", "Candidate not found");
     }
+    const isAdmin = _context.auth?.token?.admin === true;
+    const isOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
+    if (!isAdmin && !isOwner && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+    }
     // --- Verify every clientId exists in users/ ---
     const userRefs = clientIds.map((id) => db.collection("users").doc(id));
     const userDocs = await db.getAll(...userRefs);
@@ -732,6 +740,10 @@ exports.adjustClientCredits = functions.https.onCall(async (data, _context) => {
         throw new functions.https.HttpsError("invalid-argument", "reason must be a non-empty string");
     }
     const trimmedReason = reason.trim();
+    // Admin validation
+    if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("permission-denied", "Must be an admin to adjust credits");
+    }
     const db = admin.firestore();
     const clientRef = db.collection("users").doc(trimmedClientId);
     let newBalance = 0;
@@ -924,11 +936,8 @@ exports.deleteClient = functions.https.onCall(async (data, _context) => {
     }
     // Admin validation
     const db = admin.firestore();
-    if (_context.auth?.uid) {
-        const callerDoc = await db.collection("users").doc(_context.auth.uid).get();
-        if (callerDoc.data()?.role !== "admin" && callerDoc.data()?.role !== "owner") {
-            throw new functions.https.HttpsError("permission-denied", "Must be an admin to delete a client");
-        }
+    if (_context.auth?.token?.admin !== true && !allowAnonDemo()) {
+        throw new functions.https.HttpsError("permission-denied", "Must be an admin to delete a client");
     }
     const clientRef = db.collection("users").doc(clientId);
     const clientDoc = await clientRef.get();

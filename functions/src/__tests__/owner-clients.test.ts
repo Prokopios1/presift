@@ -92,7 +92,7 @@ describe('updateCandidateClients', () => {
 
   it('happy path: valid candidateId + 2 existing clients, returns candidateId + clientIds', async () => {
     // Arrange
-    getMock.mockResolvedValueOnce({ exists: true }); // candidate doc
+    getMock.mockResolvedValueOnce({ exists: true, data: () => ({ recruiterId: 'owner_user' }) }); // candidate doc
     getAllMock.mockResolvedValueOnce([{ exists: true }, { exists: true }]); // both clients found
     const data = { candidateId: 'cand_1', clientIds: ['client_a', 'client_b'] };
 
@@ -124,7 +124,7 @@ describe('updateCandidateClients', () => {
 
   it('throws invalid-argument when a clientId does not exist in users/', async () => {
     // Arrange
-    getMock.mockResolvedValueOnce({ exists: true }); // candidate exists
+    getMock.mockResolvedValueOnce({ exists: true, data: () => ({ recruiterId: 'owner_user' }) }); // candidate exists
     getAllMock.mockResolvedValueOnce([{ exists: true }, { exists: false }]); // second client missing
     const data = { candidateId: 'cand_1', clientIds: ['client_a', 'ghost_client'] };
 
@@ -181,7 +181,7 @@ describe('updateCandidateClients', () => {
     // The emulator env var is not set in test env, and config mock returns allow_anon: 'true',
     // so we verify ANON_CTX is accepted (demo bypass) rather than testing the unauthenticated path,
     // which would require patching the module. This test asserts the bypass works.
-    getMock.mockResolvedValueOnce({ exists: true });
+    getMock.mockResolvedValueOnce({ exists: true, data: () => ({ recruiterId: 'owner_user' }) });
     getAllMock.mockResolvedValueOnce([{ exists: true }]);
     const data = { candidateId: 'cand_1', clientIds: ['client_a'] };
 

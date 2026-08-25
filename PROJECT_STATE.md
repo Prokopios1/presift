@@ -16,8 +16,12 @@ HEAD: **`c8f0479`** "feat: implement recruiter workflow, admin guard, candidate 
 - Global Back/Forward nav via react-router.
 - VAT/Billing removed from RegisterPage (only Name/Email/Company; backend+PaymentPage untouched).
 - Campaign Wizard: AssessmentWizardPage + CampaignsPage + backend `createCampaign` callable.
-- Tests: **204/204 pass** (31 files), tsc clean, builds exit 0.
-
+- AuthContext updated to enforce custom admin claims (`claims.admin: true`).
+- AdminPage updated with ActionMenu for recruiter management (Top Up, Delete) and conditional rendering for test environment.
+- DashboardPage updated with inline candidate deletion (`deleteCandidate`).
+- Backend Cloud Functions updated with cascading deletions (`deleteClient`, `deleteCandidate`) and credit management (`adjustClientCredits`).
+- Firestore security rules hardened to evaluate `{ admin: true }` custom claim.
+- Tests: **All passing**, tsc clean, builds exit 0.
 ## 3. Auth & Infrastructure State
 - **Firebase CLI re-authenticated**: `marketingopen10@gmail.com` — `firebase projects:list` works (was `invalid_grant`, now fixed). Deployable.
 - Build verified clean (frontend + functions). Deploy/SMOKE to Firebase `presift` still outstanding.
