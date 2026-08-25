@@ -548,7 +548,7 @@ export const startSession = functions.https.onCall(async (data, _context) => {
   }
 });
 
-import { candidateDocId } from "./submission";
+
 
 export const submitAssessment = functions.https.onCall(async (data, _context) => {
   try {
