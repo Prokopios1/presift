@@ -35,7 +35,7 @@ const RecruiterGuard = ({ children }: { children: React.ReactNode }) => {
 
   if (role === 'admin' || role === 'owner') {
     if (targetId) return <>{children}</>;
-    if (location.pathname === '/profile') return <>{children}</>;
+    if (location.pathname.startsWith('/profile')) return <>{children}</>;
     return <Navigate to="/admin" replace />;
   }
 

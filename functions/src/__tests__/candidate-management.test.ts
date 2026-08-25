@@ -55,7 +55,7 @@ describe('Candidate Management Callables', () => {
   describe('updateCandidate', () => {
     it('updates candidate with valid fields', async () => {
       // Arrange
-      getMock.mockResolvedValueOnce({ exists: true });
+      getMock.mockResolvedValueOnce({ exists: true, data: () => ({ recruiterId: 'recruiter' }) });
       const data = { candidateId: '123', name: ' John ', email: ' john@example.com ', appliedRole: ' Dev ' };
       
       // Act
@@ -111,7 +111,7 @@ describe('Candidate Management Callables', () => {
       // Arrange
       const data = { candidateIds: ['id1', 'id2'] };
       // getAll returns an array of doc snapshots corresponding to the passed refs
-      getAllMock.mockResolvedValueOnce([{ exists: true }, { exists: false }]);
+      getAllMock.mockResolvedValueOnce([{ exists: true, data: () => ({ recruiterId: 'r' }) }, { exists: false }]);
       
       // Act
       const result = await bulkDeleteCandidates(data, { auth: { uid: 'r' } } as any);
