@@ -338,8 +338,8 @@ exports.deleteCandidate = functions.https.onCall(async (data, _context) => {
         throw new functions.https.HttpsError("not-found", "Candidate not found");
     }
     const isAdmin = _context.auth?.token?.admin === true;
-    const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-    if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
         throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
     }
     await candRef.delete();
@@ -364,8 +364,8 @@ exports.updateCandidateStatus = functions.https.onCall(async (data, _context) =>
         throw new functions.https.HttpsError("not-found", "Candidate not found");
     }
     const isAdmin = _context.auth?.token?.admin === true;
-    const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-    if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
         throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
     }
     await candRef.update({ status });
@@ -409,8 +409,8 @@ exports.updateCandidate = functions.https.onCall(async (data, _context) => {
         throw new functions.https.HttpsError("not-found", "Candidate not found");
     }
     const isAdmin = _context.auth?.token?.admin === true;
-    const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-    if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
         throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
     }
     if (Object.keys(updates).length > 0) {
@@ -442,8 +442,8 @@ exports.bulkDeleteCandidates = functions.https.onCall(async (data, _context) => 
     const uid = _context.auth?.uid;
     docs.forEach((doc, i) => {
         if (doc.exists) {
-            const isOwner = doc.data()?.recruiterId === uid;
-            if (!isAdmin && !isOwner && !allowAnonDemo()) {
+            const isRecordOwner = doc.data()?.recruiterId === uid;
+            if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
                 throw new functions.https.HttpsError("permission-denied", `You do not own candidate ${candidateIds[i]}`);
             }
             existingIds.push(candidateIds[i]);
@@ -654,7 +654,7 @@ exports.checkAbandonedSessions = functions.pubsub.schedule("every 24 hours").onR
     console.log(`Abandoned ${snapshot.size} sessions.`);
 });
 // ---------------------------------------------------------------------------
-// Owner callables — many-to-many candidate↔client management
+// Admin/Recruiter callables — many-to-many candidate↔client management
 // ---------------------------------------------------------------------------
 exports.updateCandidateClients = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo())
@@ -687,8 +687,8 @@ exports.updateCandidateClients = functions.https.onCall(async (data, _context) =
         throw new functions.https.HttpsError("not-found", "Candidate not found");
     }
     const isAdmin = _context.auth?.token?.admin === true;
-    const isOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
-    if (!isAdmin && !isOwner && !allowAnonDemo()) {
+    const isRecordOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
         throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
     }
     // --- Verify every clientId exists in users/ ---

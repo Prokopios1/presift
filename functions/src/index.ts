@@ -337,8 +337,8 @@ export const deleteCandidate = functions.https.onCall(async (data, _context) => 
   }
 
   const isAdmin = _context.auth?.token?.admin === true;
-  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+  const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
     throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
   }
 
@@ -366,8 +366,8 @@ export const updateCandidateStatus = functions.https.onCall(async (data, _contex
   }
 
   const isAdmin = _context.auth?.token?.admin === true;
-  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+  const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
     throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
   }
 
@@ -413,8 +413,8 @@ export const updateCandidate = functions.https.onCall(async (data, _context) => 
   }
 
   const isAdmin = _context.auth?.token?.admin === true;
-  const isOwner = doc.data()?.recruiterId === _context.auth?.uid;
-  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+  const isRecordOwner = doc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
     throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
   }
 
@@ -456,8 +456,8 @@ export const bulkDeleteCandidates = functions.https.onCall(async (data, _context
 
   docs.forEach((doc, i) => {
     if (doc.exists) {
-      const isOwner = doc.data()?.recruiterId === uid;
-      if (!isAdmin && !isOwner && !allowAnonDemo()) {
+      const isRecordOwner = doc.data()?.recruiterId === uid;
+      if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
         throw new functions.https.HttpsError("permission-denied", `You do not own candidate ${candidateIds[i]}`);
       }
       existingIds.push(candidateIds[i]);
@@ -701,7 +701,7 @@ export const checkAbandonedSessions = functions.pubsub.schedule("every 24 hours"
 });
 
 // ---------------------------------------------------------------------------
-// Owner callables — many-to-many candidate↔client management
+// Admin/Recruiter callables — many-to-many candidate↔client management
 // ---------------------------------------------------------------------------
 
 export const updateCandidateClients = functions.https.onCall(async (data, _context) => {
@@ -740,8 +740,8 @@ export const updateCandidateClients = functions.https.onCall(async (data, _conte
   }
 
   const isAdmin = _context.auth?.token?.admin === true;
-  const isOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
-  if (!isAdmin && !isOwner && !allowAnonDemo()) {
+  const isRecordOwner = candDoc.data()?.recruiterId === _context.auth?.uid;
+  if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
     throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
   }
 

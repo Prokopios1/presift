@@ -247,31 +247,29 @@ export const DashboardPage = () => {
 <p className="text-slate-500">Recruiter: {recruiterIdentifier}</p>
               </div>
             </div>
-        {role !== 'admin' && (
-          <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
-            <div className="flex flex-col">
-              <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
-              <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button onClick={async () => {
-                  const amount = prompt('How many credits to top up?');
-                  if (!amount || isNaN(parseInt(amount))) return;
-                  try {
-                    const topUp = httpsCallable(functions, 'topUpCredits');
-                    await topUp({ amount: parseInt(amount), recruiterId });
-                    setBalance(b => b + parseInt(amount));
-                  } catch (e) {
-                    console.error(e);
-                    alert('Failed to top up.');
-                  }
-                }}>Top Up Credits</Button>
-              </TooltipTrigger>
-              <TooltipContent>Add more assessment credits to your account</TooltipContent>
-            </Tooltip>
+        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
+          <div className="flex flex-col">
+            <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
           </div>
-        )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={async () => {
+                const amount = prompt('How many credits to top up?');
+                if (!amount || isNaN(parseInt(amount))) return;
+                try {
+                  const topUp = httpsCallable(functions, 'topUpCredits');
+                  await topUp({ amount: parseInt(amount), recruiterId });
+                  setBalance(b => b + parseInt(amount));
+                } catch (e) {
+                  console.error(e);
+                  alert('Failed to top up.');
+                }
+              }}>Top Up Credits</Button>
+            </TooltipTrigger>
+            <TooltipContent>Add more assessment credits to your account</TooltipContent>
+          </Tooltip>
+        </div>
         </header>
       
       {/* Toolbar */}
@@ -507,7 +505,7 @@ export const DashboardPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>Cancel</Button>
-            <Button disabled={balance <= 0} onClick={async () => {
+            <Button disabled={balance <= 0 && role !== 'admin'} onClick={async () => {
               const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
               const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
               const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
@@ -516,7 +514,9 @@ export const DashboardPage = () => {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
                 const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId });
                 const data = res.data as any;
-                setBalance(b => b - 1);
+                if (role !== 'admin') {
+                  setBalance(b => b - 1);
+                }
                 navigator.clipboard.writeText(data.url);
                 alert('Link created and copied to clipboard!\n' + data.url);
                 setCreateLinkDialogOpen(false);
@@ -525,7 +525,7 @@ export const DashboardPage = () => {
                 alert('Failed to create link.');
               }
             }}>
-              {balance <= 0 ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
+              {(balance <= 0 && role !== 'admin') ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
             </Button>
           </DialogFooter>
         </DialogContent>

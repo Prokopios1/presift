@@ -52,6 +52,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     getCountFromServer: vi.fn(() => Promise.resolve({ data: () => ({ count: 2 }) })),
     getDocs: vi.fn(() => Promise.resolve({ docs: docs.map(d => ({ id: d.id, data: () => d })) })),
     doc: vi.fn(),
+    getDoc: vi.fn(() => Promise.resolve({ exists: () => true, data: () => ({ role: 'admin' }) })),
     addDoc: vi.fn(() => Promise.resolve({ id: 'new_user_123' })),
     serverTimestamp: vi.fn(() => 'mock-timestamp'),
   };

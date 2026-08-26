@@ -189,12 +189,12 @@ describe('DashboardPage Core Rendering & Navigation', () => {
 
     // Assert — sidebar buttons rendered
     expect(await screen.findByRole('button', { name: 'Recruiter Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Owner / Admin' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Admin Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Buy Credits' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Home / Landing' })).toBeInTheDocument();
 
     // Act — click admin
-    const adminLink = screen.getByRole('button', { name: 'Owner / Admin' });
+    const adminLink = screen.getByRole('button', { name: 'Admin Dashboard' });
     fireEvent.click(adminLink);
 
     // Assert

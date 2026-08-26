@@ -24,7 +24,7 @@ export const ImpersonationBanner = () => {
         onClick={handleReturnToAdmin}
         className="h-8 bg-white text-orange-600 hover:bg-orange-50"
       >
-        Return to Admin
+        Exit Impersonation
       </Button>
     </div>
   );

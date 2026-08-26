@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setRole(userDoc.data()?.role || 'recruiter');
           } else {
             // Fallback: legacy profile doc keyed by the old localStorage ID
-            // (e.g. users/owner_prokopios, see scripts/bootstrap-admin.mjs),
+            // (e.g. users/admin_prokopios, see scripts/bootstrap-admin.mjs),
             // which stores the auth UID as a field. Without this, admins whose
             // profile hasn't been migrated to users/{authUid} yet resolve to
             // 'recruiter' and get bounced away from /admin.

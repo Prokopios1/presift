@@ -15,7 +15,7 @@ export const DemoPage = () => {
     alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
-  const handleOwnerLogin = () => {
+  const handleAdminLogin = () => {
     alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
@@ -24,7 +24,7 @@ export const DemoPage = () => {
     try {
       const seedDemoData = httpsCallable(functions, 'seedDemoData');
       await seedDemoData();
-      alert("Seeded 9 candidates + recruiter + owner accounts!");
+      alert("Seeded 9 candidates + recruiter + admin accounts!");
       navigate('/dashboard');
     } catch (e) {
       console.error("Seed failed:", e);
@@ -54,7 +54,7 @@ export const DemoPage = () => {
             </CardHeader>
             <CardContent className="flex gap-3">
               <Button onClick={handleRecruiterLogin} className="flex-1">Load Mock Recruiter Session</Button>
-              <Button onClick={handleOwnerLogin} variant="outline" className="flex-1">Load Mock Owner Session</Button>
+              <Button onClick={handleAdminLogin} variant="outline" className="flex-1">Load Mock Admin Session</Button>
             </CardContent>
           </Card>
 

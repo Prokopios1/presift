@@ -1,7 +1,7 @@
 /**
  * Tests for archiveCandidate callable and the startSession archived gate.
  * AAA layout with // Arrange / // Act / // Assert comment zones.
- * Follows the existing pattern in owner-clients.test.ts and submission-identity.test.ts.
+ * Follows the existing pattern in admin-clients.test.ts and submission-identity.test.ts.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

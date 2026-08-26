@@ -24,7 +24,7 @@ export const DevToolbar = () => {
     alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
-  const handleMockOwnerLogin = () => {
+  const handleMockAdminLogin = () => {
     alert("Mock login is disabled in strict auth mode. Please use the Firebase Emulator Auth UI.");
   };
 
@@ -92,7 +92,7 @@ export const DevToolbar = () => {
         {!isTestPage && (
           <>
             <Button size="sm" variant="secondary" onClick={handleMockRecruiterLogin}>🧑‍💼 Recruiter Login</Button>
-            <Button size="sm" variant="secondary" onClick={handleMockOwnerLogin}>👑 Owner Login</Button>
+            <Button size="sm" variant="secondary" onClick={handleMockAdminLogin}>👑 Admin Login</Button>
             <Button size="sm" variant="secondary" onClick={handleSeedData} disabled={loading}>
               {loading ? "Seeding..." : "🌱 Seed Demo Data"}
             </Button>

@@ -19,7 +19,7 @@ import { ProfilePage } from './pages/ProfilePage';
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const { role, loading } = useAuth();
   if (loading) return <div className="p-8 text-center">Checking access...</div>;
-  if (role !== 'admin' && role !== 'owner') return <Navigate to="/dashboard" replace />;
+  if (role !== 'admin') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -31,7 +31,7 @@ const RecruiterGuard = ({ children }: { children: React.ReactNode }) => {
   if (loading) return <div className="p-8 text-center">Checking access...</div>;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (role === 'admin' || role === 'owner') {
+  if (role === 'admin') {
     if (targetId) return <>{children}</>;
     if (location.pathname.startsWith('/profile')) return <>{children}</>;
     return <Navigate to="/admin" replace />;

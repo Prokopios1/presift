@@ -48,7 +48,7 @@ function buildDemoData() {
         totalPurchased: 13,
         role: "recruiter",
     };
-    const owner = {
+    const adminUser = {
         email: "prokopios@presift.app",
         credits: 999,
         companyName: "PreSift Admin",
@@ -91,7 +91,7 @@ function buildDemoData() {
         // 1x ⚠️ Integrity Flag
         { name: "Harry Flag", appliedRole: "Senior Frontend Engineer", status: "Completed", completionDate: now, duration: 1850, isLocked: false, email: "harry@example.com", integrityEvents: [{ type: "blur", at: Date.now() - 10000 }, { type: "blur", at: Date.now() - 5000 }, { type: "blur", at: Date.now() - 1000 }], fitBadge: "⚠️ Integrity Flag", scoreResult: score(35, 93, 14, 13, 12, 11) },
     ];
-    return { recruiter, owner, assessments, candidates };
+    return { recruiter, adminUser, assessments, candidates };
 }
 exports.seedDemoData = functions.https.onCall(async (_data, _context) => {
     // Destructive seeder: it batch-deletes every candidate for demo_recruiter
@@ -104,7 +104,7 @@ exports.seedDemoData = functions.https.onCall(async (_data, _context) => {
     const demo = buildDemoData();
     const recruiterId = "demo_recruiter";
     await db.collection("users").doc(recruiterId).set(demo.recruiter);
-    await db.collection("users").doc("owner_prokopios").set(demo.owner);
+    await db.collection("users").doc("admin_prokopios").set(demo.adminUser);
     const batch = db.batch();
     demo.assessments.forEach((a, i) => {
         const docRef = db.collection("assessments").doc(`demo_assessment_${i}`);
