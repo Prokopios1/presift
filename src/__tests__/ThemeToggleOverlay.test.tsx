@@ -66,7 +66,7 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     expect(fixedTopRightElements.length).toBe(0);
   });
 
-  it('renders ThemeToggle in LandingPage nav alongside the Pricing CTA without collision', () => {
+  it('proves ThemeToggle is not rendered on standalone LandingPage', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
@@ -78,16 +78,11 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
 
     // Act
     const nav = container.querySelector('main nav');
-    const pricingCta = screen.getByRole('link', { name: /Pricing/i });
-    const themeButtons = screen.getAllByRole('button', { name: /🌙 Dark|☀️ Light/i });
-    const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
+    const themeButtons = screen.queryAllByRole('button', { name: /🌙 Dark|☀️ Light/i });
 
     // Assert
-    expect(fixedOverlay).toBeNull();
-    expect(themeButtons.length).toBe(1);
-    expect(nav).not.toBeNull();
-    expect(nav?.contains(pricingCta)).toBe(true);
-    expect(nav?.contains(themeButtons[0])).toBe(true);
+    expect(themeButtons.length).toBe(0);
+    expect(nav).toBeNull();
   });
 
   it('renders ThemeToggle in PaymentPage nav in normal flow', () => {
@@ -202,12 +197,12 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     expect(container.contains(themeButtons[0])).toBe(true);
   });
 
-  it('toggles light and dark themes correctly when clicked', () => {
+  it('toggles light and dark themes correctly when clicked (PaymentPage)', () => {
     // Arrange
     render(
       <TooltipProvider>
         <MemoryRouter>
-          <LandingPage />
+          <PaymentPage />
         </MemoryRouter>
       </TooltipProvider>
     );

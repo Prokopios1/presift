@@ -276,7 +276,7 @@ export const AdminPage = () => {
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-3xl font-bold tracking-tight">Owner Dashboard</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">Administrator Dashboard</h1>
                   <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-none">Admin</Badge>
                 </div>
               <p className="text-slate-500">Global overview of all PreSift customer accounts.</p>

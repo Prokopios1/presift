@@ -6,7 +6,9 @@ import { TooltipProvider } from '../components/ui/tooltip';
 
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+  useAuth: vi.fn(() => ({ 
+    user: localStorage.getItem('presift_uid') ? { uid: localStorage.getItem('presift_uid') } : null 
+  }))
 }));
 vi.mock('@/contexts/ImpersonationContext', () => ({
   useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))
@@ -18,7 +20,7 @@ describe('LandingPage', () => {
     localStorage.clear();
   });
 
-  it('renders the hero section with navigation and footer', () => {
+  it('renders the hero section without navigation but with footer', () => {
     // Arrange
     render(
       <TooltipProvider>
@@ -32,10 +34,17 @@ describe('LandingPage', () => {
     // Core hero elements
     expect(screen.queryByText(/B2B Psychometric Screening Engine/i)).toBeNull();
     expect(screen.getByText(/Stop interviewing candidates/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Register/i })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Pricing/i })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Get Started/i })).toBeTruthy();
+    
+    // Nav items are removed
+    expect(screen.queryByRole('button', { name: /Register/i })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Pricing/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /🌙 Dark|☀️ Light/i })).toBeNull();
+
+    // Get Started CTA is present and links to /register for unauthenticated users
+    const getStartedLink = screen.getByRole('link', { name: /Get Started/i });
+    expect(getStartedLink.getAttribute('href')).toBe('/register');
     expect(screen.queryByRole('button', { name: /View Demo Dashboard/i })).toBeNull();
+    
     // Footer
     expect(screen.getByText(/All rights reserved/i)).toBeTruthy();
     // Ensure removed elements are not present
@@ -45,7 +54,25 @@ describe('LandingPage', () => {
     expect(screen.queryByPlaceholderText(/Berlin, Germany/i)).toBeNull();
   });
 
-  it('renders theme toggle inside nav alongside pricing CTA in normal flow with no fixed overlay', () => {
+  it('links Get Started to /dashboard for registered users', () => {
+    // Arrange
+    localStorage.setItem('presift_uid', 'recruiter-123');
+
+    // Act
+    render(
+      <TooltipProvider>
+        <MemoryRouter>
+          <LandingPage />
+        </MemoryRouter>
+      </TooltipProvider>
+    );
+
+    // Assert
+    const getStartedLink = screen.getByRole('link', { name: /Get Started/i });
+    expect(getStartedLink.getAttribute('href')).toBe('/dashboard');
+  });
+
+  it('renders as standalone page with no nav and no theme toggle', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
@@ -57,14 +84,12 @@ describe('LandingPage', () => {
 
     // Act
     const nav = container.querySelector('main nav');
-    const pricingCta = screen.getByRole('link', { name: /Pricing/i });
-    const themeBtn = screen.getByRole('button', { name: /🌙 Dark|☀️ Light/i });
+    const themeBtn = screen.queryByRole('button', { name: /🌙 Dark|☀️ Light/i });
     const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
 
     // Assert
     expect(fixedOverlay).toBeNull();
-    expect(nav).not.toBeNull();
-    expect(nav?.contains(pricingCta)).toBe(true);
-    expect(nav?.contains(themeBtn)).toBe(true);
+    expect(nav).toBeNull();
+    expect(themeBtn).toBeNull();
   });
 });
