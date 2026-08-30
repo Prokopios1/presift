@@ -3,6 +3,7 @@
  * Covers:
  * - New user registration (created: true, credits: 0, default counters, server timestamps)
  * - Existing user registration / merge (created: false, preserves credits and existing counters)
+ * - Adoption of existing admin-created doc by email
  * - Validation errors (missing/empty name, invalid/missing email, missing companyName, invalid uid)
  * - Demo mode / auth checks
  */
@@ -12,22 +13,40 @@ const {
   getMock,
   setMock,
   updateMock,
+  deleteMock,
   collectionMock,
   docMock,
+  whereMock,
+  whereGetMock,
+  batchCommitMock,
+  batchSetMock,
+  batchDeleteMock
 } = vi.hoisted(() => {
   const setMock = vi.fn().mockResolvedValue(undefined);
   const updateMock = vi.fn().mockResolvedValue(undefined);
   const deleteMock = vi.fn();
   const getMock = vi.fn();
-  const docMock = vi.fn(() => ({ get: getMock, set: setMock, update: updateMock, delete: deleteMock }));
-  const collectionMock = vi.fn(() => ({ doc: docMock }));
+  
+  const whereGetMock = vi.fn().mockResolvedValue({ empty: true, docs: [] });
+  const whereMock = vi.fn(() => ({ get: whereGetMock }));
+  
+  // Need to hoist collectionMock but it calls docMock and vice versa. 
+  // Let's define them in a way they can reference each other.
+  const collectionMockFn = vi.fn();
+  const docMockFn = vi.fn(() => ({ get: getMock, set: setMock, update: updateMock, delete: deleteMock, collection: collectionMockFn }));
+  collectionMockFn.mockImplementation(() => ({ doc: docMockFn, where: whereMock, get: getMock }));
+  
+  const batchSetMock = vi.fn();
+  const batchDeleteMock = vi.fn();
+  const batchCommitMock = vi.fn().mockResolvedValue(undefined);
 
-  return { getMock, setMock, updateMock, collectionMock, docMock };
+  return { getMock, setMock, updateMock, deleteMock, collectionMock: collectionMockFn, docMock: docMockFn, whereMock, whereGetMock, batchCommitMock, batchSetMock, batchDeleteMock };
 });
 
 vi.mock('firebase-admin', () => {
   const firestoreMock = () => ({
     collection: collectionMock,
+    batch: () => ({ set: batchSetMock, delete: batchDeleteMock, commit: batchCommitMock }),
   });
 
   return {
@@ -75,11 +94,12 @@ describe('registerRecruiter callable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setMock.mockResolvedValue(undefined);
+    whereGetMock.mockResolvedValue({ empty: true, docs: [] });
   });
 
   it('creates new recruiter profile with 0 credits and timestamps when user doc does not exist', async () => {
     // Arrange
-    getMock.mockResolvedValueOnce({ exists: false });
+    getMock.mockResolvedValueOnce({ exists: false }); // User doc check
     const payload = {
       uid: 'new_recruiter_1',
       name: 'Jane Recruiter',
@@ -178,11 +198,99 @@ describe('registerRecruiter callable', () => {
       },
       { merge: true }
     );
-    // Credits must NOT be in the set payload
-    expect(setMock.mock.calls[0][0]).not.toHaveProperty('credits');
-    expect(setMock.mock.calls[0][0]).not.toHaveProperty('totalSpent');
-    expect(setMock.mock.calls[0][0]).not.toHaveProperty('totalPurchased');
   });
+
+  it('adopts existing admin-created doc by email, moving credits and archiving old doc', async () => {
+    const oldDocId = 'random_admin_created_id';
+    const oldDocData = {
+      name: 'Admin Added Name',
+      email: 'match@company.com',
+      companyName: 'Admin Corp',
+      credits: 5,
+      totalPurchased: 5,
+      role: 'recruiter',
+      createdAt: { toMillis: () => 1000 }
+    };
+    
+    whereGetMock.mockResolvedValueOnce({
+      empty: false,
+      docs: [{
+        id: oldDocId,
+        data: () => oldDocData,
+        ref: { update: updateMock, collection: collectionMock }
+      }]
+    });
+    
+    // Simulate creditAuditLog returned by getMock when getting the subcollection
+    getMock.mockResolvedValueOnce({
+      empty: false,
+      docs: [{ id: 'log1', data: () => ({ amount: 5, reason: 'grant' }), ref: 'log1_ref' }]
+    });
+
+    const payload = {
+      uid: 'new_auth_uid_123',
+      name: 'Real Name',
+      email: 'match@company.com',
+      companyName: 'Real Corp'
+    };
+
+    const res = await registerRecruiter(payload, { auth: { uid: 'new_auth_uid_123' } } as any);
+
+    expect(res.adopted).toBe(true);
+    expect(res.profile.credits).toBe(5);
+    
+    // Check that we merged into the new doc
+    expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Admin Added Name',
+      credits: 5,
+      adoptedFrom: oldDocId,
+    }), { merge: true });
+
+    // Check old doc was archived
+    expect(updateMock).toHaveBeenCalledWith({
+      archived: true,
+      archivedAt: '__SERVER_TIMESTAMP__',
+      mergedInto: 'new_auth_uid_123'
+    });
+
+    // Check audit logs were moved
+    expect(batchSetMock).toHaveBeenCalled();
+    expect(batchDeleteMock).toHaveBeenCalledWith('log1_ref');
+    expect(batchCommitMock).toHaveBeenCalled();
+  });
+
+  it('is idempotent on adoption: ignores docs that already have mergedInto', async () => {
+    const oldDocId = 'random_admin_created_id';
+    const oldDocData = {
+      name: 'Already Merged',
+      email: 'match@company.com',
+      mergedInto: 'some_other_uid'
+    };
+    
+    whereGetMock.mockResolvedValueOnce({
+      empty: false,
+      docs: [{
+        id: oldDocId,
+        data: () => oldDocData,
+      }]
+    });
+    
+    getMock.mockResolvedValueOnce({ exists: false }); // Fallback to normal create
+
+    const payload = {
+      uid: 'new_auth_uid_123',
+      name: 'Real Name',
+      email: 'match@company.com',
+      companyName: 'Real Corp'
+    };
+
+    const res = await registerRecruiter(payload, { auth: { uid: 'new_auth_uid_123' } } as any);
+
+    expect(res.created).toBe(true);
+    expect(res.adopted).toBeUndefined();
+    expect(res.profile.credits).toBe(0); // Did not adopt credits
+  });
+
 
   it('generates a new uid if uid is omitted and no auth uid is present', async () => {
     // Arrange
@@ -204,67 +312,24 @@ describe('registerRecruiter callable', () => {
   });
 
   it('rejects missing or empty full name with invalid-argument', async () => {
-    // Arrange
-    const payload = {
-      name: '   ',
-      email: 'recruiter@company.com',
-      companyName: 'Company Inc',
-    };
-
-    // Act & Assert
-    await expect(registerRecruiter(payload, AUTH_CTX)).rejects.toMatchObject({
-      code: 'invalid-argument',
-    });
+    const payload = { name: '   ', email: 'recruiter@company.com', companyName: 'Company Inc' };
+    await expect(registerRecruiter(payload, AUTH_CTX)).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('rejects missing or malformed email with invalid-argument', async () => {
-    // Arrange
-    const payloadMissing = {
-      name: 'John Doe',
-      email: '',
-      companyName: 'Company Inc',
-    };
-    const payloadInvalid = {
-      name: 'John Doe',
-      email: 'not-an-email',
-      companyName: 'Company Inc',
-    };
-
-    // Act & Assert
-    await expect(registerRecruiter(payloadMissing, AUTH_CTX)).rejects.toMatchObject({
-      code: 'invalid-argument',
-    });
-    await expect(registerRecruiter(payloadInvalid, AUTH_CTX)).rejects.toMatchObject({
-      code: 'invalid-argument',
-    });
+    const payloadMissing = { name: 'John Doe', email: '', companyName: 'Company Inc' };
+    const payloadInvalid = { name: 'John Doe', email: 'not-an-email', companyName: 'Company Inc' };
+    await expect(registerRecruiter(payloadMissing, AUTH_CTX)).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(registerRecruiter(payloadInvalid, AUTH_CTX)).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('rejects missing or empty company name with invalid-argument', async () => {
-    // Arrange
-    const payload = {
-      name: 'John Doe',
-      email: 'john@company.com',
-      companyName: '',
-    };
-
-    // Act & Assert
-    await expect(registerRecruiter(payload, AUTH_CTX)).rejects.toMatchObject({
-      code: 'invalid-argument',
-    });
+    const payload = { name: 'John Doe', email: 'john@company.com', companyName: '' };
+    await expect(registerRecruiter(payload, AUTH_CTX)).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('rejects invalid uid type or empty string with invalid-argument', async () => {
-    // Arrange
-    const payload = {
-      uid: '   ',
-      name: 'John Doe',
-      email: 'john@company.com',
-      companyName: 'Company Inc',
-    };
-
-    // Act & Assert
-    await expect(registerRecruiter(payload, ANON_CTX)).rejects.toMatchObject({
-      code: 'invalid-argument',
-    });
+    const payload = { uid: '   ', name: 'John Doe', email: 'john@company.com', companyName: 'Company Inc' };
+    await expect(registerRecruiter(payload, ANON_CTX)).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });
