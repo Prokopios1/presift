@@ -23,9 +23,9 @@ function validateSubmission(payload, bank) {
         throw new SubmissionError('Invalid payload');
     if (!payload.sessionId)
         throw new SubmissionError('Missing sessionId');
-    if (!Array.isArray(payload.icar) || payload.icar.length !== 16)
+    if (!Array.isArray(payload.icar) || payload.icar.length !== bank.cognitive.items.length)
         throw new SubmissionError('Invalid icar array');
-    if (!Array.isArray(payload.wleis) || payload.wleis.length !== 16)
+    if (!Array.isArray(payload.wleis) || payload.wleis.length !== bank.wleis.items.length)
         throw new SubmissionError('Invalid wleis array');
     const icarIds = new Set();
     const normalizedIcar = [];
