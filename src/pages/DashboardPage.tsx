@@ -76,8 +76,8 @@ export const DashboardPage = () => {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [editCandidateDialog, setEditCandidateDialog] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-
+  const [generatedLinkData, setGeneratedLinkData] = useState<{url: string} | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
   const filteredCandidates = candidates.filter(c => {
@@ -517,8 +517,7 @@ export const DashboardPage = () => {
                 if (role !== 'admin') {
                   setBalance(b => b - 1);
                 }
-                navigator.clipboard.writeText(data.url);
-                alert('Link created and copied to clipboard!\n' + data.url);
+                setGeneratedLinkData({ url: data.url });
                 setCreateLinkDialogOpen(false);
               } catch (e: any) {
                 console.error(e);
@@ -535,6 +534,36 @@ export const DashboardPage = () => {
             }}>
               {(balance <= 0 && role !== 'admin') ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!generatedLinkData} onOpenChange={(o) => !o && setGeneratedLinkData(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assessment Link Created</DialogTitle>
+            <DialogDescription>Share this link with your candidate.</DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex flex-col items-center gap-4">
+            <p className="text-center font-mono bg-slate-100 dark:bg-slate-900 p-4 rounded text-sm break-all select-all w-full border border-slate-200 dark:border-slate-800">
+              {generatedLinkData?.url}
+            </p>
+            <Button
+              className="w-full"
+              variant={linkCopied ? 'outline' : 'default'}
+              onClick={() => {
+                if (generatedLinkData) {
+                  navigator.clipboard.writeText(generatedLinkData.url);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }
+              }}
+            >
+              {linkCopied ? 'Copied!' : 'Copy to Clipboard'}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setGeneratedLinkData(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
