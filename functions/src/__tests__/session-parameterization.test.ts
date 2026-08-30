@@ -6,12 +6,12 @@ const RNG_A = () => 0.1;
 const RNG_B = () => 0.9;
 
 describe('session parameterization (iteration 5)', () => {
-  it('resolves exactly 16 items, one per bank item', () => {
+  it('resolves exactly one item per bank item', () => {
     // Arrange
     // Act
     const session = resolveSession('assess_1', bank, RNG_A);
     // Assert
-    expect(session.items).toHaveLength(16);
+    expect(session.items).toHaveLength(bank.cognitive.items.length);
     expect(session.items.map((i) => i.itemId)).toEqual(bank.cognitive.items.map((i) => i.id));
   });
 
@@ -75,7 +75,7 @@ describe('buildSessionKeys (iteration 5)', () => {
     // Act
     const keys = buildSessionKeys(session, bank, RNG_A);
     // Assert
-    expect(keys).toHaveLength(16);
+    expect(keys).toHaveLength(bank.cognitive.items.length);
     for (const k of keys) {
       expect(Number.isInteger(k.correctIndex)).toBe(true);
       expect(k.correctIndex).toBeGreaterThanOrEqual(0);

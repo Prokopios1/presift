@@ -19,8 +19,10 @@ describe('validateSubmission', () => {
     const result = validateSubmission(payload, bank);
     // Assert
     expect(result.sessionId).toBe('sess_abc123');
-    expect(result.icar).toHaveLength(16);
-    expect(result.wleis).toHaveLength(16);
+    const expectedIcarLength = bank.cognitive.items.length;
+    const expectedWleisLength = bank.wleis.items.length;
+    expect(result.icar).toHaveLength(expectedIcarLength);
+    expect(result.wleis).toHaveLength(expectedWleisLength);
   });
 
   it('rejects a payload missing sessionId', () => {
@@ -89,7 +91,8 @@ describe('validateSubmission', () => {
   it('rejects wrong item counts', () => {
     // Arrange
     const payload = validPayload();
-    payload.icar = payload.icar.slice(0, 15);
+    const expectedLength = bank.cognitive.items.length;
+    payload.icar = payload.icar.slice(0, expectedLength - 1);
     // Act / Assert
     expect(() => validateSubmission(payload, bank)).toThrow();
   });

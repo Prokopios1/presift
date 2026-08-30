@@ -10,7 +10,8 @@ describe('resolveSession', () => {
     // Act
     const session = resolveSession('assess_1', bank, SEEDED);
     // Assert
-    expect(session.items).toHaveLength(16);
+    const expectedLength = bank.cognitive.items.length;
+    expect(session.items).toHaveLength(expectedLength);
     expect(session.items.map((i) => i.itemId)).toEqual(bank.cognitive.items.map((i) => i.id));
   });
 
@@ -69,7 +70,8 @@ describe('buildSessionKeys', () => {
     // Act
     const keys = buildSessionKeys(session, bank, SEEDED);
     // Assert
-    expect(keys).toHaveLength(16);
+    const expectedLength = bank.cognitive.items.length;
+    expect(keys).toHaveLength(expectedLength);
     for (const k of keys) {
       expect(k.correctIndex).toBeGreaterThanOrEqual(0);
       expect(k.correctIndex).toBeLessThanOrEqual(3);
