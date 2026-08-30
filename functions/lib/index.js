@@ -124,6 +124,77 @@ exports.registerRecruiter = functions.https.onCall(async (data, _context) => {
     }
     const db = admin.firestore();
     const userRef = db.collection("users").doc(uid);
+    // Adoption logic: look for existing admin-created doc by email
+    const existingUsersQuery = await db.collection("users")
+        .where("email", "==", trimmedEmail)
+        .get();
+    let adoptionCandidate = null;
+    for (const doc of existingUsersQuery.docs) {
+        if (doc.id === uid)
+            continue;
+        const data = doc.data();
+        if (data.archived === true)
+            continue;
+        if (data.mergedInto)
+            continue; // Idempotency check
+        if (!adoptionCandidate) {
+            adoptionCandidate = doc;
+        }
+        else {
+            const currentCreatedAt = data.createdAt?.toMillis() || 0;
+            const bestCreatedAt = adoptionCandidate.data()?.createdAt?.toMillis() || 0;
+            if (currentCreatedAt > bestCreatedAt) {
+                adoptionCandidate = doc;
+            }
+        }
+    }
+    if (adoptionCandidate) {
+        const candidateData = adoptionCandidate.data();
+        const adoptedUpdates = {
+            name: candidateData.name || trimmedName,
+            email: trimmedEmail,
+            companyName: candidateData.companyName || trimmedCompanyName,
+            vatId: candidateData.vatId || trimmedVatId,
+            billingAddress: candidateData.billingAddress || trimmedBillingAddress,
+            credits: candidateData.credits || 0,
+            totalSpent: candidateData.totalSpent || 0,
+            totalPurchased: candidateData.totalPurchased || 0,
+            role: candidateData.role || "recruiter",
+            adoptedFrom: adoptionCandidate.id,
+            adoptedAt: firestore_1.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            createdAt: candidateData.createdAt || firestore_1.FieldValue.serverTimestamp()
+        };
+        await userRef.set(adoptedUpdates, { merge: true });
+        await adoptionCandidate.ref.update({
+            archived: true,
+            archivedAt: firestore_1.FieldValue.serverTimestamp(),
+            mergedInto: uid
+        });
+        const auditLogs = await adoptionCandidate.ref.collection("creditAuditLog").get();
+        if (!auditLogs.empty) {
+            const batch = db.batch();
+            for (const logDoc of auditLogs.docs) {
+                const newLogRef = userRef.collection("creditAuditLog").doc(logDoc.id);
+                batch.set(newLogRef, logDoc.data());
+                batch.delete(logDoc.ref);
+            }
+            await batch.commit();
+        }
+        const profile = {
+            uid,
+            name: adoptedUpdates.name,
+            email: adoptedUpdates.email,
+            companyName: adoptedUpdates.companyName,
+            vatId: adoptedUpdates.vatId,
+            billingAddress: adoptedUpdates.billingAddress,
+            credits: adoptedUpdates.credits,
+            totalSpent: adoptedUpdates.totalSpent,
+            totalPurchased: adoptedUpdates.totalPurchased,
+            role: adoptedUpdates.role
+        };
+        return { uid, created: false, profile, adopted: true };
+    }
     const userDoc = await userRef.get();
     if (userDoc.exists) {
         const existingData = userDoc.data() || {};
