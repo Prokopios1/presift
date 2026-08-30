@@ -276,8 +276,18 @@ exports.topUpCredits = functions.https.onCall(async (data, _context) => {
     if (!doc.exists) {
         throw new functions.https.HttpsError("not-found", "Recruiter not found");
     }
-    if (doc.data()?.role === "admin") {
-        throw new functions.https.HttpsError("invalid-argument", "Admins cannot top up credits directly");
+    try {
+        const targetAuth = await admin.auth().getUser(uid);
+        if (targetAuth.customClaims?.admin === true) {
+            throw new functions.https.HttpsError("invalid-argument", "Admins cannot top up credits directly");
+        }
+    }
+    catch (err) {
+        if (err instanceof functions.https.HttpsError)
+            throw err;
+        if (err?.code !== 'auth/user-not-found')
+            throw err;
+        // Doc-only account → not an admin → continue
     }
     await recruiterRef.set({
         credits: firestore_1.FieldValue.increment(amount)
@@ -296,8 +306,18 @@ exports.createAssessmentLink = functions.https.onCall(async (data, _context) => 
     if (!doc.exists) {
         throw new functions.https.HttpsError("not-found", "Recruiter not found");
     }
-    if (doc.data()?.role === "admin") {
-        throw new functions.https.HttpsError("invalid-argument", "Admins cannot create assessment links directly");
+    try {
+        const targetAuthRecord = await admin.auth().getUser(recruiterId);
+        if (targetAuthRecord.customClaims?.admin === true) {
+            throw new functions.https.HttpsError("invalid-argument", "Admins cannot create assessment links directly");
+        }
+    }
+    catch (err) {
+        if (err instanceof functions.https.HttpsError)
+            throw err;
+        if (err?.code !== 'auth/user-not-found')
+            throw err;
+        // Doc-only account → not an admin → continue
     }
     const credits = doc.data()?.credits || 0;
     if (credits <= 0) {

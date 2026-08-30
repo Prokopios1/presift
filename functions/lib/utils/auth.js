@@ -57,17 +57,26 @@ async function resolveRecruiterId(context, payloadRecruiterId) {
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
     }
     if (payloadRecruiterId && payloadRecruiterId.trim() && payloadRecruiterId.trim() !== callerUid) {
-        const db = admin.firestore();
-        // Fetch the caller to ensure they are an admin
-        const callerDoc = await db.collection('users').doc(callerUid).get();
-        if (!callerDoc.exists || callerDoc.data()?.role !== 'admin') {
+        // Caller must be an admin (via Firebase Auth custom claim, NOT Firestore doc role)
+        if (context.auth?.token?.admin !== true) {
             throw new functions.https.HttpsError("permission-denied", "You do not have permission to perform this action on behalf of another user.");
         }
-        // Fetch the target user to ensure we are not impersonating another admin
+        // Verify the target is not another admin (via Auth custom claims).
+        // Doc-only accounts (created via "Add Client") have no Auth record —
+        // getUser rejects with auth/user-not-found; treat them as non-admin.
         const targetId = payloadRecruiterId.trim();
-        const targetDoc = await db.collection('users').doc(targetId).get();
-        if (targetDoc.exists && targetDoc.data()?.role === 'admin') {
-            throw new functions.https.HttpsError("permission-denied", "Admins cannot impersonate other admins.");
+        try {
+            const targetUser = await admin.auth().getUser(targetId);
+            if (targetUser.customClaims?.admin === true) {
+                throw new functions.https.HttpsError("permission-denied", "Admins cannot impersonate other admins.");
+            }
+        }
+        catch (err) {
+            if (err instanceof functions.https.HttpsError)
+                throw err;
+            if (err?.code !== 'auth/user-not-found')
+                throw err;
+            // No Auth record → not an admin → continue
         }
         return targetId;
     }

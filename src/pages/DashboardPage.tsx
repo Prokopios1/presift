@@ -520,9 +520,17 @@ export const DashboardPage = () => {
                 navigator.clipboard.writeText(data.url);
                 alert('Link created and copied to clipboard!\n' + data.url);
                 setCreateLinkDialogOpen(false);
-              } catch (e) {
+              } catch (e: any) {
                 console.error(e);
-                alert('Failed to create link.');
+                if (e.code === 'functions/failed-precondition') {
+                  alert('Insufficient credits — top up this recruiter to create a link.');
+                } else if (e.code === 'functions/permission-denied') {
+                  alert('No permission to create links for this account.');
+                } else if (e.code === 'functions/unauthenticated') {
+                  alert('Please sign in to create a link.');
+                } else {
+                  alert('Failed to create link.');
+                }
               }
             }}>
               {(balance <= 0 && role !== 'admin') ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
