@@ -15,6 +15,8 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogOut } from 'lucide-react';
 import { format } from 'date-fns';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 
 interface CreditAuditLog {
   id: string;
@@ -119,17 +121,22 @@ export const ProfilePage = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Manage your details and view credit history</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/50 dark:hover:text-red-300"
-              onClick={async () => {
-                await signOut(auth);
-                window.location.href = '/login';
-              }}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+                  onClick={async () => {
+                    await signOut(auth);
+                    window.location.href = '/login';
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>End your session and return to the login page</TooltipContent>
+            </Tooltip>
             <ThemeToggle />
           </div>
         </header>
@@ -175,9 +182,15 @@ export const ProfilePage = () => {
                           onChange={(e) => setProfile({ ...profile, vatNumber: e.target.value })}
                         />
                       </div>
-                      <Button type="submit" disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Details'}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button type="submit" disabled={saving}>
+                            {saving ? <Spinner size="sm" className="mr-2" /> : null}
+                            {saving ? 'Saving...' : 'Save Details'}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Save your updated organization details</TooltipContent>
+                      </Tooltip>
                       {message && <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">{message}</p>}
                     </form>
                   </CardContent>
@@ -191,13 +204,23 @@ export const ProfilePage = () => {
                     <CardDescription>Your current assessment credits</CardDescription>
                   </CardHeader>
                   <CardContent className="flex items-center justify-between">
-                    <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      {role === 'admin' ? 'Unlimited' : profile.credits}
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent cursor-help">
+                          {role === 'admin' ? 'Unlimited' : profile.credits}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Credits remaining — each assessment link costs 1 credit</TooltipContent>
+                    </Tooltip>
                     {role !== 'admin' && (
-                      <Button onClick={() => navigate('/pricing')} variant="default">
-                        Top Up Credits
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button onClick={() => navigate('/pricing')} variant="default">
+                            Top Up Credits
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Buy more assessment credits — opens the payment page</TooltipContent>
+                      </Tooltip>
                     )}
                   </CardContent>
                 </Card>
@@ -217,7 +240,14 @@ export const ProfilePage = () => {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Amount</TableHead>
+                                <TableHead>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="cursor-help">Amount</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Credit transactions: + = credits added, − = credits used</TooltipContent>
+                                  </Tooltip>
+                                </TableHead>
                                 <TableHead>Reason</TableHead>
                               </TableRow>
                             </TableHeader>

@@ -3,12 +3,14 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { LogOut } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
-
+import { useState } from 'react';
+import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const AppSidebar = () => {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
   const { role } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
 
   const navItems = [
     { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments', show: true },
@@ -49,17 +51,24 @@ export const AppSidebar = () => {
         })}
       </nav>
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-base h-12 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
-          onClick={async () => {
-            await signOut(auth);
-            window.location.href = '/login';
-          }}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-base h-12 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+              disabled={signingOut}
+              onClick={async () => {
+                setSigningOut(true);
+                await signOut(auth);
+                window.location.href = '/login';
+              }}
+            >
+              {signingOut ? <Spinner size="sm" className="mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
+              Sign Out
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>End your session and return to the login page</TooltipContent>
+        </Tooltip>
       </div>
     </aside>
   );

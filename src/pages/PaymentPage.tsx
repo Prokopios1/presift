@@ -311,7 +311,7 @@ export const PaymentPage = () => {
             <h3 className="font-bold text-xl">Each credit includes:</h3>
             <ul className="space-y-4">
               {[
-                "Full ICAR-12 cognitive assessment",
+                "Full ICAR cognitive assessment",
                 "Full WLEIS-16 emotional intelligence screen",
                 "Anti-cheating & integrity monitoring",
                 "Percentile scores + fit badge",

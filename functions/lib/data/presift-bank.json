@@ -303,26 +303,6 @@
                     "estimatedUniqueInstances": 12
                 },
                 "resolvedExample": { "prompt": "Which figure completes the sequence?  ◆   ◆◆   ◆◆◆   ◆◆◆◆   ?", "options": ["◆◆◆◆◆", "◆◆◆◆", "◆◆◆◆◆◆", "◆◆◆"], "correctIndex": 0 }
-            },
-            {
-                "id": "ICAR-A-04",
-                "domain": "abstract",
-                "promptTemplate": "Which figure completes the sequence?  {{A}}   {{B}}   {{A}}   {{B}}   {{A}}   ?",
-                "optionTemplates": ["{{B}}", "{{A}}", "{{G1}}{{G1}}", "{{G2}}{{G2}}"],
-                "correctIndex": 0,
-                "difficulty": 0.85,
-                "irt": { "a": 1.1, "b": -1.73, "c": 0.2 },
-                "parameterization": {
-                    "randomizedVariables": ["glyphPair"],
-                    "rules": [
-                        { "variable": "glyphPair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick", "constraint": "A = G1G2, B = G2G1" }
-                    ],
-                    "distractorRules": ["previous term (A)", "G1G1", "G2G2"],
-                    "uniqueness": ["all four options distinct by construction"],
-                    "seed": "per-session crypto seed",
-                    "estimatedUniqueInstances": 3
-                },
-                "resolvedExample": { "prompt": "The shape P-RIGHT is rotated 90° counter-clockwise. Which option shows the result?", "options": ["P-UP", "P-DOWN", "P-LEFT", "P-RIGHT"], "correctIndex": 0 }
             }
         ]
     },

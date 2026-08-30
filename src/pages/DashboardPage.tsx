@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppSidebar } from '@/components/AppSidebar';
+import { Spinner } from '@/components/ui/spinner';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -78,6 +79,11 @@ export const DashboardPage = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [generatedLinkData, setGeneratedLinkData] = useState<{url: string} | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [creatingLink, setCreatingLink] = useState(false);
+  const [deletingBulk, setDeletingBulk] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
   const filteredCandidates = candidates.filter(c => {
@@ -153,6 +159,7 @@ export const DashboardPage = () => {
   const handleBulkDelete = async () => {
     if (selectedCandidateIds.size === 0) return;
     if (confirm(`Are you sure you want to delete ${selectedCandidateIds.size} candidate(s)? This cannot be undone.`)) {
+      setDeletingBulk(true);
       try {
         const bulkDelete = httpsCallable(functions, 'bulkDeleteCandidates');
         await bulkDelete({ candidateIds: Array.from(selectedCandidateIds) });
@@ -161,6 +168,8 @@ export const DashboardPage = () => {
       } catch (e) {
         alert('Failed to delete candidates.');
         console.error(e);
+      } finally {
+        setDeletingBulk(false);
       }
     }
   };
@@ -181,6 +190,7 @@ export const DashboardPage = () => {
   const handleEditCandidate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editCandidateDialog) return;
+    setSavingEdit(true);
     try {
       const updateCandidate = httpsCallable(functions, 'updateCandidate');
       await updateCandidate({
@@ -197,11 +207,14 @@ export const DashboardPage = () => {
     } catch(e) {
       alert('Failed to edit candidate.');
       console.error(e);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
   const handleArchiveCandidate = async (c: any) => {
     const newArchived = !c.archived;
+    setArchivingId(c.id);
     try {
       const archiveCandidate = httpsCallable(functions, 'archiveCandidate');
       await archiveCandidate({ candidateId: c.id, archived: newArchived });
@@ -209,11 +222,14 @@ export const DashboardPage = () => {
     } catch (e) {
       alert('Failed to archive/unarchive candidate.');
       console.error(e);
+    } finally {
+      setArchivingId(null);
     }
   };
 
   const handleDeleteCandidate = async (c: any) => {
     if (!window.confirm(`Are you sure you want to permanently delete candidate ${c.name}?`)) return;
+    setDeletingId(c.id);
     try {
       const deleteCandidateCallable = httpsCallable(functions, 'deleteCandidate');
       await deleteCandidateCallable({ candidateId: c.id });
@@ -221,6 +237,8 @@ export const DashboardPage = () => {
     } catch (e) {
       alert('Failed to delete candidate.');
       console.error(e);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -231,8 +249,23 @@ export const DashboardPage = () => {
       <main className="flex-1 w-full pl-0 md:pl-60">
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                  <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Go back to the previous page</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => navigate(1)}>
+                  Forward <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Go forward to the next page</TooltipContent>
+            </Tooltip>
           </div>
           <ThemeToggle />
         </nav>
@@ -250,13 +283,20 @@ export const DashboardPage = () => {
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
           <div className="flex flex-col">
             <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
-            <span className="font-bold text-lg text-slate-900 dark:text-white">{loading ? '...' : `${balance} Credits`}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="font-bold text-lg text-slate-900 dark:text-white cursor-help">
+                  {loading ? '...' : `${balance} Credits`}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Credits remaining — each assessment link costs 1 credit</TooltipContent>
+            </Tooltip>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => navigate('/pricing')}>Top Up Credits</Button>
             </TooltipTrigger>
-            <TooltipContent>Add more assessment credits to your account</TooltipContent>
+            <TooltipContent>Buy more assessment credits — opens the payment page</TooltipContent>
           </Tooltip>
         </div>
         </header>
@@ -273,14 +313,21 @@ export const DashboardPage = () => {
           />
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-          <Switch id="show-archived-dash" checked={showArchived} onCheckedChange={setShowArchived} />
-          <Label htmlFor="show-archived-dash">Show archived</Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <Switch id="show-archived-dash" checked={showArchived} onCheckedChange={setShowArchived} />
+                <Label htmlFor="show-archived-dash">Show archived</Label>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Show or hide archived candidates</TooltipContent>
+          </Tooltip>
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button onClick={() => setCreateLinkDialogOpen(true)}>+ Create New Assessment</Button>
           </TooltipTrigger>
-          <TooltipContent>Create an assessment link to send to candidates</TooltipContent>
+          <TooltipContent>Generate an assessment link to send to a candidate</TooltipContent>
         </Tooltip>
       </div>
 
@@ -296,9 +343,12 @@ export const DashboardPage = () => {
                 <span className="text-sm font-medium">{selectedCandidateIds.size} selected</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="destructive" onClick={handleBulkDelete}><Trash2 className="w-4 h-4 mr-2" /> Delete selected</Button>
+                    <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={deletingBulk}>
+                      {deletingBulk ? <Spinner size="sm" className="mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                      Delete selected
+                    </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Permanently delete selected candidates</TooltipContent>
+                  <TooltipContent>Permanently remove the selected candidates</TooltipContent>
                 </Tooltip>
               </div>
             )}
@@ -325,7 +375,13 @@ export const DashboardPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCandidates.map((c) => (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center">
+                      <Spinner className="mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredCandidates.map((c) => (
                   <TableRow key={c.id} className={c.archived ? 'opacity-50' : ''}>
                     <TableCell>
                       <Checkbox 
@@ -356,7 +412,12 @@ export const DashboardPage = () => {
                     </TableCell>
                     <TableCell>
                       {c.integrityEvents?.length > 0 ? (
-                        <Badge variant="destructive">⚠️ Flagged</Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="destructive" className="cursor-help">⚠️ Flagged</Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>Candidate flagged by anti-cheating monitoring</TooltipContent>
+                        </Tooltip>
                       ) : (
                         <span className="text-slate-400 text-sm">Clear</span>
                       )}
@@ -391,42 +452,44 @@ export const DashboardPage = () => {
                             <Edit className="w-4 h-4 text-slate-500" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Edit candidate details</TooltipContent>
+                        <TooltipContent>Edit this candidate's details</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
+                            disabled={archivingId === c.id}
                             onClick={() => handleArchiveCandidate(c)}
                             aria-label={c.archived ? `Unarchive ${c.name}` : `Archive ${c.name}`}
                           >
-                            {c.archived
+                            {archivingId === c.id ? <Spinner size="sm" /> : c.archived
                               ? <ArchiveRestore className="w-4 h-4 text-slate-500" />
                               : <Archive className="w-4 h-4 text-slate-500" />
                             }
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{c.archived ? 'Unarchive this candidate' : 'Archive this candidate — hides from active list'}</TooltipContent>
+                        <TooltipContent>{c.archived ? 'Restore this candidate from the archive' : 'Move this candidate to the archive'}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
+                            disabled={deletingId === c.id}
                             onClick={() => handleDeleteCandidate(c)}
                             aria-label={`Delete ${c.name}`}
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            {deletingId === c.id ? <Spinner size="sm" className="text-red-500" /> : <Trash2 className="w-4 h-4 text-red-500" />}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Delete candidate permanently</TooltipContent>
+                        <TooltipContent>Permanently remove the selected candidates</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/candidate/${c.id}`)}>View</Button>
                         </TooltipTrigger>
-                        <TooltipContent>View candidate profile and scores</TooltipContent>
+                        <TooltipContent>Open this candidate's full profile and results</TooltipContent>
                       </Tooltip>
                     </TableCell>
                   </TableRow>
@@ -446,7 +509,7 @@ export const DashboardPage = () => {
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid />
                 <XAxis type="number" dataKey="icar" name="ICAR Percentile" unit="%ile" domain={[0, 100]} />
-                <YAxis type="number" dataKey="wleis" name="WLEIS Score" domain={[16, 112]} />
+                <YAxis type="number" dataKey="wleis" name="WLEIS Score" domain={[16, 80]} />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
@@ -493,13 +556,22 @@ export const DashboardPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>Cancel</Button>
-            <Button disabled={balance <= 0 && role !== 'admin'} onClick={async () => {
-              const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
-              const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
-              const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
-              if (!roleTitle) return alert('Enter a role title');
-              try {
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>Cancel</Button>
+              </TooltipTrigger>
+              <TooltipContent>Close this dialog without creating a link</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button disabled={creatingLink || (balance <= 0 && role !== 'admin')} onClick={async () => {
+                  const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
+                  const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
+                  const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
+                  if (!roleTitle) return alert('Enter a role title');
+                  setCreatingLink(true);
+                  try {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
                 const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId });
                 const data = res.data as any;
@@ -519,10 +591,16 @@ export const DashboardPage = () => {
                 } else {
                   alert('Failed to create link.');
                 }
+              } finally {
+                setCreatingLink(false);
               }
             }}>
+              {creatingLink ? <Spinner size="sm" className="mr-2" /> : null}
               {(balance <= 0 && role !== 'admin') ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
             </Button>
+          </TooltipTrigger>
+          <TooltipContent>Create the link and copy it — costs 1 credit</TooltipContent>
+        </Tooltip>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -537,22 +615,32 @@ export const DashboardPage = () => {
             <p className="text-center font-mono bg-slate-100 dark:bg-slate-900 p-4 rounded text-sm break-all select-all w-full border border-slate-200 dark:border-slate-800">
               {generatedLinkData?.url}
             </p>
-            <Button
-              className="w-full"
-              variant={linkCopied ? 'outline' : 'default'}
-              onClick={() => {
-                if (generatedLinkData) {
-                  navigator.clipboard.writeText(generatedLinkData.url);
-                  setLinkCopied(true);
-                  setTimeout(() => setLinkCopied(false), 2000);
-                }
-              }}
-            >
-              {linkCopied ? 'Copied!' : 'Copy to Clipboard'}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant={linkCopied ? 'outline' : 'default'}
+                  onClick={() => {
+                    if (generatedLinkData) {
+                      navigator.clipboard.writeText(generatedLinkData.url);
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    }
+                  }}
+                >
+                  {linkCopied ? 'Copied!' : 'Copy to Clipboard'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Copy the link to share with the candidate</TooltipContent>
+            </Tooltip>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setGeneratedLinkData(null)}>Close</Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" onClick={() => setGeneratedLinkData(null)}>Close</Button>
+              </TooltipTrigger>
+              <TooltipContent>Close this popup</TooltipContent>
+            </Tooltip>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -592,7 +680,15 @@ export const DashboardPage = () => {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="submit" disabled={savingEdit}>
+                    {savingEdit ? <Spinner size="sm" className="mr-2" /> : null}
+                    Save Changes
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save the candidate's updated details</TooltipContent>
+              </Tooltip>
             </DialogFooter>
           </form>
         </DialogContent>

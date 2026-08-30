@@ -674,11 +674,8 @@ export const submitAssessment = functions.https.onCall(async (data, _context) =>
 
     let smileScoringResult = null;
     if (validData.smileAnswers && bank.smileTask?.trials) {
-      // WLEIS OEA is a sum of 4 items (each 1-7), so mean is 1-7.
-      const rawOea1to7 = scoreResult.wleis?.rawScores?.OEA !== undefined ? (scoreResult.wleis.rawScores.OEA / 4) : 4.0;
-      // Convert the 1-7 OEA mean to the 1-5 calibration scale.
-      // scoreResult.smile.calibration.rawOea will now reflect this 1-5 scale.
-      const rawOea = 1 + ((rawOea1to7 - 1) / 6) * 4;
+      // WLEIS OEA is a sum of 4 items (each 1-5), so mean is already on the 1-5 scale.
+      const rawOea = scoreResult.wleis?.rawScores?.OEA !== undefined ? (scoreResult.wleis.rawScores.OEA / 4) : 4.0;
       const smileTrials: SmileTrialConfig[] = bank.smileTask.trials.map((t: any) => ({
         trialId: t.trialId,
         start: t.start,

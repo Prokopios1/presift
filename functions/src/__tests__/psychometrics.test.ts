@@ -26,21 +26,21 @@ const PARAMS: IrtParams[] = [
 describe('transformLikert', () => {
   it('returns the raw value when reverse is false', () => {
     // Arrange
-    const cases = [1, 4, 7];
+    const cases = [1, 3, 5];
     // Act / Assert
     for (const v of cases) expect(transformLikert(v, false)).toBe(v);
   });
 
-  it('maps reverse-scored 1-7 Likert via 8 - value', () => {
+  it('maps reverse-scored 1-5 Likert via 6 - value', () => {
     // Arrange
-    const cases: Array<[number, number]> = [[1, 7], [4, 4], [7, 1], [2, 6], [6, 2]];
+    const cases: Array<[number, number]> = [[1, 5], [3, 3], [5, 1], [2, 4], [4, 2]];
     // Act / Assert
     for (const [input, expected] of cases) expect(transformLikert(input, true)).toBe(expected);
   });
 
   it('throws on out-of-range Likert values', () => {
     // Arrange
-    const bad = [0, 8, -1, 7.5, NaN];
+    const bad = [0, 6, 8, -1, 5.5, NaN];
     // Act / Assert
     for (const v of bad) expect(() => transformLikert(v, false)).toThrow();
   });
@@ -134,20 +134,20 @@ describe('scoreWleis', () => {
   it('applies reverse scoring and totals per subscale', () => {
     // Arrange
     const answers: WleisAnswer[] = [
-      { subscale: 'SEA', value: 6, reverse: false },
-      { subscale: 'SEA', value: 2, reverse: true },  // -> 6
-      { subscale: 'OEA', value: 7, reverse: false },
-      { subscale: 'UOE', value: 1, reverse: true },  // -> 7
+      { subscale: 'SEA', value: 4, reverse: false },
+      { subscale: 'SEA', value: 2, reverse: true },  // -> 4
+      { subscale: 'OEA', value: 5, reverse: false },
+      { subscale: 'UOE', value: 1, reverse: true },  // -> 5
       { subscale: 'ROE', value: 3, reverse: false },
     ];
     // Act
     const s = scoreWleis(answers);
     // Assert
-    expect(s.SEA).toBe(12); // 6 + 6
-    expect(s.OEA).toBe(7);
-    expect(s.UOE).toBe(7);
+    expect(s.SEA).toBe(8); // 4 + 4
+    expect(s.OEA).toBe(5);
+    expect(s.UOE).toBe(5);
     expect(s.ROE).toBe(3);
-    expect(s.Total).toBe(29);
+    expect(s.Total).toBe(21);
   });
 
   it('throws when a subscale is invalid', () => {
@@ -165,7 +165,7 @@ describe('evaluateCandidate', () => {
     const subscales: WleisAnswer['subscale'][] = ['SEA', 'OEA', 'UOE', 'ROE'];
     const wleis: WleisAnswer[] = PARAMS.map((_, i) => ({
       subscale: subscales[i % 4],
-      value: (i % 7) + 1,
+      value: (i % 5) + 1,
       reverse: i % 3 === 0,
     }));
     // Act

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 import { ArrowLeft, ArrowRight, MoreVertical, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
@@ -91,12 +92,17 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
 
   return (
     <>
-      <Button ref={buttonRef} variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => {
-        e.stopPropagation();
-        setOpen(true);
-      }}>
-        <MoreVertical className="h-4 w-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button ref={buttonRef} variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>More actions</TooltipContent>
+      </Tooltip>
       {open && rect && (
         <div className="fixed inset-0 z-50" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
           <div 
@@ -104,16 +110,31 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
             style={{ top: rect.bottom + 4, right: window.innerWidth - rect.right }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onEdit(); }}>
-              <Edit2 className="w-4 h-4 text-slate-500" /> Edit
-            </button>
-            <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onTopUp(); }}>
-              <Plus className="w-4 h-4 text-slate-500" /> Top Up
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onEdit(); }}>
+                  <Edit2 className="w-4 h-4 text-slate-500" /> Edit
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Edit this organization's details</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onTopUp(); }}>
+                  <Plus className="w-4 h-4 text-slate-500" /> Top Up
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add credits to this organization's balance</TooltipContent>
+            </Tooltip>
             <div className="h-px bg-slate-200 dark:bg-slate-800 my-1" />
-            <button className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm text-left w-full" onClick={() => { setOpen(false); onDelete(); }}>
-              <Trash2 className="w-4 h-4 text-red-500" /> Delete
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm text-left w-full" onClick={() => { setOpen(false); onDelete(); }}>
+                  <Trash2 className="w-4 h-4 text-red-500" /> Delete
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Permanently remove this organization and all its data</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       )}
@@ -287,19 +308,24 @@ export const AdminPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <Switch
-                id="show-archived"
-                checked={showArchived}
-                onCheckedChange={setShowArchived}
-              />
-              <Label htmlFor="show-archived">Show archived</Label>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <Switch
+                    id="show-archived"
+                    checked={showArchived}
+                    onCheckedChange={setShowArchived}
+                  />
+                  <Label htmlFor="show-archived">Show archived</Label>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Show or hide archived organizations</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button onClick={() => setAddClientDialog(true)}>Add Client</Button>
               </TooltipTrigger>
-              <TooltipContent>Create a new customer account</TooltipContent>
+              <TooltipContent>Create a new organization account</TooltipContent>
             </Tooltip>
           </div>
         </header>
@@ -428,6 +454,7 @@ export const AdminPage = () => {
                 onClick={handleAddClient}
                 disabled={addingClient || !newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
               >
+                {addingClient ? <Spinner size="sm" className="mr-2" /> : null}
                 {addingClient ? 'Saving...' : 'Create Client'}
               </Button>
             </DialogFooter>
@@ -457,6 +484,7 @@ export const AdminPage = () => {
                 onClick={handleTopUp}
                 disabled={toppingUp || topUpCredits <= 0}
               >
+                {toppingUp ? <Spinner size="sm" className="mr-2" /> : null}
                 {toppingUp ? 'Saving...' : 'Top Up'}
               </Button>
             </DialogFooter>
@@ -484,6 +512,7 @@ export const AdminPage = () => {
                 onClick={handleDeleteClient}
                 disabled={deleting}
               >
+                {deleting ? <Spinner size="sm" className="mr-2" /> : null}
                 {deleting ? 'Deleting...' : 'Delete Permanently'}
               </Button>
             </DialogFooter>

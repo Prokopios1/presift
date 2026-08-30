@@ -8,7 +8,7 @@ const WLEIS_IDS = bank.wleis.items.map((i) => i.id);
 const validPayload = () => ({
   sessionId: 'sess_abc123',
   icar: ICAR_IDS.map((itemId, i) => ({ itemId, selectedIndex: i % 4 })),
-  wleis: WLEIS_IDS.map((itemId, i) => ({ itemId, value: (i % 7) + 1 })),
+  wleis: WLEIS_IDS.map((itemId, i) => ({ itemId, value: (i % 5) + 1 })),
 });
 
 describe('validateSubmission', () => {

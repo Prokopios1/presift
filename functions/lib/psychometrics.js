@@ -14,10 +14,10 @@ class PsychometricError extends Error {
 }
 exports.PsychometricError = PsychometricError;
 function transformLikert(value, reverse) {
-    if (value < 1 || value > 7 || !Number.isInteger(value)) {
-        throw new PsychometricError(`Invalid Likert value: ${value}. Must be integer between 1 and 7.`);
+    if (value < 1 || value > 5 || !Number.isInteger(value)) {
+        throw new PsychometricError(`Invalid Likert value: ${value}. Must be integer between 1 and 5.`);
     }
-    return reverse ? 8 - value : value;
+    return reverse ? 6 - value : value;
 }
 // 3PL IRT probability
 function calculateProb(theta, a, b, c) {
