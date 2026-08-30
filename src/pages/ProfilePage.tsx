@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db, functions } from '@/lib/firebase';
+import { auth, db, functions } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface CreditAuditLog {
@@ -117,6 +119,17 @@ export const ProfilePage = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Manage your details and view credit history</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+              onClick={async () => {
+                await signOut(auth);
+                window.location.href = '/login';
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
             <ThemeToggle />
           </div>
         </header>

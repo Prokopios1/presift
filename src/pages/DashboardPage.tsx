@@ -254,18 +254,7 @@ export const DashboardPage = () => {
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={async () => {
-                const amount = prompt('How many credits to top up?');
-                if (!amount || isNaN(parseInt(amount))) return;
-                try {
-                  const topUp = httpsCallable(functions, 'topUpCredits');
-                  await topUp({ amount: parseInt(amount), recruiterId });
-                  setBalance(b => b + parseInt(amount));
-                } catch (e) {
-                  console.error(e);
-                  alert('Failed to top up.');
-                }
-              }}>Top Up Credits</Button>
+              <Button onClick={() => navigate('/pricing')}>Top Up Credits</Button>
             </TooltipTrigger>
             <TooltipContent>Add more assessment credits to your account</TooltipContent>
           </Tooltip>

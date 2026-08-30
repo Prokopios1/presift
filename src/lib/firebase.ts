@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getAuth, connectAuthEmulator, setPersistence, browserSessionPersistence } from "firebase/auth";
 
 // Live Firebase project config (project: presift)
 const firebaseConfig = {
@@ -17,6 +17,7 @@ export const app = initializeApp(firebaseConfig);
 export const functions = getFunctions(app);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+setPersistence(auth, browserSessionPersistence);
 
 // Connect to local emulator during development and tests only
 if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {

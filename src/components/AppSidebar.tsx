@@ -19,7 +19,7 @@ export const AppSidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 hidden md:flex flex-col">
+    <aside className="fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col">
       <div className="p-6 border-b border-slate-200 dark:border-slate-800">
         <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           PreSift
@@ -51,7 +51,7 @@ export const AppSidebar = () => {
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
         <Button
           variant="ghost"
-          className="w-full justify-start text-base h-12 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
+          className="w-full justify-start text-base h-12 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
           onClick={async () => {
             await signOut(auth);
             window.location.href = '/login';

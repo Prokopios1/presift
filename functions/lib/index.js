@@ -337,6 +337,9 @@ const crypto = __importStar(require("crypto"));
 exports.topUpCredits = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo())
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+    if (_context.auth?.token?.admin !== true) {
+        throw new functions.https.HttpsError("permission-denied", "Only admins can top up credits");
+    }
     const { amount, recruiterId: payloadRecruiterId } = data || {};
     if (!amount || typeof amount !== 'number' || amount <= 0) {
         throw new functions.https.HttpsError("invalid-argument", "Valid amount required");
