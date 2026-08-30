@@ -81,7 +81,7 @@ const setCandidateDocs = (docList: Array<{ id: string; data: () => Record<string
 // ─────────────────────────────────────────────────────────────────────────────
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null } }))
+  useAuth: vi.fn(() => ({ user: { uid: localStorage.getItem('presift_uid') || null }, role: 'admin', loading: false }))
 }));
 vi.mock('@/contexts/ImpersonationContext', () => ({
   useImpersonation: vi.fn(() => ({ targetId: null, setTargetId: vi.fn() }))

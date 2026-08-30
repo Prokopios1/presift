@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { ArrowLeft, ArrowRight, MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MoreVertical, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { collection, getDocs, query, where, getCountFromServer } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 interface RecruiterAccount {
   id: string;
@@ -121,6 +123,8 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
 
 export const AdminPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { setTargetId } = useImpersonation();
   const [recruiters, setRecruiters] = useState<RecruiterAccount[]>([]);
   const [candidateCounts, setCandidateCounts] = useState<Record<string, number | string>>({});
   const [loading, setLoading] = useState(true);
@@ -155,7 +159,7 @@ export const AdminPage = () => {
         const snap = await getDocs(collection(db, 'users'));
         const loaded: RecruiterAccount[] = snap.docs
           .map(d => ({ id: d.id, ...d.data() } as RecruiterAccount & { role?: string }))
-          .filter(u => u.role !== 'admin');
+          .filter(u => u.role !== 'admin' && u.id !== user?.uid);
         setRecruiters(loaded);
 
         // Candidate count per non-archived client
@@ -352,11 +356,30 @@ export const AdminPage = () => {
                         {r.archived ? '–' : (candidateCounts[r.id] !== undefined ? String(candidateCounts[r.id]) : '…')}
                       </TableCell>
                       <TableCell>
-                        <ActionMenu 
-                          onEdit={() => navigate(`/admin/clients/${r.id}`)}
-                          onTopUp={() => { setTopUpClient(r); setTopUpCredits(10); setTopUpReason('Admin manual top up'); setTopUpDialog(true); }}
-                          onDelete={() => { setDeleteClientTarget(r); setDeleteDialog(true); }}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTargetId(r.id);
+                                  navigate('/dashboard');
+                                }}
+                              >
+                                <Eye className="h-4 w-4 text-blue-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Impersonate this recruiter</TooltipContent>
+                          </Tooltip>
+                          <ActionMenu 
+                            onEdit={() => navigate(`/admin/clients/${r.id}`)}
+                            onTopUp={() => { setTopUpClient(r); setTopUpCredits(10); setTopUpReason('Admin manual top up'); setTopUpDialog(true); }}
+                            onDelete={() => { setDeleteClientTarget(r); setDeleteDialog(true); }}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
