@@ -1,5 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { LogOut } from 'lucide-react';
+import { auth } from '../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -45,6 +48,19 @@ export const AppSidebar = () => {
           );
         })}
       </nav>
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-base h-12 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
+          onClick={async () => {
+            await signOut(auth);
+            window.location.href = '/login';
+          }}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
+      </div>
     </aside>
   );
 };

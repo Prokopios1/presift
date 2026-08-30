@@ -23,7 +23,7 @@ interface CreditAuditLog {
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { targetId } = useImpersonation();
   const isImpersonating = !!targetId;
   const recruiterId = targetId;
@@ -179,52 +179,56 @@ export const ProfilePage = () => {
                   </CardHeader>
                   <CardContent className="flex items-center justify-between">
                     <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      {profile.credits}
+                      {role === 'admin' ? 'Unlimited' : profile.credits}
                     </div>
-                    <Button onClick={() => navigate('/pricing')} variant="default">
-                      Top Up Credits
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Billing History</CardTitle>
-                    <CardDescription>Recent credit transactions</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {logs.length === 0 ? (
-                      <div className="text-sm text-slate-500 text-center py-4">No billing history found.</div>
-                    ) : (
-                      <div className="overflow-auto max-h-[300px]">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Date</TableHead>
-                              <TableHead>Amount</TableHead>
-                              <TableHead>Reason</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {logs.map((log) => (
-                              <TableRow key={log.id}>
-                                <TableCell className="whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
-                                  {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm')}
-                                </TableCell>
-                                <TableCell>
-                                  <span className={`font-medium ${log.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {log.amount > 0 ? '+' : ''}{log.amount}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-sm">{log.reason}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                    {role !== 'admin' && (
+                      <Button onClick={() => navigate('/pricing')} variant="default">
+                        Top Up Credits
+                      </Button>
                     )}
                   </CardContent>
                 </Card>
+
+                {role !== 'admin' && (
+                  <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Billing History</CardTitle>
+                      <CardDescription>Recent credit transactions</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {logs.length === 0 ? (
+                        <div className="text-sm text-slate-500 text-center py-4">No billing history found.</div>
+                      ) : (
+                        <div className="overflow-auto max-h-[300px]">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Reason</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {logs.map((log) => (
+                                <TableRow key={log.id}>
+                                  <TableCell className="whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                                    {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm')}
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className={`font-medium ${log.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                      {log.amount > 0 ? '+' : ''}{log.amount}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-sm">{log.reason}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           )}

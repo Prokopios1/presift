@@ -19,6 +19,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
+      // On any auth state change (login, logout, account switch), clear residual state
+      sessionStorage.removeItem('impersonatedId');
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('assessment_')) {
+          localStorage.removeItem(key);
+        }
+      }
+
       if (currentUser) {
         try {
           const idTokenResult = await currentUser.getIdTokenResult();
