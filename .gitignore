@@ -30,3 +30,12 @@ test-results/
 
 # Backup artifacts
 *.bak-*
+
+# Secrets (defense in depth)
+*.env
+.env.*
+functions/.env*
+firebase-debug.log
+serviceAccount*.json
+*.pem
+functions/.runtimeconfig.json
