@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { httpsCallable } from 'firebase/functions';
@@ -112,8 +112,7 @@ export const TestPage = () => {
   });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPausedAtCut, setIsPausedAtCut] = useState(false);
+
   const trialStartTimeRef = useRef<number>(Date.now());
 
   const clearLocalStorage = () => {
@@ -243,21 +242,15 @@ export const TestPage = () => {
     if ((stage !== 'smile_trials' && smileStage !== 'trials') || !currentSmileTrial || !videoRef.current) return;
     const video = videoRef.current;
     video.currentTime = currentSmileTrial.start;
-    setIsPausedAtCut(false);
     trialStartTimeRef.current = Date.now();
 
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    }
+    video.play();
   }, [stage, smileStage, smileTrialIndex, currentSmileTrial]);
 
   const handleVideoTimeUpdate = () => {
     if (!videoRef.current || !currentSmileTrial) return;
     if (videoRef.current.currentTime >= currentSmileTrial.end) {
       videoRef.current.pause();
-      setIsPlaying(false);
-      setIsPausedAtCut(true);
     }
   };
 
