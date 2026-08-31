@@ -387,8 +387,8 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-slate-950 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full shadow-lg border-t-4 border-t-slate-800">
@@ -430,8 +430,8 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
@@ -475,8 +475,8 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
@@ -526,8 +526,8 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
@@ -572,8 +572,8 @@ export const TestPage = () => {
           <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-                <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
               <div className="font-mono text-sm text-slate-400">
                 Smile Perception: Trial <span className="text-emerald-400 font-bold">{smileTrialIndex + 1}</span> of {totalSmileTrials}
@@ -645,8 +645,8 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-2xl">
@@ -654,14 +654,15 @@ export const TestPage = () => {
               <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono mb-2">
                 Assessment Complete
               </div>
-              <CardTitle className="text-3xl font-bold">WLEIS & Smile Calibration Summary</CardTitle>
-              <CardDescription className="text-slate-400">
-                Perceptual Emotional Accuracy aligned with Self-Reported Others' Emotion Appraisal
+              <CardTitle className="text-3xl font-bold">Thank you for completing the assessment.</CardTitle>
+              <CardDescription className="text-slate-400 text-base mt-2">
+                Your responses have been submitted successfully and will be reviewed by the recruiter. You may now close this window.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               {calibration ? (
                 <>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">Perceptual Calibration Summary</div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-800/80 rounded-lg border border-slate-700 text-center">
                       <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
@@ -698,14 +699,10 @@ export const TestPage = () => {
                       <span className="font-mono font-bold text-emerald-400">{calibration.calibratedOeaScore.toFixed(2)} / 5.00</span>
                     </div>
                   </div>
-
-                  <div className="text-xs text-slate-400 bg-slate-950 p-4 rounded-lg border border-slate-800 leading-relaxed">
-                    Thank you for completing the assessment. Your results have been securely recorded. You may now close this window.
-                  </div>
                 </>
-              ) : (
+              ) : submittedResult ? null : (
                 <div className="text-center py-8 text-slate-400 space-y-2">
-                  <div className="animate-pulse text-emerald-400 font-semibold">Submitting and calculating score calibration...</div>
+                  <div className="animate-pulse text-emerald-400 font-semibold">Submitting your responses...</div>
                 </div>
               )}
             </CardContent>
@@ -745,8 +742,8 @@ export const TestPage = () => {
       <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <div className="font-mono text-sm text-slate-400">
             Question {currentQuestion + 1} of {totalQuestions}

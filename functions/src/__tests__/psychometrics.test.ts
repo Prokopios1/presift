@@ -159,7 +159,7 @@ describe('scoreWleis', () => {
 });
 
 describe('evaluateCandidate', () => {
-  it('produces a complete ScoringResult', () => {
+  it('produces a complete ScoringResult without domains (domainScores absent)', () => {
     // Arrange
     const vector = PARAMS.map(() => 1);
     const subscales: WleisAnswer['subscale'][] = ['SEA', 'OEA', 'UOE', 'ROE'];
@@ -176,5 +176,49 @@ describe('evaluateCandidate', () => {
     expect(result.icar.standardScore).toBeGreaterThan(100);
     expect(result.icar.percentile).toBeGreaterThan(50);
     expect(Object.keys(result.wleis.rawScores)).toEqual(['SEA', 'OEA', 'UOE', 'ROE', 'Total']);
+    expect(result.icar.domainScores).toBeUndefined();
+  });
+
+  it('computes domainScores when a domains array is provided', () => {
+    // Arrange — 4 numerical, 4 verbal, 4 abstract, 4 numerical (16 items)
+    // Correct: all 4 numerical + 0 verbal + 2 abstract answered correctly
+    const domains = [
+      'numerical', 'numerical', 'numerical', 'numerical',
+      'verbal', 'verbal', 'verbal', 'verbal',
+      'abstract', 'abstract', 'abstract', 'abstract',
+      'numerical', 'numerical', 'numerical', 'numerical',
+    ];
+    // responseVector: 4 correct numerical (first 4), 0 verbal, 2 abstract, 4 more numerical
+    const vector = [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1];
+    const subscales: WleisAnswer['subscale'][] = ['SEA', 'OEA', 'UOE', 'ROE'];
+    const wleis: WleisAnswer[] = PARAMS.map((_, i) => ({
+      subscale: subscales[i % 4],
+      value: 3,
+      reverse: false,
+    }));
+    // Act
+    const result = evaluateCandidate(vector, wleis, PARAMS, domains);
+    // Assert
+    expect(result.icar.domainScores).toBeDefined();
+    expect(result.icar.domainScores!.numerical).toBe(8); // 4 + 4
+    expect(result.icar.domainScores!.verbal).toBe(0);
+    expect(result.icar.domainScores!.abstract).toBe(2);
+  });
+
+  it('ignores unknown domain labels gracefully', () => {
+    // Arrange — one item has domain 'spatial' which is not in counts
+    const domains = PARAMS.map((_, i) => (i === 0 ? 'spatial' : 'numerical'));
+    const vector = PARAMS.map(() => 1);
+    const wleis: WleisAnswer[] = PARAMS.map((_, i) => ({
+      subscale: (['SEA', 'OEA', 'UOE', 'ROE'] as WleisAnswer['subscale'][])[i % 4],
+      value: 3,
+      reverse: false,
+    }));
+    // Act
+    const result = evaluateCandidate(vector, wleis, PARAMS, domains);
+    // Assert — spatial item is silently skipped; 15 numerical items correct
+    expect(result.icar.domainScores!.numerical).toBe(15);
+    expect(result.icar.domainScores!.verbal).toBe(0);
+    expect(result.icar.domainScores!.abstract).toBe(0);
   });
 });

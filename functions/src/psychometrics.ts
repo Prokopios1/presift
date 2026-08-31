@@ -18,6 +18,11 @@ export interface ScoringResult {
     theta: number;
     standardScore: number;
     percentile: number;
+    domainScores?: {
+      numerical: number;
+      verbal: number;
+      abstract: number;
+    };
   };
   wleis: {
     rawScores: {
@@ -134,21 +139,39 @@ export function scoreWleis(answers: WleisAnswer[]): { SEA: number; OEA: number; 
   return rawScores;
 }
 
-export function evaluateCandidate(responseVector: number[], wleisAnswers: WleisAnswer[], params: IrtParams[]): ScoringResult {
+export function evaluateCandidate(
+  responseVector: number[],
+  wleisAnswers: WleisAnswer[],
+  params: IrtParams[],
+  domains?: string[]
+): ScoringResult {
   const theta = estimateTheta(responseVector, params);
   const { standardScore, percentile } = mapToScale(theta);
-  
+
   const rawScore = responseVector.reduce((sum, val) => sum + val, 0);
-  
+
   const wleisScores = scoreWleis(wleisAnswers);
-  
+
+  let domainScores: { numerical: number; verbal: number; abstract: number } | undefined;
+  if (domains && domains.length === responseVector.length) {
+    const counts = { numerical: 0, verbal: 0, abstract: 0 };
+    for (let i = 0; i < responseVector.length; i++) {
+      const d = domains[i] as keyof typeof counts;
+      if (d in counts) {
+        counts[d] += responseVector[i];
+      }
+    }
+    domainScores = counts;
+  }
+
   return {
     icar: {
       rawScore,
       maxRawScore: responseVector.length,
       theta: Number(theta.toFixed(4)),
       standardScore,
-      percentile
+      percentile,
+      ...(domainScores ? { domainScores } : {}),
     },
     wleis: {
       rawScores: wleisScores

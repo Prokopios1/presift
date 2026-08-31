@@ -92,18 +92,30 @@ function scoreWleis(answers) {
     }
     return rawScores;
 }
-function evaluateCandidate(responseVector, wleisAnswers, params) {
+function evaluateCandidate(responseVector, wleisAnswers, params, domains) {
     const theta = estimateTheta(responseVector, params);
     const { standardScore, percentile } = mapToScale(theta);
     const rawScore = responseVector.reduce((sum, val) => sum + val, 0);
     const wleisScores = scoreWleis(wleisAnswers);
+    let domainScores;
+    if (domains && domains.length === responseVector.length) {
+        const counts = { numerical: 0, verbal: 0, abstract: 0 };
+        for (let i = 0; i < responseVector.length; i++) {
+            const d = domains[i];
+            if (d in counts) {
+                counts[d] += responseVector[i];
+            }
+        }
+        domainScores = counts;
+    }
     return {
         icar: {
             rawScore,
             maxRawScore: responseVector.length,
             theta: Number(theta.toFixed(4)),
             standardScore,
-            percentile
+            percentile,
+            ...(domainScores ? { domainScores } : {}),
         },
         wleis: {
             rawScores: wleisScores

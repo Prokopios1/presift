@@ -649,6 +649,34 @@ exports.submitAssessment = functions.https.onCall(async (data, _context) => {
             }));
             smileScoringResult = (0, smile_1.scoreSmileTask)(validData.smileAnswers, smileTrials, rawOea);
         }
+        // Compute per-domain correct counts using bank domain tags + session keys
+        const domainCounts = { numerical: 0, verbal: 0, abstract: 0 };
+        for (const answer of validData.icar) {
+            const bankItem = presift_bank_1.bank.cognitive.items.find((i) => i.id === answer.itemId);
+            if (!bankItem)
+                continue;
+            const sessionKey = keys.find((k) => k.itemId === answer.itemId);
+            if (!sessionKey)
+                continue;
+            const isCorrect = answer.selectedIndex === sessionKey.correctIndex ? 1 : 0;
+            const d = bankItem.domain;
+            if (d in domainCounts)
+                domainCounts[d] += isCorrect;
+        }
+        // Compute session duration in seconds (session createdAt → now)
+        const sessionRaw = sessionDoc.data();
+        let duration;
+        if (sessionRaw?.createdAt && typeof sessionRaw.createdAt.toMillis === 'function') {
+            duration = Math.round((Date.now() - sessionRaw.createdAt.toMillis()) / 1000);
+        }
+        else if (Array.isArray(sessionRaw?.integrityEvents) && sessionRaw.integrityEvents.length > 0) {
+            const lastEvent = sessionRaw.integrityEvents[sessionRaw.integrityEvents.length - 1];
+            if (lastEvent?.timestamp) {
+                const ts = typeof lastEvent.timestamp === 'number' ? lastEvent.timestamp : Date.parse(lastEvent.timestamp);
+                if (!isNaN(ts))
+                    duration = Math.round((Date.now() - ts) / 1000);
+            }
+        }
         let fitBadge = "🔴 Low Fit";
         if (scoreResult.icar.percentile >= 80)
             fitBadge = "🟢 Strong Fit";
@@ -657,6 +685,10 @@ exports.submitAssessment = functions.https.onCall(async (data, _context) => {
         const resultPayload = {
             scoreResult: {
                 ...scoreResult,
+                icar: {
+                    ...scoreResult.icar,
+                    domainScores: domainCounts,
+                },
                 ...(smileScoringResult ? { smile: smileScoringResult } : {}),
             },
             ...(smileScoringResult ? { smileResult: smileScoringResult } : {}),
@@ -666,6 +698,7 @@ exports.submitAssessment = functions.https.onCall(async (data, _context) => {
             completedAt: firestore_1.FieldValue.serverTimestamp(),
             completionDate: new Date().toISOString(),
             integrityEvents: integrityEvents || [],
+            ...(duration !== undefined ? { duration } : {}),
         };
         const candRef = admin.firestore().collection("candidates").doc(assessmentId);
         const candDoc = await candRef.get();

@@ -11,6 +11,69 @@ import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+// ── Interpretation helpers ───────────────────────────────────────────────────
+
+function icarPercentileLabel(p: number): string {
+  if (p >= 90) return 'Well above average';
+  if (p >= 75) return 'Above average';
+  if (p >= 50) return 'Average';
+  if (p >= 25) return 'Below average';
+  return 'Well below average';
+}
+
+function icarPercentileSentence(p: number): string {
+  const pct = Math.round(p);
+  return `Performs better than ${pct}% of the reference group on reasoning tasks.`;
+}
+
+function icarDomainLabel(score: number): string {
+  if (score >= 3) return 'Strong';
+  if (score === 2) return 'Moderate';
+  return 'Weak';
+}
+
+function icarDomainColor(score: number): string {
+  if (score >= 3) return 'text-emerald-600 dark:text-emerald-400';
+  if (score === 2) return 'text-amber-600 dark:text-amber-400';
+  return 'text-red-600 dark:text-red-400';
+}
+
+function wleisLabel(total: number): string {
+  if (total >= 59) return 'Above the mid-range';
+  if (total >= 38) return 'Around the mid-range';
+  return 'Below the mid-range';
+}
+
+function wleisSentence(total: number): string {
+  if (total >= 59)
+    return 'Reports strong emotional awareness and regulation relative to the norm group.';
+  if (total >= 38)
+    return 'Reports moderate emotional intelligence — in line with most professionals.';
+  return 'Reports lower emotional intelligence; explore specific subscales in the interview.';
+}
+
+function wleisSubscaleLabel(score: number): string {
+  if (score >= 15) return 'High';
+  if (score >= 10) return 'Moderate';
+  return 'Low';
+}
+
+function wleisSubscaleColor(score: number): string {
+  if (score >= 15) return 'text-emerald-600 dark:text-emerald-400';
+  if (score >= 10) return 'text-amber-600 dark:text-amber-400';
+  return 'text-red-600 dark:text-red-400';
+}
+
+function fitBadgeSentence(badge: string): string {
+  if (badge?.includes('Strong'))
+    return 'Strong overall match — reasoning and EI align well with role demands.';
+  if (badge?.includes('Conditional'))
+    return 'Moderate match — explore specific areas in the interview.';
+  return 'Weak overall match — probe carefully before advancing.';
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 export const CandidateDetailPage = () => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
@@ -92,6 +155,11 @@ export const CandidateDetailPage = () => {
   if (loading) return <div className="p-8 text-center">Loading candidate...</div>;
   if (!selectedCandidate) return <div className="p-8 text-center">Candidate not found.</div>;
 
+  const icar = selectedCandidate.scoreResult?.icar;
+  const wleis = selectedCandidate.scoreResult?.wleis?.rawScores;
+  const blurs = selectedCandidate.integrityEvents?.length || 0;
+  const dur = selectedCandidate.duration;
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppSidebar />
@@ -103,95 +171,121 @@ export const CandidateDetailPage = () => {
           </div>
           <ThemeToggle />
         </nav>
-        
+
         <div className="p-8 max-w-4xl mx-auto space-y-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight">{selectedCandidate.name}</h1>
             <p className="text-slate-500">{selectedCandidate.roleTitle || selectedCandidate.appliedRole} • {selectedCandidate.status}</p>
           </div>
 
-          <div className="flex gap-4 items-center">
-            <Badge className="text-lg py-1 px-3" variant="secondary">{selectedCandidate.fitBadge || selectedCandidate.fit}</Badge>
-            {selectedCandidate.integrityEvents?.length > 0 && (
-              <Badge variant="destructive" className="text-lg py-1 px-3">⚠️ {selectedCandidate.integrityEvents.length} Integrity Flags</Badge>
-            )}
-            
-            <div className="ml-auto flex gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant={selectedCandidate.status === 'Shortlisted' ? 'default' : 'outline'} onClick={() => updateStatus('Shortlisted')}>Shortlist</Button>
-                </TooltipTrigger>
-                <TooltipContent>Move to Shortlisted status</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant={selectedCandidate.status === 'Interviewing' ? 'default' : 'outline'} onClick={() => updateStatus('Interviewing')}>Interview</Button>
-                </TooltipTrigger>
-                <TooltipContent>Move to Interviewing status</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant={selectedCandidate.status === 'Rejected' ? 'default' : 'outline'} onClick={() => updateStatus('Rejected')}>Reject</Button>
-                </TooltipTrigger>
-                <TooltipContent>Move to Rejected status</TooltipContent>
-              </Tooltip>
+          {/* Fit badge + plain sentence */}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-4 items-center">
+              <Badge className="text-lg py-1 px-3" variant="secondary">{selectedCandidate.fitBadge || selectedCandidate.fit}</Badge>
+              {blurs > 0 && (
+                <Badge variant="destructive" className="text-lg py-1 px-3">⚠️ {blurs} Integrity Flags</Badge>
+              )}
+              <div className="ml-auto flex gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant={selectedCandidate.status === 'Shortlisted' ? 'default' : 'outline'} onClick={() => updateStatus('Shortlisted')}>Shortlist</Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Move to Shortlisted status</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant={selectedCandidate.status === 'Interviewing' ? 'default' : 'outline'} onClick={() => updateStatus('Interviewing')}>Interview</Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Move to Interviewing status</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant={selectedCandidate.status === 'Rejected' ? 'default' : 'outline'} onClick={() => updateStatus('Rejected')}>Reject</Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Move to Rejected status</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
+            {(selectedCandidate.fitBadge || selectedCandidate.fit) && (
+              <p className="text-sm text-slate-500 mt-1">{fitBadgeSentence(selectedCandidate.fitBadge || selectedCandidate.fit)}</p>
+            )}
           </div>
-          
+
+          {/* ICAR percentile + WLEIS total score cards */}
           <div className="grid grid-cols-2 gap-4">
             <Card>
               <CardHeader><CardTitle className="text-sm text-slate-500">Cognitive (ICAR)</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{selectedCandidate.scoreResult?.icar?.percentile || 0}th <span className="text-sm font-normal text-slate-500">%ile</span></p></CardContent>
+              <CardContent>
+                <p className="text-3xl font-bold">{icar?.percentile ?? 0}th <span className="text-sm font-normal text-slate-500">%ile</span></p>
+                {icar?.percentile !== undefined && (
+                  <>
+                    <p className="text-sm font-semibold mt-1">{icarPercentileLabel(icar.percentile)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{icarPercentileSentence(icar.percentile)}</p>
+                  </>
+                )}
+              </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle className="text-sm text-slate-500">Emotional Intelligence</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{selectedCandidate.scoreResult?.wleis?.rawScores?.Total || 0} <span className="text-sm font-normal text-slate-500">Score</span></p></CardContent>
+              <CardContent>
+                <p className="text-3xl font-bold">{wleis?.Total ?? 0} <span className="text-sm font-normal text-slate-500">Score</span></p>
+                {wleis?.Total !== undefined && (
+                  <>
+                    <p className="text-sm font-semibold mt-1">{wleisLabel(wleis.Total)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{wleisSentence(wleis.Total)}</p>
+                  </>
+                )}
+              </CardContent>
             </Card>
           </div>
 
+          {/* Domain breakdowns */}
           {selectedCandidate.scoreResult && (
             <div className="grid grid-cols-2 gap-4">
+              {/* ICAR Domain Breakdown — 3 domains, no Spatial */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">ICAR 4-Domain Breakdown</h3>
-                <div className="grid grid-cols-4 gap-2 text-center text-sm">
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.icar?.domainScores?.numerical ?? 'N/A'}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Numerical</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.icar?.domainScores?.verbal ?? 'N/A'}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Verbal</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.icar?.domainScores?.abstract ?? 'N/A'}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Abstract</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.icar?.domainScores?.spatial ?? 'N/A'}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Spatial</div>
-                  </div>
+                <h3 className="font-semibold text-lg">ICAR Domain Breakdown</h3>
+                <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                  {(['numerical', 'verbal', 'abstract'] as const).map(domain => {
+                    const val = icar?.domainScores?.[domain] ?? 'N/A';
+                    const numVal = typeof val === 'number' ? val : -1;
+                    return (
+                      <div key={domain} className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                        <div className="font-bold">{val}</div>
+                        <div className="text-slate-500 text-[10px] uppercase">{domain}</div>
+                        {numVal >= 0 && (
+                          <div className={`text-[10px] font-semibold mt-0.5 ${icarDomainColor(numVal)}`}>
+                            {icarDomainLabel(numVal)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* WLEIS 4x4 Breakdown with subscale meanings + Low/Moderate/High */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">WLEIS 4x4 Breakdown</h3>
+                <h3 className="font-semibold text-lg">WLEIS 4×4 Breakdown</h3>
                 <div className="grid grid-cols-4 gap-2 text-center text-sm">
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.wleis?.rawScores?.SEA || 0}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Self</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.wleis?.rawScores?.OEA || 0}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Others</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.wleis?.rawScores?.UOE || 0}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Use</div>
-                  </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                    <div className="font-bold">{selectedCandidate.scoreResult.wleis?.rawScores?.ROE || 0}</div>
-                    <div className="text-slate-500 text-[10px] uppercase">Reg</div>
-                  </div>
+                  {([
+                    { key: 'SEA', label: 'Self', meaning: 'Reading your own emotions' },
+                    { key: 'OEA', label: 'Others', meaning: "Reading others' emotions" },
+                    { key: 'UOE', label: 'Use', meaning: 'Using emotions to guide thinking' },
+                    { key: 'ROE', label: 'Reg', meaning: 'Managing your own emotions' },
+                  ] as const).map(({ key, label, meaning }) => {
+                    const val: number = wleis?.[key] ?? 0;
+                    return (
+                      <div key={key} className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
+                        <div className="font-bold">{val}</div>
+                        <div className="text-slate-500 text-[10px] uppercase">{label}</div>
+                        <div className={`text-[10px] font-semibold mt-0.5 ${wleisSubscaleColor(val)}`}>
+                          {wleisSubscaleLabel(val)}
+                        </div>
+                        <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">{meaning}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -203,14 +297,23 @@ export const CandidateDetailPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{selectedCandidate.duration ? `${Math.round(selectedCandidate.duration / 60)}m ${selectedCandidate.duration % 60}s` : 'N/A'}</p>
+                  <p className="text-2xl font-bold">
+                    {dur ? `${Math.floor(dur / 60)}m ${dur % 60}s` : 'N/A'}
+                  </p>
                   <p className="text-xs text-slate-500 uppercase mt-1">Total Duration</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <p className={`text-2xl font-bold ${(selectedCandidate.integrityEvents?.length || 0) > 2 ? 'text-red-500' : ''}`}>{selectedCandidate.integrityEvents?.length || 0}</p>
+                  <p className={`text-2xl font-bold ${blurs > 0 ? 'text-red-500' : 'text-emerald-500'}`}>{blurs}</p>
                   <p className="text-xs text-slate-500 uppercase mt-1">Tab-Switch Blurs</p>
+                  {blurs === 0 ? (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">No integrity issues detected.</p>
+                  ) : (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Candidate left the test window {blurs} {blurs === 1 ? 'time' : 'times'} — review results with caution.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
