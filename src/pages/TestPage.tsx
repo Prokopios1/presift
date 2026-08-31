@@ -62,7 +62,7 @@ export const TestPage = () => {
     return saved ? JSON.parse(saved) : false;
   });
   const [consent, setConsent] = useState(false);
-  const [extraTime, setExtraTime] = useState(false);
+  
 
   const [currentQuestion, setCurrentQuestion] = useState(() => {
     const saved = localStorage.getItem(`assessment_${assessmentId}_current`);
@@ -234,7 +234,7 @@ export const TestPage = () => {
     const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started, stage, timeLeft, extraTime, currentQuestion, sessionData]);
+  }, [started, stage, timeLeft, currentQuestion, sessionData]);
 
   // Video trial control
   const currentSmileTrial = sessionData?.smileTask?.trials?.[smileTrialIndex];
@@ -261,13 +261,7 @@ export const TestPage = () => {
     }
   };
 
-  const replayTrial = () => {
-    if (!videoRef.current || !currentSmileTrial) return;
-    videoRef.current.currentTime = currentSmileTrial.start;
-    setIsPausedAtCut(false);
-    trialStartTimeRef.current = Date.now();
-    videoRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-  };
+
 
   const submitTest = async (finalIcar: any, finalWleis: any, finalSmile?: any) => {
     if (!sessionData || isSubmitting.current) return;
@@ -352,7 +346,7 @@ export const TestPage = () => {
       }
     } else {
       setCurrentQuestion((prev: number) => prev + 1);
-      setTimeLeft(extraTime ? Math.floor(45 * 1.5) : 45);
+      setTimeLeft(45);
     }
   };
 
@@ -400,8 +394,8 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-slate-950 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full shadow-lg border-t-4 border-t-slate-800">
@@ -410,22 +404,7 @@ export const TestPage = () => {
             <CardDescription>Session ID: {sessionData.sessionId}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div className="bg-slate-100 dark:bg-slate-900 p-6 rounded-lg text-sm text-slate-700 dark:text-slate-300 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold">Assessment Structure</span>
-                <span className="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full font-mono text-xs">
-                  ICAR Cognitive + WLEIS EI {sessionData.smileTask ? '+ Smile Perception' : ''}
-                </span>
-              </div>
-            </div>
 
-            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border">
-              <Switch id="accessibility" checked={extraTime} onCheckedChange={setExtraTime} />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="accessibility">Accessibility Mode: Extra Processing Time</Label>
-                <p className="text-sm text-slate-500">Extends item timers by 50% if you require accommodations.</p>
-              </div>
-            </div>
 
             <div className="flex items-start space-x-2">
               <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked as boolean)} />
@@ -458,8 +437,8 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
@@ -472,7 +451,7 @@ export const TestPage = () => {
           <CardContent className="space-y-6 text-slate-300">
             <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
               <p>
-                11 short reasoning questions — numbers, words, shapes. Answer each one; there is no time limit per question. Expected time: ~10 minutes.
+                11 short reasoning questions — numbers, words, shapes. Answer each one; you have 45 seconds per question. The timer is shown at the top of the screen. Expected time: ~10 minutes.
               </p>
             </div>
           </CardContent>
@@ -483,7 +462,7 @@ export const TestPage = () => {
                   className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold"
                   onClick={() => {
                     setStage('icar');
-                    setTimeLeft(extraTime ? Math.floor(45 * 1.5) : 45);
+                    setTimeLeft(45);
                   }}
                 >
                   Go
@@ -517,7 +496,7 @@ export const TestPage = () => {
           <CardContent className="space-y-6 text-slate-300">
             <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
               <p>
-                16 statements — choose how much you agree on a 1–5 scale (1 = strongly disagree, 5 = strongly agree). Expected time: ~8 minutes.
+                16 statements — choose how much you agree on a 1–5 scale (1 = strongly disagree, 5 = strongly agree). You have 45 seconds per statement. Expected time: ~8 minutes.
               </p>
             </div>
           </CardContent>
@@ -528,7 +507,7 @@ export const TestPage = () => {
                   className="w-full h-12 text-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold"
                   onClick={() => {
                     setStage('wleis');
-                    setTimeLeft(extraTime ? Math.floor(45 * 1.5) : 45);
+                    setTimeLeft(45);
                   }}
                 >
                   Go
@@ -554,8 +533,8 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
@@ -600,8 +579,8 @@ export const TestPage = () => {
           <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-                <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
               <div className="font-mono text-sm text-slate-400">
                 Smile Perception: Trial <span className="text-emerald-400 font-bold">{smileTrialIndex + 1}</span> of {totalSmileTrials}
@@ -621,19 +600,7 @@ export const TestPage = () => {
                 muted
                 className="w-full h-full object-cover"
               />
-              {!isPlaying && !isPausedAtCut && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={replayTrial}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 text-white hover:bg-black/40 transition-all"
-                    >
-                      <span className="px-6 py-3 bg-emerald-600 rounded-lg text-lg font-semibold shadow-lg">Play Video Clip</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Play video clip</TooltipContent>
-                </Tooltip>
-              )}
+
             </div>
 
             <div className="w-full max-w-2xl flex flex-col items-center space-y-4">
@@ -670,19 +637,7 @@ export const TestPage = () => {
                 </Tooltip>
               </div>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-slate-300 hover:text-white border-slate-700 bg-slate-800 hover:bg-slate-700 disabled:text-slate-500"
-                    onClick={replayTrial}
-                  >
-                    ↺ Replay clip
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Replay the current video clip from start</TooltipContent>
-              </Tooltip>
+
             </div>
           </main>
         </div>
@@ -697,8 +652,8 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button variant="outline" size="sm" className="disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="text-slate-200 disabled:text-slate-500" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-2xl">
@@ -752,7 +707,7 @@ export const TestPage = () => {
                   </div>
 
                   <div className="text-xs text-slate-400 bg-slate-950 p-4 rounded-lg border border-slate-800 leading-relaxed">
-                    <strong>Calibration Insight:</strong> Your self-reported emotional appraisal (OEA) has been objectively calibrated against your actual perceptual discrimination of subtle facial micro-expressions.
+                    Thank you for completing the assessment. Your results have been securely recorded. You may now close this window.
                   </div>
                 </>
               ) : (
@@ -784,7 +739,7 @@ export const TestPage = () => {
   }
 
   // Active Stage 1 & 2: ICAR & WLEIS Interface
-  const maxTime = extraTime ? Math.floor(45 * 1.5) : 45;
+  const maxTime = 45;
   const progressPercent = (timeLeft / maxTime) * 100;
 
   const isIcar = currentQuestion < sessionData.items.length;

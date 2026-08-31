@@ -70,24 +70,7 @@ describe('TestPage pre-test gate', () => {
     vi.useRealTimers();
   });
 
-  it('extends the timer to 67s in accessibility mode after clicking Go', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    renderTest();
-    
-    const checkbox = await screen.findByRole('checkbox');
-    const btn = await screen.findByRole('button', { name: /Begin Assessment/i });
-    const switchBtn = await screen.findByRole('switch');
-    
-    fireEvent.click(checkbox);
-    fireEvent.click(switchBtn);
-    fireEvent.click(btn);
-    
-    const goBtn = await screen.findByRole('button', { name: /Go/i });
-    fireEvent.click(goBtn);
 
-    expect(screen.getByText('00:67')).toBeTruthy();
-    vi.useRealTimers();
-  });
 
   it('renders Smile Stage 3 instructions with Go button after completing ICAR and WLEIS', async () => {
     vi.mocked(httpsCallable).mockReturnValueOnce((() => Promise.resolve({
@@ -148,7 +131,7 @@ describe('TestPage pre-test gate', () => {
     expect(screen.getByRole('button', { name: /5 Strongly agree/i })).toBeTruthy();
   });
 
-  it('renders Replay clip button on SMILE trials', async () => {
+  it('renders Genuine and Fake buttons on SMILE trials', async () => {
     vi.mocked(httpsCallable).mockReturnValueOnce((() => Promise.resolve({
       data: {
         sessionId: 'sess_smile_trials',
@@ -173,8 +156,7 @@ describe('TestPage pre-test gate', () => {
     const goBtn = await screen.findByRole('button', { name: /Go/i });
     fireEvent.click(goBtn);
 
-    expect(await screen.findByRole('button', { name: /Replay clip/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Genuine Smile/i })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /Genuine Smile/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Fake \/ Posed Smile/i })).toBeTruthy();
   });
 });
