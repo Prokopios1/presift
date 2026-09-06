@@ -5,31 +5,31 @@ exports.calibrateWLEIS = calibrateWLEIS;
 exports.scoreSmileTask = scoreSmileTask;
 function validateSmileAnswers(answers, trials) {
     if (!Array.isArray(answers)) {
-        throw new Error('smileAnswers must be an array');
+        throw new Error('ERR_INVALID_SMILE_ARRAY');
     }
     if (answers.length !== trials.length) {
-        throw new Error(`Expected ${trials.length} answers, received ${answers.length}`);
+        throw new Error(`ERR_SMILE_LENGTH_MISMATCH`);
     }
     const validTrialIds = new Set(trials.map((t) => t.trialId));
     const seenTrialIds = new Set();
     const validated = [];
     for (const ans of answers) {
         if (!ans || typeof ans !== 'object') {
-            throw new Error('Invalid answer object');
+            throw new Error('ERR_INVALID_SMILE_ANSWER');
         }
         const { trialId, perceived, rtMs } = ans;
         if (!trialId || !validTrialIds.has(trialId)) {
-            throw new Error(`Invalid trialId: ${trialId}`);
+            throw new Error(`ERR_INVALID_TRIAL_ID`);
         }
         if (seenTrialIds.has(trialId)) {
-            throw new Error(`Duplicate trialId: ${trialId}`);
+            throw new Error(`ERR_DUPLICATE_TRIAL_ID`);
         }
         seenTrialIds.add(trialId);
         if (perceived !== 'genuine' && perceived !== 'fake') {
-            throw new Error(`Invalid perceived string: ${perceived}`);
+            throw new Error(`ERR_INVALID_PERCEIVED_STRING`);
         }
         if (typeof rtMs !== 'number' || isNaN(rtMs) || rtMs < 0) {
-            throw new Error(`Invalid rtMs: ${rtMs}`);
+            throw new Error(`ERR_INVALID_RT_MS`);
         }
         validated.push({
             trialId,

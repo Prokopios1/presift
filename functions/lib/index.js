@@ -371,9 +371,12 @@ exports.topUpCredits = functions.https.onCall(async (data, _context) => {
 exports.createAssessmentLink = functions.https.onCall(async (data, _context) => {
     if (!_context.auth && !allowAnonDemo())
         throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-    const { roleTitle, candidateName, candidateEmail, recruiterId: payloadRecruiterId } = data || {};
+    const { roleTitle, candidateName, candidateEmail, recruiterId: payloadRecruiterId, lang } = data || {};
     if (!roleTitle)
         throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
+    // Candidate test language (product decision): recruiter picks 'el'|'en' when
+    // generating the link; default 'el'. Server returns content in that language.
+    const candidateLang = lang === 'en' ? 'en' : 'el';
     const recruiterId = await (0, auth_1.resolveRecruiterId)(_context, payloadRecruiterId);
     const recruiterRef = admin.firestore().collection("users").doc(recruiterId);
     const doc = await recruiterRef.get();
@@ -407,6 +410,7 @@ exports.createAssessmentLink = functions.https.onCall(async (data, _context) => 
         name: candidateName || "",
         email: candidateEmail || "",
         status: "Invited",
+        lang: candidateLang,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         recruiterId
     });
@@ -575,14 +579,21 @@ exports.startSession = functions.https.onCall(async (data, _context) => {
             appliedRole: "",
             candidateRecruiterId: "",
         };
+        let candidateLang = "el";
+        // True only when a real candidate record exists (doc-less /test/... harness
+        // links have no stored lang). We only signal lang to the client from real
+        // links; synthetic links keep the ambient UI language instead.
+        let hasCandidateLang = false;
         try {
             const candDoc = await admin.firestore().collection("candidates").doc(assessmentId).get();
             if (candDoc.exists) {
+                hasCandidateLang = true;
                 const c = candDoc.data();
                 // --- Archived gate: block new sessions for archived candidates ---
                 if (c.archived === true) {
                     throw new functions.https.HttpsError("failed-precondition", "This candidate is archived and cannot start a new assessment session.");
                 }
+                candidateLang = c.lang === "en" ? "en" : "el";
                 identity = {
                     candidateName: c.name || "",
                     candidateEmail: c.email || "",
@@ -612,8 +623,17 @@ exports.startSession = functions.https.onCall(async (data, _context) => {
             integrityEvents: [],
             ...identity,
         });
-        // Return the safe items and token to the client (never _keys)
-        return { sessionId: session.sessionId, items: session.items, wleisItems: session.wleisItems, sessionToken, smileTask: session.smileTask };
+        // Return the safe items and token to the client (never _keys). Items are
+        // localized to the candidate link's language (captured above).
+        const localized = (0, session_1.localizeSession)(session, candidateLang);
+        return {
+            sessionId: session.sessionId,
+            items: localized.items,
+            wleisItems: localized.wleisItems,
+            ...(hasCandidateLang ? { lang: candidateLang } : {}),
+            sessionToken,
+            smileTask: session.smileTask,
+        };
     }
     catch (error) {
         if (error instanceof functions.https.HttpsError)

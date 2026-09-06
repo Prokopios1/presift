@@ -10,6 +10,13 @@ function captureDialogs(page: Page): string[] {
 }
 
 test.describe('Dashboard (mock recruiter flows)', () => {
+  // Deterministic English chrome (I18nContext reads localStorage; default is gr).
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('presift_language', 'en');
+    });
+  });
+
   test('mock login lands on dashboard', async ({ page }) => {
     // Arrange
     await page.goto('/dashboard?demo=true');

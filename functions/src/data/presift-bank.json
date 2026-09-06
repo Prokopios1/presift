@@ -13,7 +13,12 @@
     "Spatial items use asset codes (e.g. L-UP) resolved server-side to hosted SVG assets; the key scheme is renderer-agnostic."
   ],
   "norming": {
-    "baseline": { "mean": 100, "sd": 15, "thetaPriorMean": 0, "thetaPriorSd": 1 },
+    "baseline": {
+      "mean": 100,
+      "sd": 15,
+      "thetaPriorMean": 0,
+      "thetaPriorSd": 1
+    },
     "estimator": "EAP (default): deterministic midpoint quadrature over [-6, 6], step 0.025. MLE (bisection on the 3PL score function) available with EAP fallback."
   },
   "antiCheat": {
@@ -26,41 +31,375 @@
     "itemVersioning": "Every resolved instance carries itemId + variantHash (SHA-256 of the resolved prompt/options) for post-hoc audit."
   },
   "banks": {
-    "analogyPairs": [
-      ["doctor", "hospital", "teacher", "school"],
-      ["chef", "kitchen", "pilot", "cockpit"],
-      ["author", "book", "composer", "symphony"],
-      ["carpenter", "wood", "tailor", "fabric"],
-      ["driver", "vehicle", "captain", "ship"]
+    "analogyPairs": {
+      "en": [
+        [
+          "doctor",
+          "hospital",
+          "teacher",
+          "school"
+        ],
+        [
+          "chef",
+          "kitchen",
+          "pilot",
+          "cockpit"
+        ],
+        [
+          "author",
+          "book",
+          "composer",
+          "symphony"
+        ],
+        [
+          "carpenter",
+          "wood",
+          "tailor",
+          "fabric"
+        ],
+        [
+          "driver",
+          "vehicle",
+          "captain",
+          "ship"
+        ]
+      ],
+      "el": [
+        [
+          "γιατρός",
+          "νοσοκομείο",
+          "δάσκαλος",
+          "σχολείο"
+        ],
+        [
+          "σεφ",
+          "κουζίνα",
+          "πιλότος",
+          "πιλοτήριο"
+        ],
+        [
+          "συγγραφέας",
+          "βιβλίο",
+          "συνθέτης",
+          "συμφωνία"
+        ],
+        [
+          "ξυλουργός",
+          "ξύλο",
+          "ράφτης",
+          "ύφασμα"
+        ],
+        [
+          "οδηγός",
+          "όχημα",
+          "καπετάνιος",
+          "πλοίο"
+        ]
+      ]
+    },
+    "analogyDistractorPool": {
+      "en": [
+        "office",
+        "library",
+        "clinic",
+        "factory",
+        "studio",
+        "garage",
+        "court",
+        "ward"
+      ],
+      "el": [
+        "γραφείο",
+        "βιβλιοθήκη",
+        "κλινική",
+        "εργοστάσιο",
+        "στούντιο",
+        "γκαράζ",
+        "δικαστήριο",
+        "θάλαμος"
+      ]
+    },
+    "synonymSets": {
+      "en": [
+        [
+          "rapid",
+          "fast",
+          "slow",
+          "loud",
+          "heavy",
+          "soft"
+        ],
+        [
+          "abundant",
+          "plentiful",
+          "scarce",
+          "tiny",
+          "empty",
+          "sparse"
+        ],
+        [
+          "candid",
+          "frank",
+          "vague",
+          "polite",
+          "harsh",
+          "secretive"
+        ],
+        [
+          "fragile",
+          "delicate",
+          "sturdy",
+          "coarse",
+          "heavy",
+          "rough"
+        ],
+        [
+          "evident",
+          "obvious",
+          "hidden",
+          "subtle",
+          "vague",
+          "obscure"
+        ]
+      ],
+      "el": [
+        [
+          "γρήγορος",
+          "ταχύς",
+          "αργός",
+          "δυνατός",
+          "βαρύς",
+          "απαλός"
+        ],
+        [
+          "άφθονος",
+          "πλούσιος",
+          "σπάνιος",
+          "μικροσκοπικός",
+          "άδειος",
+          "αραιός"
+        ],
+        [
+          "ειλικρινής",
+          "ευθύς",
+          "ασαφής",
+          "ευγενικός",
+          "σκληρός",
+          "μυστικοπαθής"
+        ],
+        [
+          "εύθραυστος",
+          "λεπτός",
+          "γερός",
+          "χονδροειδής",
+          "βαρύς",
+          "τραχύς"
+        ],
+        [
+          "προφανής",
+          "ολοφάνερος",
+          "κρυφός",
+          "ανεπαίσθητος",
+          "ασαφής",
+          "σκοτεινός"
+        ]
+      ]
+    },
+    "antonymSets": {
+      "en": [
+        [
+          "expand",
+          "shrink",
+          "grow",
+          "stretch",
+          "spread"
+        ],
+        [
+          "ancient",
+          "modern",
+          "old",
+          "aged",
+          "antique"
+        ],
+        [
+          "assemble",
+          "disassemble",
+          "gather",
+          "build",
+          "construct"
+        ],
+        [
+          "ascend",
+          "descend",
+          "climb",
+          "rise",
+          "soar"
+        ],
+        [
+          "generous",
+          "stingy",
+          "kind",
+          "giving",
+          "noble"
+        ]
+      ],
+      "el": [
+        [
+          "επεκτείνω",
+          "συρρικνώνω",
+          "μεγαλώνω",
+          "τεντώνω",
+          "απλώνω"
+        ],
+        [
+          "αρχαίος",
+          "σύγχρονος",
+          "παλιός",
+          "ηλικιωμένος",
+          "αντίκα"
+        ],
+        [
+          "συναρμολογώ",
+          "αποσυναρμολογώ",
+          "μαζεύω",
+          "χτίζω",
+          "κατασκευάζω"
+        ],
+        [
+          "ανεβαίνω",
+          "κατεβαίνω",
+          "σκαρφαλώνω",
+          "υψώνομαι",
+          "πετάω"
+        ],
+        [
+          "γενναιόδωρος",
+          "τσιγκούνης",
+          "ευγενικός",
+          "δοτικός",
+          "ευγενής"
+        ]
+      ]
+    },
+    "oddOneOutSets": {
+      "en": [
+        [
+          "apple",
+          "banana",
+          "carrot",
+          "cherry",
+          2
+        ],
+        [
+          "guitar",
+          "piano",
+          "drum",
+          "violin",
+          2
+        ],
+        [
+          "eagle",
+          "sparrow",
+          "penguin",
+          "hawk",
+          2
+        ],
+        [
+          "ruby",
+          "emerald",
+          "sapphire",
+          "diamond",
+          3
+        ],
+        [
+          "river",
+          "stream",
+          "ocean",
+          "lake",
+          2
+        ]
+      ],
+      "el": [
+        [
+          "μήλο",
+          "μπανάνα",
+          "καρότο",
+          "κεράσι",
+          2
+        ],
+        [
+          "κιθάρα",
+          "πιάνο",
+          "τύμπανο",
+          "βιολί",
+          2
+        ],
+        [
+          "αετός",
+          "σπουργίτι",
+          "πιγκουίνος",
+          "γεράκι",
+          2
+        ],
+        [
+          "ρουμπίνι",
+          "σμαράγδι",
+          "ζαφείρι",
+          "διαμάντι",
+          3
+        ],
+        [
+          "ποτάμι",
+          "ρυάκι",
+          "ωκεανός",
+          "λίμνη",
+          2
+        ]
+      ]
+    },
+    "abstractGlyphPairs": [
+      [
+        "◇",
+        "◆"
+      ],
+      [
+        "▲",
+        "●"
+      ],
+      [
+        "■",
+        "□"
+      ]
     ],
-    "analogyDistractorPool": ["office", "library", "clinic", "factory", "studio", "garage", "court", "ward"],
-    "synonymSets": [
-      ["rapid", "fast", "slow", "loud", "heavy", "soft"],
-      ["abundant", "plentiful", "scarce", "tiny", "empty", "sparse"],
-      ["candid", "frank", "vague", "polite", "harsh", "secretive"],
-      ["fragile", "delicate", "sturdy", "coarse", "heavy", "rough"],
-      ["evident", "obvious", "hidden", "subtle", "vague", "obscure"]
-    ],
-    "antonymSets": [
-      ["expand", "shrink", "grow", "stretch", "spread"],
-      ["ancient", "modern", "old", "aged", "antique"],
-      ["assemble", "disassemble", "gather", "build", "construct"],
-      ["ascend", "descend", "climb", "rise", "soar"],
-      ["generous", "stingy", "kind", "giving", "noble"]
-    ],
-    "oddOneOutSets": [
-      ["apple", "banana", "carrot", "cherry", 2],
-      ["guitar", "piano", "drum", "violin", 2],
-      ["eagle", "sparrow", "penguin", "hawk", 2],
-      ["ruby", "emerald", "sapphire", "diamond", 3],
-      ["river", "stream", "ocean", "lake", 2]
-    ],
-    "abstractGlyphPairs": [["◇", "◆"], ["▲", "●"], ["■", "□"]],
     "spatialShapes": [
-      { "code": "L-UP", "rot90cw": "L-RIGHT", "rot90ccw": "L-LEFT", "rot180": "L-DOWN", "mirror": "L-LEFT" },
-      { "code": "T-UP", "rot90cw": "T-RIGHT", "rot90ccw": "T-LEFT", "rot180": "T-DOWN", "mirror": "T-LEFT" },
-      { "code": "F-UP", "rot90cw": "F-RIGHT", "rot90ccw": "F-LEFT", "rot180": "F-DOWN", "mirror": "F-LEFT" },
-      { "code": "P-RIGHT", "rot90cw": "P-DOWN", "rot90ccw": "P-UP", "rot180": "P-LEFT", "mirror": "P-LEFT" }
+      {
+        "code": "L-UP",
+        "rot90cw": "L-RIGHT",
+        "rot90ccw": "L-LEFT",
+        "rot180": "L-DOWN",
+        "mirror": "L-LEFT"
+      },
+      {
+        "code": "T-UP",
+        "rot90cw": "T-RIGHT",
+        "rot90ccw": "T-LEFT",
+        "rot180": "T-DOWN",
+        "mirror": "T-LEFT"
+      },
+      {
+        "code": "F-UP",
+        "rot90cw": "F-RIGHT",
+        "rot90ccw": "F-LEFT",
+        "rot180": "F-DOWN",
+        "mirror": "F-LEFT"
+      },
+      {
+        "code": "P-RIGHT",
+        "rot90cw": "P-DOWN",
+        "rot90ccw": "P-UP",
+        "rot180": "P-LEFT",
+        "mirror": "P-LEFT"
+      }
     ]
   },
   "cognitive": {
@@ -77,232 +416,905 @@
       {
         "id": "ICAR-N-01",
         "domain": "numerical",
-        "promptTemplate": "What number completes the series?  {{a}}, {{a+d}}, {{a+2d}}, {{a+3d}}, {{a+4d}}, ?",
-        "optionTemplates": ["{{a+5d}}", "{{a+5d-d}}", "{{a+5d+d}}", "{{a+5d-2d}}"],
+        "promptTemplate": {
+          "en": "What number completes the series?  {{a}}, {{a+d}}, {{a+2d}}, {{a+3d}}, {{a+4d}}, ?",
+          "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  {{a}}, {{a+d}}, {{a+2d}}, {{a+3d}}, {{a+4d}}, ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{a+5d}}",
+            "{{a+5d-d}}",
+            "{{a+5d+d}}",
+            "{{a+5d-2d}}"
+          ],
+          "el": [
+            "{{a+5d}}",
+            "{{a+5d-d}}",
+            "{{a+5d+d}}",
+            "{{a+5d-2d}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.72,
-        "irt": { "a": 1.1, "b": -0.94, "c": 0.15 },
+        "irt": {
+          "a": 1.1,
+          "b": -0.94,
+          "c": 0.15
+        },
         "parameterization": {
-          "randomizedVariables": ["a", "d"],
-          "rules": [
-            { "variable": "a", "type": "integer", "range": [2, 9] },
-            { "variable": "d", "type": "integer", "range": [2, 7], "constraint": "(a + 5*d) <= 120" }
+          "randomizedVariables": [
+            "a",
+            "d"
           ],
-          "distractorRules": ["correct - d", "correct + d", "correct - 2*d"],
-          "uniqueness": ["all four options distinct", "all options >= 0", "no distractor equals the correct answer"],
+          "rules": [
+            {
+              "variable": "a",
+              "type": "integer",
+              "range": [
+                2,
+                9
+              ]
+            },
+            {
+              "variable": "d",
+              "type": "integer",
+              "range": [
+                2,
+                7
+              ],
+              "constraint": "(a + 5*d) <= 120"
+            }
+          ],
+          "distractorRules": [
+            "correct - d",
+            "correct + d",
+            "correct - 2*d"
+          ],
+          "uniqueness": [
+            "all four options distinct",
+            "all options >= 0",
+            "no distractor equals the correct answer"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 48
         },
-        "resolvedExample": { "prompt": "What number completes the series?  3, 7, 11, 15, 19, ?", "options": ["23", "19", "27", "15"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "What number completes the series?  3, 7, 11, 15, 19, ?",
+            "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  3, 7, 11, 15, 19, ?"
+          },
+          "options": {
+            "en": [
+              "23",
+              "19",
+              "27",
+              "15"
+            ],
+            "el": [
+              "23",
+              "19",
+              "27",
+              "15"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-N-02",
         "domain": "numerical",
-        "promptTemplate": "What number completes the series?  {{a}}, {{a*r}}, {{a*r^2}}, {{a*r^3}}, {{a*r^4}}, ?",
-        "optionTemplates": ["{{a*r^5}}", "{{a*r^4 + a*r^3}}", "{{a*r^5 - a*r^2}}", "{{a*r^5 + a*r^2}}"],
+        "promptTemplate": {
+          "en": "What number completes the series?  {{a}}, {{a*r}}, {{a*r^2}}, {{a*r^3}}, {{a*r^4}}, ?",
+          "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  {{a}}, {{a*r}}, {{a*r^2}}, {{a*r^3}}, {{a*r^4}}, ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{a*r^5}}",
+            "{{a*r^4 + a*r^3}}",
+            "{{a*r^5 - a*r^2}}",
+            "{{a*r^5 + a*r^2}}"
+          ],
+          "el": [
+            "{{a*r^5}}",
+            "{{a*r^4 + a*r^3}}",
+            "{{a*r^5 - a*r^2}}",
+            "{{a*r^5 + a*r^2}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.58,
-        "irt": { "a": 1.3, "b": -0.32, "c": 0.2 },
+        "irt": {
+          "a": 1.3,
+          "b": -0.32,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["a", "r"],
-          "rules": [
-            { "variable": "a", "type": "integer", "range": [2, 5] },
-            { "variable": "r", "type": "integer", "range": [2, 3], "constraint": "a * r^5 <= 1000" }
+          "randomizedVariables": [
+            "a",
+            "r"
           ],
-          "distractorRules": ["correct - a*r^2", "a*r^4 + a*r^3", "correct + a*r^2"],
-          "uniqueness": ["all four options distinct", "all options >= 0", "no distractor equals the correct answer"],
+          "rules": [
+            {
+              "variable": "a",
+              "type": "integer",
+              "range": [
+                2,
+                5
+              ]
+            },
+            {
+              "variable": "r",
+              "type": "integer",
+              "range": [
+                2,
+                3
+              ],
+              "constraint": "a * r^5 <= 1000"
+            }
+          ],
+          "distractorRules": [
+            "correct - a*r^2",
+            "a*r^4 + a*r^3",
+            "correct + a*r^2"
+          ],
+          "uniqueness": [
+            "all four options distinct",
+            "all options >= 0",
+            "no distractor equals the correct answer"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 7
         },
-        "resolvedExample": { "prompt": "What number completes the series?  4, 8, 16, 32, 64, ?", "options": ["128", "96", "112", "144"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "What number completes the series?  4, 8, 16, 32, 64, ?",
+            "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  4, 8, 16, 32, 64, ?"
+          },
+          "options": {
+            "en": [
+              "128",
+              "96",
+              "112",
+              "144"
+            ],
+            "el": [
+              "128",
+              "96",
+              "112",
+              "144"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-N-03",
         "domain": "numerical",
-        "promptTemplate": "What number completes the series?  {{a}}, {{a/3}}, {{a/9}}, {{a/27}}, {{a/81}}, ?",
-        "optionTemplates": ["{{a/243}}", "{{a/243 + 1}}", "{{a/81}}", "{{a/243 - 1}}"],
+        "promptTemplate": {
+          "en": "What number completes the series?  {{a}}, {{a/3}}, {{a/9}}, {{a/27}}, {{a/81}}, ?",
+          "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  {{a}}, {{a/3}}, {{a/9}}, {{a/27}}, {{a/81}}, ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{a/243}}",
+            "{{a/243 + 1}}",
+            "{{a/81}}",
+            "{{a/243 - 1}}"
+          ],
+          "el": [
+            "{{a/243}}",
+            "{{a/243 + 1}}",
+            "{{a/81}}",
+            "{{a/243 - 1}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.55,
-        "irt": { "a": 1.2, "b": -0.2, "c": 0.2 },
+        "irt": {
+          "a": 1.2,
+          "b": -0.2,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["a"],
-          "rules": [
-            { "variable": "a", "type": "integer", "enum": [243, 486, 729], "constraint": "all terms stay integers" }
+          "randomizedVariables": [
+            "a"
           ],
-          "distractorRules": ["correct + 1", "previous term (a/81)", "correct - 1"],
-          "uniqueness": ["all four options distinct", "no distractor equals the correct answer"],
+          "rules": [
+            {
+              "variable": "a",
+              "type": "integer",
+              "enum": [
+                243,
+                486,
+                729
+              ],
+              "constraint": "all terms stay integers"
+            }
+          ],
+          "distractorRules": [
+            "correct + 1",
+            "previous term (a/81)",
+            "correct - 1"
+          ],
+          "uniqueness": [
+            "all four options distinct",
+            "no distractor equals the correct answer"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 3
         },
-        "resolvedExample": { "prompt": "What number completes the series?  243, 81, 27, 9, 3, ?", "options": ["1", "2", "3", "0"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "What number completes the series?  243, 81, 27, 9, 3, ?",
+            "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  243, 81, 27, 9, 3, ?"
+          },
+          "options": {
+            "en": [
+              "1",
+              "2",
+              "3",
+              "0"
+            ],
+            "el": [
+              "1",
+              "2",
+              "3",
+              "0"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-N-04",
         "domain": "numerical",
-        "promptTemplate": "What number completes the series?  {{b^2}}, {{(b+1)^2}}, {{(b+2)^2}}, {{(b+3)^2}}, {{(b+4)^2}}, ?",
-        "optionTemplates": ["{{(b+5)^2}}", "{{(b+5)^2 - (b+4)}}", "{{(b+5)^2 - 2*(b+4)}}", "{{(b+5)^2 + (b+4)}}"],
+        "promptTemplate": {
+          "en": "What number completes the series?  {{b^2}}, {{(b+1)^2}}, {{(b+2)^2}}, {{(b+3)^2}}, {{(b+4)^2}}, ?",
+          "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  {{b^2}}, {{(b+1)^2}}, {{(b+2)^2}}, {{(b+3)^2}}, {{(b+4)^2}}, ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{(b+5)^2}}",
+            "{{(b+5)^2 - (b+4)}}",
+            "{{(b+5)^2 - 2*(b+4)}}",
+            "{{(b+5)^2 + (b+4)}}"
+          ],
+          "el": [
+            "{{(b+5)^2}}",
+            "{{(b+5)^2 - (b+4)}}",
+            "{{(b+5)^2 - 2*(b+4)}}",
+            "{{(b+5)^2 + (b+4)}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.65,
-        "irt": { "a": 1.0, "b": -0.62, "c": 0.15 },
+        "irt": {
+          "a": 1,
+          "b": -0.62,
+          "c": 0.15
+        },
         "parameterization": {
-          "randomizedVariables": ["b"],
-          "rules": [
-            { "variable": "b", "type": "integer", "range": [1, 3] }
+          "randomizedVariables": [
+            "b"
           ],
-          "distractorRules": ["correct - (b+4)", "correct - 2*(b+4)", "correct + (b+4)"],
-          "uniqueness": ["all four options distinct", "no distractor equals the correct answer"],
+          "rules": [
+            {
+              "variable": "b",
+              "type": "integer",
+              "range": [
+                1,
+                3
+              ]
+            }
+          ],
+          "distractorRules": [
+            "correct - (b+4)",
+            "correct - 2*(b+4)",
+            "correct + (b+4)"
+          ],
+          "uniqueness": [
+            "all four options distinct",
+            "no distractor equals the correct answer"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 3
         },
-        "resolvedExample": { "prompt": "What number completes the series?  1, 4, 9, 16, 25, ?", "options": ["36", "31", "26", "41"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "What number completes the series?  1, 4, 9, 16, 25, ?",
+            "el": "Ποιος αριθμός συμπληρώνει τη σειρά;  1, 4, 9, 16, 25, ?"
+          },
+          "options": {
+            "en": [
+              "36",
+              "31",
+              "26",
+              "41"
+            ],
+            "el": [
+              "36",
+              "31",
+              "26",
+              "41"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-V-01",
         "domain": "verbal",
-        "promptTemplate": "{{X}} is to {{Y}} as {{P}} is to ?",
-        "optionTemplates": ["{{Q}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+        "promptTemplate": {
+          "en": "{{X}} is to {{Y}} as {{P}} is to ?",
+          "el": "Το {{X}} έχει σχέση με το {{Y}} όπως το {{P}} έχει σχέση με το;"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{Q}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ],
+          "el": [
+            "{{Q}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.85,
-        "irt": { "a": 0.9, "b": -1.73, "c": 0.2 },
+        "irt": {
+          "a": 0.9,
+          "b": -1.73,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["analogyPair", "distractors"],
-          "rules": [
-            { "variable": "analogyPair", "source": "banks.analogyPairs", "strategy": "uniform random pick per session", "shape": [2, 4] },
-            { "variable": "distractors", "source": "banks.analogyDistractorPool", "strategy": "sample 3 of 8 without replacement", "constraint": "distractors must differ from Q and from each other; semantic relatedness to the Y field preferred" }
+          "randomizedVariables": [
+            "analogyPair",
+            "distractors"
           ],
-          "distractorRules": ["D1..D3 sampled from pool, related to Y"],
-          "uniqueness": ["all four options distinct", "correct option (Q) never collides with distractors"],
+          "rules": [
+            {
+              "variable": "analogyPair",
+              "source": "banks.analogyPairs",
+              "strategy": "uniform random pick per session",
+              "shape": [
+                2,
+                4
+              ]
+            },
+            {
+              "variable": "distractors",
+              "source": "banks.analogyDistractorPool",
+              "strategy": "sample 3 of 8 without replacement",
+              "constraint": "distractors must differ from Q and from each other; semantic relatedness to the Y field preferred"
+            }
+          ],
+          "distractorRules": [
+            "D1..D3 sampled from pool, related to Y"
+          ],
+          "uniqueness": [
+            "all four options distinct",
+            "correct option (Q) never collides with distractors"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 280
         },
-        "resolvedExample": { "prompt": "doctor is to hospital as teacher is to ?", "options": ["school", "office", "library", "clinic"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "doctor is to hospital as teacher is to ?",
+            "el": "Το doctor έχει σχέση με το hospital όπως το teacher έχει σχέση με το;"
+          },
+          "options": {
+            "en": [
+              "school",
+              "office",
+              "library",
+              "clinic"
+            ],
+            "el": [
+              "school",
+              "office",
+              "library",
+              "clinic"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-V-02",
         "domain": "verbal",
-        "promptTemplate": "Which word is closest in meaning to '{{TARGET}}'?",
-        "optionTemplates": ["{{SYN}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+        "promptTemplate": {
+          "en": "Which word is closest in meaning to '{{TARGET}}'?",
+          "el": "Ποια λέξη έχει την πιο κοντινή σημασία με τη λέξη '{{TARGET}}';"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{SYN}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ],
+          "el": [
+            "{{SYN}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.78,
-        "irt": { "a": 1.0, "b": -1.27, "c": 0.2 },
+        "irt": {
+          "a": 1,
+          "b": -1.27,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["synonymSet", "distractors"],
-          "rules": [
-            { "variable": "synonymSet", "source": "banks.synonymSets", "strategy": "uniform pick", "shape": [6], "mapping": "entry[0]=TARGET, entry[1]=SYN" },
-            { "variable": "distractors", "source": "entries 2..5 of the selected set", "strategy": "sample 3 of 4 without replacement" }
+          "randomizedVariables": [
+            "synonymSet",
+            "distractors"
           ],
-          "distractorRules": ["D1..D3 = sampled set entries"],
-          "uniqueness": ["all four options distinct"],
+          "rules": [
+            {
+              "variable": "synonymSet",
+              "source": "banks.synonymSets",
+              "strategy": "uniform pick",
+              "shape": [
+                6
+              ],
+              "mapping": "entry[0]=TARGET, entry[1]=SYN"
+            },
+            {
+              "variable": "distractors",
+              "source": "entries 2..5 of the selected set",
+              "strategy": "sample 3 of 4 without replacement"
+            }
+          ],
+          "distractorRules": [
+            "D1..D3 = sampled set entries"
+          ],
+          "uniqueness": [
+            "all four options distinct"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 20
         },
-        "resolvedExample": { "prompt": "Which word is closest in meaning to 'rapid'?", "options": ["fast", "slow", "loud", "heavy"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "Which word is closest in meaning to 'rapid'?",
+            "el": "Ποια λέξη έχει την πιο κοντινή σημασία με τη λέξη 'rapid';"
+          },
+          "options": {
+            "en": [
+              "fast",
+              "slow",
+              "loud",
+              "heavy"
+            ],
+            "el": [
+              "fast",
+              "slow",
+              "loud",
+              "heavy"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-V-03",
         "domain": "verbal",
-        "promptTemplate": "Which word is the OPPOSITE of '{{TARGET}}'?",
-        "optionTemplates": ["{{ANT}}", "{{D1}}", "{{D2}}", "{{D3}}"],
+        "promptTemplate": {
+          "en": "Which word is the OPPOSITE of '{{TARGET}}'?",
+          "el": "Ποια λέξη είναι το ΑΝΤΙΘΕΤΟ της λέξης '{{TARGET}}';"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{ANT}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ],
+          "el": [
+            "{{ANT}}",
+            "{{D1}}",
+            "{{D2}}",
+            "{{D3}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.7,
-        "irt": { "a": 1.1, "b": -0.85, "c": 0.2 },
+        "irt": {
+          "a": 1.1,
+          "b": -0.85,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["antonymSet", "distractors"],
-          "rules": [
-            { "variable": "antonymSet", "source": "banks.antonymSets", "strategy": "uniform pick", "shape": [5], "mapping": "entry[0]=TARGET, entry[1]=ANT" },
-            { "variable": "distractors", "source": "entries 2..4 of the selected set", "strategy": "all three served" }
+          "randomizedVariables": [
+            "antonymSet",
+            "distractors"
           ],
-          "distractorRules": ["D1..D3 = entries 2..4"],
-          "uniqueness": ["all four options distinct"],
+          "rules": [
+            {
+              "variable": "antonymSet",
+              "source": "banks.antonymSets",
+              "strategy": "uniform pick",
+              "shape": [
+                5
+              ],
+              "mapping": "entry[0]=TARGET, entry[1]=ANT"
+            },
+            {
+              "variable": "distractors",
+              "source": "entries 2..4 of the selected set",
+              "strategy": "all three served"
+            }
+          ],
+          "distractorRules": [
+            "D1..D3 = entries 2..4"
+          ],
+          "uniqueness": [
+            "all four options distinct"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 5
         },
-        "resolvedExample": { "prompt": "Which word is the OPPOSITE of 'expand'?", "options": ["shrink", "grow", "stretch", "spread"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "Which word is the OPPOSITE of 'expand'?",
+            "el": "Ποια λέξη είναι το ΑΝΤΙΘΕΤΟ της λέξης 'expand';"
+          },
+          "options": {
+            "en": [
+              "shrink",
+              "grow",
+              "stretch",
+              "spread"
+            ],
+            "el": [
+              "shrink",
+              "grow",
+              "stretch",
+              "spread"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-V-04",
         "domain": "verbal",
-        "promptTemplate": "Which word does NOT belong with the others?  {{W1}}, {{W2}}, {{W3}}, {{W4}}",
-        "optionTemplates": ["{{W1}}", "{{W2}}", "{{W3}}", "{{W4}}"],
+        "promptTemplate": {
+          "en": "Which word does NOT belong with the others?  {{W1}}, {{W2}}, {{W3}}, {{W4}}",
+          "el": "Ποια λέξη ΔΕΝ ταιριάζει με τις άλλες;  {{W1}}, {{W2}}, {{W3}}, {{W4}}"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{W1}}",
+            "{{W2}}",
+            "{{W3}}",
+            "{{W4}}"
+          ],
+          "el": [
+            "{{W1}}",
+            "{{W2}}",
+            "{{W3}}",
+            "{{W4}}"
+          ]
+        },
         "correctIndex": 2,
         "difficulty": 0.62,
-        "irt": { "a": 0.8, "b": -0.49, "c": 0.25 },
+        "irt": {
+          "a": 0.8,
+          "b": -0.49,
+          "c": 0.25
+        },
         "parameterization": {
-          "randomizedVariables": ["oddOneOutSet", "optionOrder"],
-          "rules": [
-            { "variable": "oddOneOutSet", "source": "banks.oddOneOutSets", "strategy": "uniform pick", "shape": [5], "mapping": "entry[4] = index of the odd word" },
-            { "variable": "optionOrder", "strategy": "server-side shuffle of the 4 words; correctIndex recomputed post-shuffle" }
+          "randomizedVariables": [
+            "oddOneOutSet",
+            "optionOrder"
           ],
-          "distractorRules": ["n/a - options ARE the four set members"],
-          "uniqueness": ["four distinct words guaranteed by bank construction"],
+          "rules": [
+            {
+              "variable": "oddOneOutSet",
+              "source": "banks.oddOneOutSets",
+              "strategy": "uniform pick",
+              "shape": [
+                5
+              ],
+              "mapping": "entry[4] = index of the odd word"
+            },
+            {
+              "variable": "optionOrder",
+              "strategy": "server-side shuffle of the 4 words; correctIndex recomputed post-shuffle"
+            }
+          ],
+          "distractorRules": [
+            "n/a - options ARE the four set members"
+          ],
+          "uniqueness": [
+            "four distinct words guaranteed by bank construction"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 120
         },
-        "resolvedExample": { "prompt": "Which word does NOT belong with the others?  apple, banana, carrot, cherry", "options": ["apple", "banana", "carrot", "cherry"], "correctIndex": 2 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "Which word does NOT belong with the others?  apple, banana, carrot, cherry",
+            "el": "Ποια λέξη ΔΕΝ ταιριάζει με τις άλλες;  apple, banana, carrot, cherry"
+          },
+          "options": {
+            "en": [
+              "apple",
+              "banana",
+              "carrot",
+              "cherry"
+            ],
+            "el": [
+              "apple",
+              "banana",
+              "carrot",
+              "cherry"
+            ]
+          },
+          "correctIndex": 2
+        }
       },
       {
         "id": "ICAR-A-01",
         "domain": "abstract",
-        "promptTemplate": "Which arrow completes the sequence?  {{S0}} {{S1}} {{S2}} {{S3}} {{S4}} {{S5}} ?",
-        "optionTemplates": ["{{S6}}", "{{S0}}", "{{S1}}", "{{S3}}"],
+        "promptTemplate": {
+          "en": "Which arrow completes the sequence?  {{S0}} {{S1}} {{S2}} {{S3}} {{S4}} {{S5}} ?",
+          "el": "Ποιο βέλος συμπληρώνει την ακολουθία;  {{S0}} {{S1}} {{S2}} {{S3}} {{S4}} {{S5}} ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{S6}}",
+            "{{S0}}",
+            "{{S1}}",
+            "{{S3}}"
+          ],
+          "el": [
+            "{{S6}}",
+            "{{S0}}",
+            "{{S1}}",
+            "{{S3}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.68,
-        "irt": { "a": 1.0, "b": -0.75, "c": 0.2 },
+        "irt": {
+          "a": 1,
+          "b": -0.75,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["startPhase"],
-          "rules": [
-            { "variable": "startPhase", "type": "integer", "range": [0, 3] },
-            { "variable": "cycle", "type": "fixed", "value": ["↑", "→", "↓", "←"], "constraint": "S_i = cycle[(startPhase + i) mod 4]; correct = S6; distractors = S0, S1, S3 (always distinct mod 4)" }
+          "randomizedVariables": [
+            "startPhase"
           ],
-          "distractorRules": ["S0, S1, S3 of the cycle window"],
-          "uniqueness": ["guaranteed by modular distinctness of indices 0, 1, 3, 6 mod 4"],
+          "rules": [
+            {
+              "variable": "startPhase",
+              "type": "integer",
+              "range": [
+                0,
+                3
+              ]
+            },
+            {
+              "variable": "cycle",
+              "type": "fixed",
+              "value": [
+                "↑",
+                "→",
+                "↓",
+                "←"
+              ],
+              "constraint": "S_i = cycle[(startPhase + i) mod 4]; correct = S6; distractors = S0, S1, S3 (always distinct mod 4)"
+            }
+          ],
+          "distractorRules": [
+            "S0, S1, S3 of the cycle window"
+          ],
+          "uniqueness": [
+            "guaranteed by modular distinctness of indices 0, 1, 3, 6 mod 4"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 4
         },
-        "resolvedExample": { "prompt": "Which arrow completes the sequence?  ↑ → ↓ ← ↑ → ?", "options": ["↓", "↑", "→", "←"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "Which arrow completes the sequence?  ↑ → ↓ ← ↑ → ?",
+            "el": "Ποιο βέλος συμπληρώνει την ακολουθία;  ↑ → ↓ ← ↑ → ?"
+          },
+          "options": {
+            "en": [
+              "↓",
+              "↑",
+              "→",
+              "←"
+            ],
+            "el": [
+              "↓",
+              "↑",
+              "→",
+              "←"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-A-02",
         "domain": "abstract",
-        "promptTemplate": "If  {{P1}}{{P2}}{{P1}}{{P2}}  becomes  {{P2}}{{P1}}{{P2}}{{P1}}  (reversal), then  {{G1}}{{G2}}{{G1}}{{G2}}  becomes ?",
-        "optionTemplates": ["{{G2}}{{G1}}{{G2}}{{G1}}", "{{G1}}{{G2}}{{G1}}{{G2}}", "{{G2}}{{G1}}{{G1}}{{G2}}", "{{G1}}{{G2}}{{G2}}{{G1}}"],
+        "promptTemplate": {
+          "en": "If  {{P1}}{{P2}}{{P1}}{{P2}}  becomes  {{P2}}{{P1}}{{P2}}{{P1}}  (reversal), then  {{G1}}{{G2}}{{G1}}{{G2}}  becomes ?",
+          "el": "Αν το  {{P1}}{{P2}}{{P1}}{{P2}}  γίνει  {{P2}}{{P1}}{{P2}}{{P1}}  (αντιστροφή), τότε το  {{G1}}{{G2}}{{G1}}{{G2}}  γίνεται;"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{G2}}{{G1}}{{G2}}{{G1}}",
+            "{{G1}}{{G2}}{{G1}}{{G2}}",
+            "{{G2}}{{G1}}{{G1}}{{G2}}",
+            "{{G1}}{{G2}}{{G2}}{{G1}}"
+          ],
+          "el": [
+            "{{G2}}{{G1}}{{G2}}{{G1}}",
+            "{{G1}}{{G2}}{{G1}}{{G2}}",
+            "{{G2}}{{G1}}{{G1}}{{G2}}",
+            "{{G1}}{{G2}}{{G2}}{{G1}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.6,
-        "irt": { "a": 0.9, "b": -0.41, "c": 0.2 },
+        "irt": {
+          "a": 0.9,
+          "b": -0.41,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["sourcePair", "targetPair"],
-          "rules": [
-            { "variable": "sourcePair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick" },
-            { "variable": "targetPair", "source": "banks.abstractGlyphPairs", "strategy": "uniform pick, targetPair != sourcePair", "constraint": "prevents trivial matching" }
+          "randomizedVariables": [
+            "sourcePair",
+            "targetPair"
           ],
-          "distractorRules": ["original order", "partial reversal (G2G1G1G2)", "partial reversal (G1G2G2G1)"],
-          "uniqueness": ["all four options distinct by construction"],
+          "rules": [
+            {
+              "variable": "sourcePair",
+              "source": "banks.abstractGlyphPairs",
+              "strategy": "uniform pick"
+            },
+            {
+              "variable": "targetPair",
+              "source": "banks.abstractGlyphPairs",
+              "strategy": "uniform pick, targetPair != sourcePair",
+              "constraint": "prevents trivial matching"
+            }
+          ],
+          "distractorRules": [
+            "original order",
+            "partial reversal (G2G1G1G2)",
+            "partial reversal (G1G2G2G1)"
+          ],
+          "uniqueness": [
+            "all four options distinct by construction"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 6
         },
-        "resolvedExample": { "prompt": "If  ◇◆◇◆  becomes  ◆◇◆◇  (reversal), then  ▲●▲●  becomes ?", "options": ["●▲●▲", "▲●▲●", "●▲▲●", "▲●●▲"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "If  ◇◆◇◆  becomes  ◆◇◆◇  (reversal), then  ▲●▲●  becomes ?",
+            "el": "Αν το  ◇◆◇◆  γίνει  ◆◇◆◇  (αντιστροφή), τότε το  ▲●▲●  γίνεται;"
+          },
+          "options": {
+            "en": [
+              "●▲●▲",
+              "▲●▲●",
+              "●▲▲●",
+              "▲●●▲"
+            ],
+            "el": [
+              "●▲●▲",
+              "▲●▲●",
+              "●▲▲●",
+              "▲●●▲"
+            ]
+          },
+          "correctIndex": 0
+        }
       },
       {
         "id": "ICAR-A-03",
         "domain": "abstract",
-        "promptTemplate": "Which figure completes the sequence?  {{G}}   {{G}}{{G}}   {{G}}{{G}}{{G}}   {{G}}{{G}}{{G}}{{G}}   ?",
-        "optionTemplates": ["{{G}}{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}{{G}}{{G}}{{G}}", "{{G}}{{G}}{{G}}"],
+        "promptTemplate": {
+          "en": "Which figure completes the sequence?  {{G}}   {{G}}{{G}}   {{G}}{{G}}{{G}}   {{G}}{{G}}{{G}}{{G}}   ?",
+          "el": "Ποιο σχήμα συμπληρώνει την ακολουθία;  {{G}}   {{G}}{{G}}   {{G}}{{G}}{{G}}   {{G}}{{G}}{{G}}{{G}}   ?"
+        },
+        "optionTemplates": {
+          "en": [
+            "{{G}}{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}"
+          ],
+          "el": [
+            "{{G}}{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}{{G}}{{G}}{{G}}",
+            "{{G}}{{G}}{{G}}"
+          ]
+        },
         "correctIndex": 0,
         "difficulty": 0.9,
-        "irt": { "a": 1.2, "b": -2.2, "c": 0.2 },
+        "irt": {
+          "a": 1.2,
+          "b": -2.2,
+          "c": 0.2
+        },
         "parameterization": {
-          "randomizedVariables": ["glyph", "startCount", "step"],
-          "rules": [
-            { "variable": "glyph", "source": "banks.abstractGlyphPairs flattened", "strategy": "uniform pick of 3 glyphs" },
-            { "variable": "startCount", "type": "integer", "range": [1, 2] },
-            { "variable": "step", "type": "integer", "range": [1, 2], "constraint": "startCount + 4*step <= 6" }
+          "randomizedVariables": [
+            "glyph",
+            "startCount",
+            "step"
           ],
-          "distractorRules": ["previous term", "correct + step", "correct - step"],
-          "uniqueness": ["all four options distinct by construction"],
+          "rules": [
+            {
+              "variable": "glyph",
+              "source": "banks.abstractGlyphPairs flattened",
+              "strategy": "uniform pick of 3 glyphs"
+            },
+            {
+              "variable": "startCount",
+              "type": "integer",
+              "range": [
+                1,
+                2
+              ]
+            },
+            {
+              "variable": "step",
+              "type": "integer",
+              "range": [
+                1,
+                2
+              ],
+              "constraint": "startCount + 4*step <= 6"
+            }
+          ],
+          "distractorRules": [
+            "previous term",
+            "correct + step",
+            "correct - step"
+          ],
+          "uniqueness": [
+            "all four options distinct by construction"
+          ],
           "seed": "per-session crypto seed",
           "estimatedUniqueInstances": 12
         },
-        "resolvedExample": { "prompt": "Which figure completes the sequence?  ◆   ◆◆   ◆◆◆   ◆◆◆◆   ?", "options": ["◆◆◆◆◆", "◆◆◆◆", "◆◆◆◆◆◆", "◆◆◆"], "correctIndex": 0 }
+        "resolvedExample": {
+          "prompt": {
+            "en": "Which figure completes the sequence?  ◆   ◆◆   ◆◆◆   ◆◆◆◆   ?",
+            "el": "Ποιο σχήμα συμπληρώνει την ακολουθία;  ◆   ◆◆   ◆◆◆   ◆◆◆◆   ?"
+          },
+          "options": {
+            "en": [
+              "◆◆◆◆◆",
+              "◆◆◆◆",
+              "◆◆◆◆◆◆",
+              "◆◆◆"
+            ],
+            "el": [
+              "◆◆◆◆◆",
+              "◆◆◆◆",
+              "◆◆◆◆◆◆",
+              "◆◆◆"
+            ]
+          },
+          "correctIndex": 0
+        }
       }
     ]
   },
@@ -314,25 +1326,161 @@
       "ROE": "Regulation of Emotion"
     },
     "itemsPerSubscale": 4,
-    "likert": { "min": 1, "max": 7, "labels": { "1": "Strongly Disagree", "4": "Neutral", "7": "Strongly Agree" } },
+    "likert": {
+      "min": 1,
+      "max": 7,
+      "labels": {
+        "1": "Strongly Disagree",
+        "4": "Neutral",
+        "7": "Strongly Agree"
+      }
+    },
     "reverseScoring": "transformed = (min + max) - original = 8 - original",
     "items": [
-      { "id": "WLEIS-SEA-01", "subscale": "SEA", "item": "I have a good sense of why I feel the emotions I feel.", "reverse": false },
-      { "id": "WLEIS-SEA-02", "subscale": "SEA", "item": "I really understand what I am feeling.", "reverse": false },
-      { "id": "WLEIS-SEA-03", "subscale": "SEA", "item": "I am often confused about my own feelings.", "reverse": true },
-      { "id": "WLEIS-SEA-04", "subscale": "SEA", "item": "I can always tell exactly how I am feeling.", "reverse": false },
-      { "id": "WLEIS-OEA-01", "subscale": "OEA", "item": "I always know my friends' emotions from their behavior.", "reverse": false },
-      { "id": "WLEIS-OEA-02", "subscale": "OEA", "item": "I am a good observer of others' emotions.", "reverse": false },
-      { "id": "WLEIS-OEA-03", "subscale": "OEA", "item": "I find it hard to understand why other people feel the way they do.", "reverse": true },
-      { "id": "WLEIS-OEA-04", "subscale": "OEA", "item": "I can tell when someone is upset even if they say nothing.", "reverse": false },
-      { "id": "WLEIS-UOE-01", "subscale": "UOE", "item": "I always set goals for myself and then try my best to achieve them.", "reverse": false },
-      { "id": "WLEIS-UOE-02", "subscale": "UOE", "item": "I always tell myself I am a competent person.", "reverse": false },
-      { "id": "WLEIS-UOE-03", "subscale": "UOE", "item": "I am a self-motivating person.", "reverse": false },
-      { "id": "WLEIS-UOE-04", "subscale": "UOE", "item": "I encourage myself to try harder even after setbacks.", "reverse": false },
-      { "id": "WLEIS-ROE-01", "subscale": "ROE", "item": "I am able to control my temper and handle problems rationally.", "reverse": false },
-      { "id": "WLEIS-ROE-02", "subscale": "ROE", "item": "I am quite capable of controlling my own emotions.", "reverse": false },
-      { "id": "WLEIS-ROE-03", "subscale": "ROE", "item": "I can calm down quickly when I am very angry.", "reverse": false },
-      { "id": "WLEIS-ROE-04", "subscale": "ROE", "item": "I lose control of my emotions when under pressure.", "reverse": true }
+      {
+        "id": "WLEIS-SEA-01",
+        "subscale": "SEA",
+        "item": {
+          "en": "I have a good sense of why I feel the emotions I feel.",
+          "el": "Έχω καλή αίσθηση του γιατί νιώθω τα συναισθήματα που νιώθω."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-SEA-02",
+        "subscale": "SEA",
+        "item": {
+          "en": "I really understand what I am feeling.",
+          "el": "Καταλαβαίνω πραγματικά τι νιώθω."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-SEA-03",
+        "subscale": "SEA",
+        "item": {
+          "en": "I am often confused about my own feelings.",
+          "el": "Συχνά μπερδεύομαι για τα δικά μου συναισθήματα."
+        },
+        "reverse": true
+      },
+      {
+        "id": "WLEIS-SEA-04",
+        "subscale": "SEA",
+        "item": {
+          "en": "I can always tell exactly how I am feeling.",
+          "el": "Μπορώ πάντα να πω ακριβώς πώς νιώθω."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-OEA-01",
+        "subscale": "OEA",
+        "item": {
+          "en": "I always know my friends' emotions from their behavior.",
+          "el": "Καταλαβαίνω πάντα τα συναισθήματα των φίλων μου από τη συμπεριφορά τους."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-OEA-02",
+        "subscale": "OEA",
+        "item": {
+          "en": "I am a good observer of others' emotions.",
+          "el": "Είμαι καλός παρατηρητής των συναισθημάτων των άλλων."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-OEA-03",
+        "subscale": "OEA",
+        "item": {
+          "en": "I find it hard to understand why other people feel the way they do.",
+          "el": "Δυσκολεύομαι να καταλάβω γιατί οι άλλοι νιώθουν όπως νιώθουν."
+        },
+        "reverse": true
+      },
+      {
+        "id": "WLEIS-OEA-04",
+        "subscale": "OEA",
+        "item": {
+          "en": "I can tell when someone is upset even if they say nothing.",
+          "el": "Μπορώ να καταλάβω πότε κάποιος είναι αναστατωμένος ακόμα και αν δεν λέει τίποτα."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-UOE-01",
+        "subscale": "UOE",
+        "item": {
+          "en": "I always set goals for myself and then try my best to achieve them.",
+          "el": "Θέτω πάντα στόχους για τον εαυτό μου και προσπαθώ για το καλύτερο ώστε να τους πετύχω."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-UOE-02",
+        "subscale": "UOE",
+        "item": {
+          "en": "I always tell myself I am a competent person.",
+          "el": "Πάντα λέω στον εαυτό μου ότι είμαι ικανός άνθρωπος."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-UOE-03",
+        "subscale": "UOE",
+        "item": {
+          "en": "I am a self-motivating person.",
+          "el": "Έχω την ικανότητα να δίνω κίνητρα στον εαυτό μου."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-UOE-04",
+        "subscale": "UOE",
+        "item": {
+          "en": "I encourage myself to try harder even after setbacks.",
+          "el": "Ενθαρρύνω τον εαυτό μου να προσπαθεί περισσότερο μετά από αποτυχίες."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-ROE-01",
+        "subscale": "ROE",
+        "item": {
+          "en": "I am able to control my temper and handle problems rationally.",
+          "el": "Είμαι ικανός να ελέγχω το θυμό μου και να χειρίζομαι προβλήματα λογικά."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-ROE-02",
+        "subscale": "ROE",
+        "item": {
+          "en": "I am quite capable of controlling my own emotions.",
+          "el": "Είμαι αρκετά ικανός να ελέγχω τα δικά μου συναισθήματα."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-ROE-03",
+        "subscale": "ROE",
+        "item": {
+          "en": "I can calm down quickly when I am very angry.",
+          "el": "Μπορώ να ηρεμήσω γρήγορα όταν είμαι πολύ θυμωμένος."
+        },
+        "reverse": false
+      },
+      {
+        "id": "WLEIS-ROE-04",
+        "subscale": "ROE",
+        "item": {
+          "en": "I lose control of my emotions when under pressure.",
+          "el": "Χάνω τον έλεγχο των συναισθημάτων μου όταν βρίσκομαι υπό πίεση."
+        },
+        "reverse": true
+      }
     ]
   },
   "smileTask": {
@@ -340,26 +1488,126 @@
     "videoUrl": "/assets/video/smile-4-presift.mp4",
     "totalTrials": 20,
     "trials": [
-      { "trialId": "smile_01", "start": 0.00, "end": 3.88, "groundTruth": "genuine" },
-      { "trialId": "smile_02", "start": 3.88, "end": 7.80, "groundTruth": "fake" },
-      { "trialId": "smile_03", "start": 7.80, "end": 12.16, "groundTruth": "fake" },
-      { "trialId": "smile_04", "start": 12.16, "end": 16.08, "groundTruth": "fake" },
-      { "trialId": "smile_05", "start": 16.08, "end": 20.72, "groundTruth": "genuine" },
-      { "trialId": "smile_06", "start": 20.72, "end": 24.72, "groundTruth": "genuine" },
-      { "trialId": "smile_07", "start": 24.72, "end": 29.72, "groundTruth": "fake" },
-      { "trialId": "smile_08", "start": 29.72, "end": 33.44, "groundTruth": "genuine" },
-      { "trialId": "smile_09", "start": 33.44, "end": 36.84, "groundTruth": "fake" },
-      { "trialId": "smile_10", "start": 36.84, "end": 40.84, "groundTruth": "genuine" },
-      { "trialId": "smile_11", "start": 40.84, "end": 43.96, "groundTruth": "genuine" },
-      { "trialId": "smile_12", "start": 43.96, "end": 48.24, "groundTruth": "fake" },
-      { "trialId": "smile_13", "start": 48.24, "end": 52.04, "groundTruth": "fake" },
-      { "trialId": "smile_14", "start": 52.04, "end": 57.60, "groundTruth": "fake" },
-      { "trialId": "smile_15", "start": 57.60, "end": 62.36, "groundTruth": "genuine" },
-      { "trialId": "smile_16", "start": 62.36, "end": 66.52, "groundTruth": "genuine" },
-      { "trialId": "smile_17", "start": 66.52, "end": 70.16, "groundTruth": "genuine" },
-      { "trialId": "smile_18", "start": 70.16, "end": 73.88, "groundTruth": "fake" },
-      { "trialId": "smile_19", "start": 73.88, "end": 77.32, "groundTruth": "genuine" },
-      { "trialId": "smile_20", "start": 77.32, "end": 80.81, "groundTruth": "fake" }
+      {
+        "trialId": "smile_01",
+        "start": 0,
+        "end": 3.88,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_02",
+        "start": 3.88,
+        "end": 7.8,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_03",
+        "start": 7.8,
+        "end": 12.16,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_04",
+        "start": 12.16,
+        "end": 16.08,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_05",
+        "start": 16.08,
+        "end": 20.72,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_06",
+        "start": 20.72,
+        "end": 24.72,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_07",
+        "start": 24.72,
+        "end": 29.72,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_08",
+        "start": 29.72,
+        "end": 33.44,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_09",
+        "start": 33.44,
+        "end": 36.84,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_10",
+        "start": 36.84,
+        "end": 40.84,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_11",
+        "start": 40.84,
+        "end": 43.96,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_12",
+        "start": 43.96,
+        "end": 48.24,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_13",
+        "start": 48.24,
+        "end": 52.04,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_14",
+        "start": 52.04,
+        "end": 57.6,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_15",
+        "start": 57.6,
+        "end": 62.36,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_16",
+        "start": 62.36,
+        "end": 66.52,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_17",
+        "start": 66.52,
+        "end": 70.16,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_18",
+        "start": 70.16,
+        "end": 73.88,
+        "groundTruth": "fake"
+      },
+      {
+        "trialId": "smile_19",
+        "start": 73.88,
+        "end": 77.32,
+        "groundTruth": "genuine"
+      },
+      {
+        "trialId": "smile_20",
+        "start": 77.32,
+        "end": 80.81,
+        "groundTruth": "fake"
+      }
     ]
   }
 }

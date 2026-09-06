@@ -20,8 +20,12 @@ describe('session parameterization (iteration 5)', () => {
     const session = resolveSession('assess_1', bank, RNG_A);
     // Assert
     for (const item of session.items) {
-      expect(item.prompt).not.toMatch(/\{\{/);
-      for (const opt of item.options) expect(opt).not.toMatch(/\{\{/);
+      expect(item.prompt.en).not.toMatch(/\{\{/);
+      expect(item.prompt.el).not.toMatch(/\{\{/);
+      for (const opt of item.options) {
+        expect(opt.en).not.toMatch(/\{\{/);
+        expect(opt.el).not.toMatch(/\{\{/);
+      }
     }
   });
 
@@ -31,8 +35,11 @@ describe('session parameterization (iteration 5)', () => {
     // Assert
     for (const item of session.items) {
       expect(item.options).toHaveLength(4);
-      expect(new Set(item.options).size).toBe(4);
-      for (const opt of item.options) expect(opt.trim().length).toBeGreaterThan(0);
+      expect(new Set(item.options.map((o: any) => o.en)).size).toBe(4);
+      for (const opt of item.options) {
+        expect(opt.en.trim().length).toBeGreaterThan(0);
+        expect(opt.el.trim().length).toBeGreaterThan(0);
+      }
     }
   });
 
@@ -51,8 +58,8 @@ describe('session parameterization (iteration 5)', () => {
     const a = resolveSession('assess_1', bank, RNG_A);
     const b = resolveSession('assess_1', bank, RNG_B);
     // Assert
-    const rendered = (s: { prompt: string; options: string[] }[]) =>
-      s.map((i) => i.prompt + '|' + i.options.join(',')).join(';');
+    const rendered = (s: any) =>
+      s.map((i: any) => i.prompt.en + '|' + i.options.map((o: any) => o.en).join(',')).join(';');
     expect(rendered(a.items)).not.toBe(rendered(b.items));
   });
 

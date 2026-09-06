@@ -12,13 +12,25 @@ function captureDialogs(page: Page): string[] {
 /**
  * Drives a full assessment session at /test/:assessmentId.
  * ICAR items = 4 options, WLEIS items = Likert scale options.
+ * Intro screens (ICAR/WLEIS) render their CTA ("Go") OUTSIDE <main>, so the
+ * helper clicks the intro "Go" button whenever no <main> option is present.
  */
 async function answerAllQuestions(page: Page, totalQuestions: number): Promise<string[]> {
   const dialogs = captureDialogs(page);
-  for (let q = 0; q < totalQuestions; q++) {
-    // Click the first available option button in the active test area.
-    const option = page.locator('main button').first();
-    await option.click();
+  const go = page.getByRole('button', { name: 'Go', exact: true });
+  const smileOption = page.getByRole('button', { name: /Genuine Smile|Fake/ }).first();
+  const option = page.locator('main button').first();
+  // Cap generously: ICAR + WLEIS + SMILE trials + intro transitions.
+  for (let q = 0; q < 80; q++) {
+    if (await option.isVisible().catch(() => false)) {
+      await option.click();
+    } else if (await go.isVisible().catch(() => false)) {
+      await go.click();
+    } else if (await smileOption.isVisible().catch(() => false)) {
+      await smileOption.click();
+    } else {
+      break;
+    }
     // If the last question auto-submits, an alert fires; stop early.
     if (dialogs.length > 0) break;
     // Give React a beat to advance the question.
@@ -28,26 +40,39 @@ async function answerAllQuestions(page: Page, totalQuestions: number): Promise<s
 }
 
 test.describe('Assessment session (candidate flow)', () => {
+  // Deterministic English chrome by default for every spec in this file (the
+  // React I18nContext reads localStorage; see I18nContext.tsx). Real candidate
+  // links created with lang:'el' override this to Greek once startSession
+  // resolves (TestPage switches on session.lang). Synthetic /test/... links
+  // carry no lang and keep this English seed.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('presift_language', 'en');
+    });
+  });
+
   test('full test: create link → consent → answer → auto-submit → back home', async ({ page, request }) => {
     // Arrange — create a REAL candidate link through the callable (doc-less
     // links now fail loudly by design), then drive the candidate UI on it.
     const base = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5174';
     const isLocal = /localhost|127\.0\.0\.1/.test(base);
     const functionsOrigin = isLocal
-      ? 'http://127.0.0.1:5001/presift'
+      ? 'http://127.0.0.1:5001/presift/us-central1'
       : 'https://us-central1-presift.cloudfunctions.net';
 
     // Local emulator only: a fresh emulator DB has no demo_recruiter user, so
-    // top up credits first (live has real credits — never touched here).
+    // seed it (seedDemoData is anon-allowed under FUNCTIONS_EMULATOR and
+    // idempotent — creates users/demo_recruiter with 5 credits). Live has real
+    // credits — never touched here.
     if (isLocal) {
-      const topup = await request.post(`${functionsOrigin}/topUpCredits`, {
-        data: { data: { amount: 5 } },
+      const seed = await request.post(`${functionsOrigin}/seedDemoData`, {
+        data: { data: {} },
       });
-      expect(topup.ok()).toBeTruthy();
+      expect(seed.ok()).toBeTruthy();
     }
 
     const created = await request.post(`${functionsOrigin}/createAssessmentLink`, {
-      data: { data: { roleTitle: 'E2E Engineer', candidateName: 'E2E Candidate', candidateEmail: 'e2e@example.com' } },
+      data: { data: { roleTitle: 'E2E Engineer', candidateName: 'E2E Candidate', candidateEmail: 'e2e@example.com', lang: 'en', recruiterId: 'demo_recruiter' } },
     });
     expect(created.ok()).toBeTruthy();
     const createdBody = await created.json();
@@ -62,13 +87,14 @@ test.describe('Assessment session (candidate flow)', () => {
     await page.getByText('Mandatory GDPR Consent').click();
     await page.getByRole('button', { name: 'Begin Assessment' }).click();
 
-    // 2. Answer every question (16 ICAR + 16 WLEIS = 32).
+    // 2. Answer every question (11 ICAR + 16 WLEIS) plus SMILE trials — the
+    // helper also clicks the intro "Go" gates and smile answers.
     const dialogs = await answerAllQuestions(page, 32);
 
-    // Assert
-    await expect.poll(() => dialogs.length, { timeout: 30_000 }).toBeGreaterThan(0);
-    expect(dialogs[0]).toContain('Assessment Complete!');
-    await expect(page).toHaveURL('/', { timeout: 15_000 });
+    // Assert — the end screen confirms submission (the modern flow renders an
+    // in-page thank-you rather than an alert when SMILE is present).
+    await expect(page.getByText('Assessment Complete')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Thank you for completing/)).toBeVisible({ timeout: 15_000 });
   });
 
   test('reload mid-test resumes from localStorage', async ({ page }) => {
@@ -77,8 +103,9 @@ test.describe('Assessment session (candidate flow)', () => {
     await expect(page.getByText('Psychometric Assessment')).toBeVisible({ timeout: 15_000 });
     await page.getByText('Mandatory GDPR Consent').click();
     await page.getByRole('button', { name: 'Begin Assessment' }).click();
-
-    // Act — answer one question, then reload.
+    // ICAR intro screen: its CTA ("Go") is outside <main> — click it to reach
+    // the first question, then answer one and reload.
+    await page.getByRole('button', { name: 'Go', exact: true }).click();
     await page.locator('main button').first().click();
     await page.waitForTimeout(300);
     await page.reload();
@@ -107,5 +134,46 @@ test.describe('Assessment session (candidate flow)', () => {
 
     // Assert
     expect(await contextMenuOpened).toBe(true);
+  });
+
+  test('Greek candidate link renders ICAR instructions in Greek', async ({ page, request }) => {
+    // Arrange — Greek copy comes verbatim from src/locales/gr.json
+    // (test_page.stage1_title):
+    //   "Στάδιο 1: Γνωστική Αξιολόγηση (ICAR)"
+    const base = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5174';
+    const isLocal = /localhost|127\.0\.0\.1/.test(base);
+    const functionsOrigin = isLocal
+      ? 'http://127.0.0.1:5001/presift/us-central1'
+      : 'https://us-central1-presift.cloudfunctions.net';
+
+    if (isLocal) {
+      const seed = await request.post(`${functionsOrigin}/seedDemoData`, {
+        data: { data: {} },
+      });
+      expect(seed.ok()).toBeTruthy();
+    }
+
+    // Create a GREEK-language candidate link (default server lang) and confirm
+    // the link stores lang:'el' on the candidate doc.
+    const created = await request.post(`${functionsOrigin}/createAssessmentLink`, {
+      data: { data: { roleTitle: 'Ελληνας Μηχανικός', candidateName: 'Ελένη Δοκιμή', candidateEmail: 'elene@example.com', lang: 'el', recruiterId: 'demo_recruiter' } },
+    });
+    expect(created.ok()).toBeTruthy();
+    const createdBody = await created.json();
+    const candidateId = createdBody?.result?.candidateId;
+    expect(candidateId).toBeTruthy();
+
+    // Act — open the link, consent, and move into the ICAR instruction stage.
+    await page.goto(`/assessment/${candidateId}`);
+    await expect(page.getByText('Ψυχομετρική Αξιολόγηση')).toBeVisible({ timeout: 15_000 });
+    await page.getByText('Συναίνεση GDPR (Υποχρεωτικό)').click();
+    await page.getByRole('button', { name: 'Begin Assessment' }).click();
+
+    // Assert — ICAR instruction headline now in Greek (gr.json stage1_title),
+    // never the English fallback.
+    await expect(
+      page.getByText('Στάδιο 1: Γνωστική Αξιολόγηση (ICAR)')
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Stage 1: Cognitive Reasoning/)).toHaveCount(0);
   });
 });

@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Landing page (B2B psychometric engine)', () => {
+  // Deterministic English chrome (I18nContext reads localStorage; default is gr).
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('presift_language', 'en');
+    });
+  });
+
   test('renders core marketing content and navigation', async ({ page }) => {
     // Arrange
     await page.goto('/');

@@ -39,8 +39,13 @@ function makeContext(
 }
 
 describe('resolveRecruiterId (claims-based)', () => {
+  const originalEmulator = process.env.FUNCTIONS_EMULATOR;
   beforeEach(() => {
     holder.getUser.mockReset();
+    process.env.FUNCTIONS_EMULATOR = 'false';
+  });
+  afterEach(() => {
+    process.env.FUNCTIONS_EMULATOR = originalEmulator;
   });
 
   // ── Arrange: claim-admin caller impersonating a non-admin recruiter

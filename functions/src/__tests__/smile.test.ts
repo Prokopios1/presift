@@ -23,25 +23,25 @@ describe('Smile Perception Module (smile.ts)', () => {
     it('rejects payload missing a trial', () => {
       const valid = buildValidAnswers();
       const incomplete = valid.slice(0, 19);
-      expect(() => validateSmileAnswers(incomplete, SMILE_TRIALS)).toThrow(/expected 20 answers/i);
+      expect(() => validateSmileAnswers(incomplete, SMILE_TRIALS)).toThrow(/ERR_SMILE_LENGTH_MISMATCH/);
     });
 
     it('rejects payload with duplicate trialId', () => {
       const valid = buildValidAnswers();
       valid[1] = { ...valid[0] };
-      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/duplicate/i);
+      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/ERR_DUPLICATE_TRIAL_ID/);
     });
 
     it('rejects invalid perceived response string', () => {
       const valid = buildValidAnswers();
       (valid[0] as any).perceived = 'happy';
-      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/invalid perceived string/i);
+      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/ERR_INVALID_PERCEIVED_STRING/);
     });
 
     it('rejects negative reaction time rtMs < 0', () => {
       const valid = buildValidAnswers();
       valid[0].rtMs = -500;
-      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/invalid rtMs/i);
+      expect(() => validateSmileAnswers(valid, SMILE_TRIALS)).toThrow(/ERR_INVALID_RT_MS/);
     });
   });
 

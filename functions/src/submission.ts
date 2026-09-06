@@ -20,29 +20,29 @@ export class SubmissionError extends Error {
 }
 
 export function candidateDocId(sessionId: string): string {
-  if (!sessionId) throw new SubmissionError('Missing sessionId');
+  if (!sessionId) throw new SubmissionError('ERR_MISSING_SESSION_ID');
   return 'cand_' + sessionId;
 }
 
 export function validateSubmission(payload: any, bank: ItemBank) {
-  if (!payload || typeof payload !== 'object') throw new SubmissionError('Invalid payload');
-  if (!payload.sessionId) throw new SubmissionError('Missing sessionId');
+  if (!payload || typeof payload !== 'object') throw new SubmissionError('ERR_INVALID_PAYLOAD');
+  if (!payload.sessionId) throw new SubmissionError('ERR_MISSING_SESSION_ID');
 
-  if (!Array.isArray(payload.icar) || payload.icar.length !== bank.cognitive.items.length) throw new SubmissionError('Invalid icar array');
-  if (!Array.isArray(payload.wleis) || payload.wleis.length !== bank.wleis.items.length) throw new SubmissionError('Invalid wleis array');
+  if (!Array.isArray(payload.icar) || payload.icar.length !== bank.cognitive.items.length) throw new SubmissionError('ERR_INVALID_ICAR_ARRAY');
+  if (!Array.isArray(payload.wleis) || payload.wleis.length !== bank.wleis.items.length) throw new SubmissionError('ERR_INVALID_WLEIS_ARRAY');
 
   const icarIds = new Set<string>();
   const normalizedIcar: { itemId: string; selectedIndex: number | null }[] = [];
   for (const item of payload.icar) {
     if ('correctAnswerKey' in item || 'correctIndex' in item || 'irt' in item || 'difficulty' in item || 'parameterization' in item) {
-      throw new SubmissionError('forbidden key');
+      throw new SubmissionError('ERR_FORBIDDEN_KEY');
     }
     const bankItem = bank.cognitive.items.find(i => i.id === item.itemId);
-    if (!bankItem) throw new SubmissionError(`Unknown icar item ${item.itemId}`);
-    if (icarIds.has(item.itemId)) throw new SubmissionError(`Duplicate icar item ${item.itemId}`);
+    if (!bankItem) throw new SubmissionError(`ERR_UNKNOWN_ICAR_ITEM`);
+    if (icarIds.has(item.itemId)) throw new SubmissionError(`ERR_DUPLICATE_ICAR_ITEM`);
     icarIds.add(item.itemId);
     if (item.selectedIndex !== null && (!Number.isInteger(item.selectedIndex) || item.selectedIndex < 0 || item.selectedIndex > 3)) {
-      throw new SubmissionError(`Invalid selectedIndex for ${item.itemId}`);
+      throw new SubmissionError(`ERR_INVALID_SELECTED_INDEX`);
     }
     normalizedIcar.push({ itemId: item.itemId, selectedIndex: item.selectedIndex });
   }
@@ -51,14 +51,14 @@ export function validateSubmission(payload: any, bank: ItemBank) {
   const normalizedWleis: WleisAnswer[] = [];
   for (const item of payload.wleis) {
     if ('correctAnswerKey' in item || 'correctIndex' in item || 'irt' in item || 'difficulty' in item || 'parameterization' in item) {
-      throw new SubmissionError('forbidden key');
+      throw new SubmissionError('ERR_FORBIDDEN_KEY');
     }
     const bankItem = bank.wleis.items.find(i => i.id === item.itemId);
-    if (!bankItem) throw new SubmissionError(`Unknown wleis item ${item.itemId}`);
-    if (wleisIds.has(item.itemId)) throw new SubmissionError(`Duplicate wleis item ${item.itemId}`);
+    if (!bankItem) throw new SubmissionError(`ERR_UNKNOWN_WLEIS_ITEM`);
+    if (wleisIds.has(item.itemId)) throw new SubmissionError(`ERR_DUPLICATE_WLEIS_ITEM`);
     wleisIds.add(item.itemId);
     if (item.value !== null && (!Number.isInteger(item.value) || item.value < 1 || item.value > 7)) {
-      throw new SubmissionError(`Invalid likert value for ${item.itemId}`);
+      throw new SubmissionError(`ERR_INVALID_LIKERT_VALUE`);
     }
     normalizedWleis.push({
       itemId: item.itemId,
@@ -71,7 +71,7 @@ export function validateSubmission(payload: any, bank: ItemBank) {
   let smileAnswers: SmileAnswer[] | undefined = undefined;
   const rawSmile = payload.smileAnswers || payload.smile;
   if (rawSmile !== undefined) {
-    if (!Array.isArray(rawSmile)) throw new SubmissionError('Invalid smileAnswers array');
+    if (!Array.isArray(rawSmile)) throw new SubmissionError('ERR_INVALID_SMILE_ARRAY');
     const smileTrials: SmileTrialConfig[] = (bank.smileTask?.trials || []).map((t: any) => ({
       trialId: t.trialId,
       start: t.start,
@@ -91,7 +91,7 @@ export function validateSubmission(payload: any, bank: ItemBank) {
 
 export function processSubmission(submission: AssessmentSubmission, sessionKeys: SessionKey[]): ScoringResult {
   if (submission.answers.length !== sessionKeys.length) {
-    throw new SubmissionError("Length mismatch between submitted answers and session keys.");
+    throw new SubmissionError("ERR_LENGTH_MISMATCH");
   }
 
   const responseVector: number[] = [];
@@ -100,7 +100,7 @@ export function processSubmission(submission: AssessmentSubmission, sessionKeys:
   for (const sessionKey of sessionKeys) {
     const submittedAnswer = submission.answers.find(a => a.itemId === sessionKey.itemId);
     if (!submittedAnswer) {
-      throw new SubmissionError(`Missing answer for item: ${sessionKey.itemId}`);
+      throw new SubmissionError(`ERR_MISSING_ANSWER`);
     }
 
     const isCorrect = submittedAnswer.selectedIndex === sessionKey.correctIndex ? 1 : 0;

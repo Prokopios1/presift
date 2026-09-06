@@ -1,10 +1,15 @@
 import { IrtParams } from './psychometrics';
 
+export interface BilingualString {
+  en: string;
+  el: string;
+}
+
 export interface ResolvedSessionItem {
   itemId: string;
   domain: string;
-  prompt: string;
-  options: string[];
+  prompt: BilingualString;
+  options: BilingualString[];
 }
 
 export interface SessionKey {
@@ -32,12 +37,12 @@ export interface ItemBank {
       id: string;
       domain: string;
       resolvedExample: {
-        prompt: string;
-        options: string[];
+        prompt: BilingualString;
+        options: { en: string[]; el: string[] };
         correctIndex: number;
       };
-      promptTemplate?: string;
-      optionTemplates?: string[];
+      promptTemplate?: BilingualString;
+      optionTemplates?: { en: string[]; el: string[] };
       correctIndex?: number;
       parameterization?: {
         rules: Array<{
@@ -55,7 +60,7 @@ export interface ItemBank {
     items: Array<{
       id: string;
       subscale: string;
-      item: string;
+      item: BilingualString;
       reverse: boolean;
     }>;
   };
@@ -72,10 +77,43 @@ export interface ItemBank {
   };
 }
 
+export type Language = 'el' | 'en';
+
+/**
+ * Single-language view of a resolved session. Consumes the bilingual output of
+ * resolveSession (items[].prompt/options carry {en, el}) and collapses each to
+ * the requested language's plain string. Language-neutral options (numeric ICAR
+ * options, Likert 1-7 labels) are identical in both languages and pass through
+ * unchanged. PURE helper — does not touch sessions or the bank.
+ */
+export function localizeSession(
+  session: { items: ResolvedSessionItem[]; wleisItems: ResolvedSessionItem[] },
+  lang: Language = 'el'
+): { items: LocalizedSessionItem[]; wleisItems: LocalizedSessionItem[] } {
+  const pick = (b: BilingualString): string => (lang === 'en' ? b.en : b.el);
+  const localize = (item: ResolvedSessionItem): LocalizedSessionItem => ({
+    itemId: item.itemId,
+    domain: item.domain,
+    prompt: pick(item.prompt),
+    options: item.options.map(o => pick(o)),
+  });
+  return {
+    items: session.items.map(localize),
+    wleisItems: session.wleisItems.map(localize),
+  };
+}
+
+export interface LocalizedSessionItem {
+  itemId: string;
+  domain: string;
+  prompt: string;
+  options: string[];
+}
+
 export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () => number): { sessionId: string; items: ResolvedSessionItem[]; wleisItems: ResolvedSessionItem[]; keys: SessionKey[]; smileTask?: SmileClientTask } {
-  if (!assessmentId) throw new Error("Missing assessmentId");
+  if (!assessmentId) throw new Error("ERR_MISSING_ASSESSMENT_ID");
   if (!bank || !bank.cognitive || !bank.cognitive.items || bank.cognitive.items.length === 0) {
-    throw new Error("Invalid or empty bank");
+    throw new Error("ERR_INVALID_BANK");
   }
 
   const random = rng || Math.random;
@@ -83,8 +121,9 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
   const keys: SessionKey[] = [];
 
   const items: ResolvedSessionItem[] = bank.cognitive.items.map(item => {
-    let resolvedPrompt = item.resolvedExample.prompt;
-    let resolvedOptions = [...item.resolvedExample.options];
+    let resolvedPrompt = { ...item.resolvedExample.prompt };
+    let resolvedOptionsEn = [...item.resolvedExample.options.en];
+    let resolvedOptionsEl = [...item.resolvedExample.options.el];
 
     if (item.promptTemplate && item.optionTemplates && item.parameterization) {
       let unique = false;
@@ -105,9 +144,7 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
               vars[rule.variable] = rule.enum[index];
             }
 
-            // Very simple constraint check (if constraint exists)
             if (rule.constraint) {
-              // Only handling the specific constraint for ICAR-N-01 as a hack, or using Function
               try {
                 const constraintFn = new Function(...Object.keys(vars), `return ${rule.constraint};`);
                 if (!constraintFn(...Object.values(vars))) {
@@ -126,20 +163,38 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
         try {
           const evalExpr = (expr: string) => {
             const cleanExpr = expr.replace(/{{|}}/g, '');
+            // For simple variables without math (e.g. {{W1}})
+            if (vars[cleanExpr] !== undefined && !/[+\-*/^]/.test(cleanExpr)) {
+              return String(vars[cleanExpr]);
+            }
+            // For math expressions, eval them
+            // We must skip evaluation if it's not actually math but a string from verbal, 
+            // but the variables from range/enum are numbers, so it's fine.
+            // Wait, for Verbal, vars might be string? 
+            // In presift-bank, verbal uses rules with sources, not just integers.
+            // But the rule.type is not integer for verbal! So vars won't have them in this loop?
+            // Wait, the parameterization in verbal items does not have type='integer'. 
+            // If they are not integers, how are they handled? The original code didn't handle them! 
+            // Wait, look at the original code: 
+            // for (const rule of item.parameterization.rules) { if (rule.type === 'integer') { ... } }
+            // Verbal items don't have type: 'integer'. The original code just ignored them and fell back to resolvedExample!
             const fn = new Function(...Object.keys(vars), `return ${cleanExpr};`);
             return String(fn(...Object.values(vars)));
           };
 
-          const newPrompt = item.promptTemplate.replace(/{{[^}]+}}/g, (match: string) => evalExpr(match));
-          const newOptions = item.optionTemplates.map((opt: string) => evalExpr(opt));
+          const newPromptEn = item.promptTemplate.en.replace(/{{[^}]+}}/g, (match: string) => evalExpr(match));
+          const newPromptEl = item.promptTemplate.el.replace(/{{[^}]+}}/g, (match: string) => evalExpr(match));
+          const newOptionsEn = item.optionTemplates.en.map((opt: string) => evalExpr(opt));
+          const newOptionsEl = item.optionTemplates.el.map((opt: string) => evalExpr(opt));
 
-          const allDistinct = new Set(newOptions).size === newOptions.length;
-          const allPositive = newOptions.every((opt: string) => !opt.startsWith('-'));
+          const allDistinct = new Set(newOptionsEn).size === newOptionsEn.length;
+          const allPositive = newOptionsEn.every((opt: string) => !opt.startsWith('-'));
 
           if (allDistinct && allPositive) {
             unique = true;
-            resolvedPrompt = newPrompt;
-            resolvedOptions = newOptions;
+            resolvedPrompt = { en: newPromptEn, el: newPromptEl };
+            resolvedOptionsEn = newOptionsEn;
+            resolvedOptionsEl = newOptionsEl;
           }
         } catch {
           // fallback to resolvedExample if parameterization fails
@@ -148,15 +203,21 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
       }
     }
 
-    const correctString = resolvedOptions[item.correctIndex || 0];
+    const correctIndex = item.correctIndex || 0;
+    
+    // Combine into objects before shuffle
+    let combinedOptions = resolvedOptionsEn.map((enStr, i) => ({
+      en: enStr,
+      el: resolvedOptionsEl[i],
+      isCorrect: i === correctIndex
+    }));
 
-    const options = [...resolvedOptions];
-    for (let i = options.length - 1; i > 0; i--) {
+    for (let i = combinedOptions.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
-      [options[i], options[j]] = [options[j], options[i]];
+      [combinedOptions[i], combinedOptions[j]] = [combinedOptions[j], combinedOptions[i]];
     }
 
-    const newCorrectIndex = options.indexOf(correctString);
+    const newCorrectIndex = combinedOptions.findIndex(o => o.isCorrect);
 
     keys.push({
       itemId: item.id,
@@ -168,16 +229,15 @@ export function resolveSession(assessmentId: string, bank: ItemBank, rng?: () =>
       itemId: item.id,
       domain: item.domain,
       prompt: resolvedPrompt,
-      options
+      options: combinedOptions.map(o => ({ en: o.en, el: o.el }))
     };
   });
-
 
   const wleisItems = bank.wleis.items.map(item => ({
     itemId: item.id,
     domain: 'wleis',
     prompt: item.item,
-    options: ['1', '2', '3', '4', '5', '6', '7']
+    options: ['1', '2', '3', '4', '5', '6', '7'].map(num => ({ en: num, el: num }))
   }));
 
   const smileTask: SmileClientTask | undefined = bank.smileTask
@@ -212,13 +272,13 @@ export function buildSessionKeys(session: { items: ResolvedSessionItem[], keys?:
 
     const bankItem = bank.cognitive.items.find(i => i.id === sessionItem.itemId);
     if (!bankItem) {
-      throw new Error(`Item ${sessionItem.itemId} not found in bank.`);
+      throw new Error(`ERR_UNKNOWN_ITEM`);
     }
-    const correctString = bankItem.resolvedExample.options[bankItem.resolvedExample.correctIndex];
-    const newCorrectIndex = sessionItem.options.indexOf(correctString);
+    const correctStringEn = bankItem.resolvedExample.options.en[bankItem.resolvedExample.correctIndex];
+    const newCorrectIndex = sessionItem.options.findIndex(o => o.en === correctStringEn);
 
     if (newCorrectIndex === -1) {
-      throw new Error(`Correct option not found in shuffled options for item ${sessionItem.itemId}`);
+      throw new Error(`ERR_CORRECT_OPTION_NOT_FOUND`);
     }
 
     keys.push({
