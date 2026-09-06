@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -62,9 +63,9 @@ vi.mock('firebase/firestore', async (importOriginal) => {
 const renderAdmin = () =>
   render(
     <TooltipProvider>
-      <MemoryRouter initialEntries={['/admin']}>
+      <I18nProvider><MemoryRouter initialEntries={['/admin']}>
         <AdminPage />
-      </MemoryRouter>
+      </MemoryRouter></I18nProvider>
     </TooltipProvider>
   );
 

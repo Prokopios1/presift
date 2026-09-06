@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { auth, db, functions } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -26,6 +27,7 @@ interface CreditAuditLog {
 }
 
 export const ProfilePage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const { targetId } = useImpersonation();
@@ -117,8 +119,8 @@ export const ProfilePage = () => {
       <main className="flex-1 md:ml-60 flex flex-col min-h-screen relative overflow-x-hidden">
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Profile & Billing</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Manage your details and view credit history</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('profile.title', 'Company Profile')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("profile.desc", "Manage your details and view credit history")}</p>
           </div>
           <div className="flex items-center gap-4">
             <Tooltip>
@@ -135,7 +137,7 @@ export const ProfilePage = () => {
                   Sign Out
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>End your session and return to the login page</TooltipContent>
+              <TooltipContent>{t("profile.tooltip.signout", "End your session and return to the login page")}</TooltipContent>
             </Tooltip>
             <ThemeToggle />
           </div>
@@ -151,13 +153,13 @@ export const ProfilePage = () => {
               <div className="space-y-8">
                 <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Organization Details</CardTitle>
-                    <CardDescription>Update your company information</CardDescription>
+                    <CardTitle>{t("profile.org_details", "Organization Details")}</CardTitle>
+                    <CardDescription>{t("profile.org_desc", "Update your company information")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSave} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Contact Name</Label>
+                        <Label htmlFor="name">{t("profile.contact_name", "Contact Name")}</Label>
                         <Input
                           id="name"
                           value={profile.name}
@@ -166,7 +168,7 @@ export const ProfilePage = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="companyName">Company Name</Label>
+                        <Label htmlFor="companyName">{t("profile.company_name", "Company Name")}</Label>
                         <Input
                           id="companyName"
                           value={profile.companyName}
@@ -175,7 +177,7 @@ export const ProfilePage = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="vatNumber">VAT Number</Label>
+                        <Label htmlFor="vatNumber">{t("profile.vat", "VAT Number")}</Label>
                         <Input
                           id="vatNumber"
                           value={profile.vatNumber}
@@ -186,10 +188,10 @@ export const ProfilePage = () => {
                         <TooltipTrigger asChild>
                           <Button type="submit" disabled={saving}>
                             {saving ? <Spinner size="sm" className="mr-2" /> : null}
-                            {saving ? 'Saving...' : 'Save Details'}
+                            {saving ? 'Saving...' : t('profile.save', 'Save Details')}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Save your updated organization details</TooltipContent>
+                        <TooltipContent>{t("profile.tooltip.save", "Save your updated organization details")}</TooltipContent>
                       </Tooltip>
                       {message && <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">{message}</p>}
                     </form>
@@ -200,8 +202,8 @@ export const ProfilePage = () => {
               <div className="space-y-8">
                 <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Credit Balance</CardTitle>
-                    <CardDescription>Your current assessment credits</CardDescription>
+                    <CardTitle>{t("profile.balance", "Credit Balance")}</CardTitle>
+                    <CardDescription>{t("profile.balance_desc", "Your current assessment credits")}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex items-center justify-between">
                     <Tooltip>
@@ -210,7 +212,7 @@ export const ProfilePage = () => {
                           {role === 'admin' ? 'Unlimited' : profile.credits}
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent>Credits remaining — each assessment link costs 1 credit</TooltipContent>
+                      <TooltipContent>{t("profile.tooltip.credits", "Credits remaining — each assessment link costs 1 credit")}</TooltipContent>
                     </Tooltip>
                     {role !== 'admin' && (
                       <Tooltip>
@@ -219,7 +221,7 @@ export const ProfilePage = () => {
                             Top Up Credits
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Buy more assessment credits — opens the payment page</TooltipContent>
+                        <TooltipContent>{t("profile.tooltip.topup", "Buy more assessment credits — opens the payment page")}</TooltipContent>
                       </Tooltip>
                     )}
                   </CardContent>
@@ -228,27 +230,27 @@ export const ProfilePage = () => {
                 {role !== 'admin' && (
                   <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                     <CardHeader>
-                      <CardTitle>Billing History</CardTitle>
-                      <CardDescription>Recent credit transactions</CardDescription>
+                      <CardTitle>{t("profile.billing", "Billing History")}</CardTitle>
+                      <CardDescription>{t("profile.billing_desc", "Recent credit transactions")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {logs.length === 0 ? (
-                        <div className="text-sm text-slate-500 text-center py-4">No billing history found.</div>
+                        <div className="text-sm text-slate-500 text-center py-4">{t("profile.history.empty", "No billing history found.")}</div>
                       ) : (
                         <div className="overflow-auto max-h-[300px]">
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Date</TableHead>
+                                <TableHead>{t("profile.date", "Date")}</TableHead>
                                 <TableHead>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <span className="cursor-help">Amount</span>
+                                      <span className="cursor-help">{t("profile.amount", "Amount")}</span>
                                     </TooltipTrigger>
-                                    <TooltipContent>Credit transactions: + = credits added, − = credits used</TooltipContent>
+                                    <TooltipContent>{t("profile.tooltip.history", "Credit transactions: + = credits added, − = credits used")}</TooltipContent>
                                   </Tooltip>
                                 </TableHead>
-                                <TableHead>Reason</TableHead>
+                                <TableHead>{t("profile.reason", "Reason")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>

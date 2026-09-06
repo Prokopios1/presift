@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -24,9 +25,9 @@ describe('LandingPage', () => {
     // Arrange
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <LandingPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -61,9 +62,9 @@ describe('LandingPage', () => {
     // Act
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <LandingPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -76,9 +77,9 @@ describe('LandingPage', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <LandingPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 

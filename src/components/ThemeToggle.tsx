@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import { useI18n } from '@/contexts/I18nContext';
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
@@ -22,10 +24,10 @@ export function ThemeToggle() {
           size="sm"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
         >
-          {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+          {theme === "light" ? t("theme.dark", "🌙 Dark") : t("theme.light", "☀️ Light")}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>Toggle light / dark theme</TooltipContent>
+      <TooltipContent>{t("theme.toggle", "Toggle light / dark theme")}</TooltipContent>
     </Tooltip>
   );
 }

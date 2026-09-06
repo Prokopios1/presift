@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -10,9 +11,9 @@ vi.mock('firebase/functions', () => ({
 
 const renderToolbar = (path: string) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <I18nProvider><MemoryRouter initialEntries={[path]}>
       <DevToolbar />
-    </MemoryRouter>
+    </MemoryRouter></I18nProvider>
   );
 
 

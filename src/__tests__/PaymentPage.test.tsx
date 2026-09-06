@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -37,9 +38,9 @@ describe('PaymentPage', () => {
 
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -68,9 +69,9 @@ describe('PaymentPage', () => {
 
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -104,9 +105,9 @@ describe('PaymentPage', () => {
 
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -140,9 +141,9 @@ describe('PaymentPage', () => {
 
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 

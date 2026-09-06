@@ -10,6 +10,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { functions, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
@@ -26,6 +27,7 @@ interface RegisteredProfile {
 }
 
 export const PaymentPage = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { targetId } = useImpersonation();
   const recruiterId = targetId || user?.uid || '';
@@ -93,7 +95,7 @@ export const PaymentPage = () => {
   const handleCheckout = async () => {
     if (credits < 1) return;
     if (!recruiterId) {
-      alert("Must be logged in to purchase credits.");
+      alert(t('payment.alert.not_logged_in', 'Must be logged in to purchase credits.'));
       return;
     }
     setPurchaseLoading(true);
@@ -112,7 +114,7 @@ export const PaymentPage = () => {
       window.location.href = res.data.url;
     } catch (e) {
       console.error('Failed to start checkout:', e);
-      alert('Failed to start checkout. Please try again.');
+      alert(t('payment.alert.checkout_failed', 'Failed to start checkout. Please try again.'));
     } finally {
       setPurchaseLoading(false);
     }
@@ -131,7 +133,7 @@ export const PaymentPage = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(1)}>{t("payment.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
             <Link to="/" className="hidden md:block font-bold text-xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               PreSift
@@ -140,27 +142,27 @@ export const PaymentPage = () => {
           <div className="flex gap-3 items-center">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>Dashboard</Button>
+                <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>{t("payment.dashboard", "Dashboard")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Open recruiter dashboard</TooltipContent>
+              <TooltipContent>{t("payment.nav.dashboard", "Open recruiter dashboard")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={() => (window.location.href = '/register')}>Register</Button>
+                <Button variant="ghost" onClick={() => (window.location.href = '/register')}>{t("payment.register", "Register")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Register recruiter account</TooltipContent>
+              <TooltipContent>{t("payment.nav.register", "Register recruiter account")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>Admin</Button>
+                <Button variant="ghost" onClick={() => (window.location.href = '/admin')}>{t("payment.admin", "Admin")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Open admin portal</TooltipContent>
+              <TooltipContent>{t("payment.nav.admin", "Open admin portal")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link to="/" className="text-sm underline">Back to Home</Link>
+                <Link to="/" className="text-sm underline">{t("payment.back_home", "Back to Home")}</Link>
               </TooltipTrigger>
-              <TooltipContent>Return to homepage</TooltipContent>
+              <TooltipContent>{t("payment.nav.home", "Return to homepage")}</TooltipContent>
             </Tooltip>
             <ThemeToggle />
           </div>
@@ -169,15 +171,15 @@ export const PaymentPage = () => {
       {/* Pricing Section */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Simple, transparent pricing</h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-3 text-lg">Pay only for what you use. No subscriptions, no hidden fees.</p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t("payment.title", "Simple, transparent pricing")}</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-3 text-lg">{t("payment.subtitle", "Pay only for what you use. No subscriptions, no hidden fees.")}</p>
         </div>
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
           {/* Price Card */}
           <Card className="w-full max-w-md shadow-2xl border-slate-200/60 dark:border-slate-800 mx-auto lg:mx-0">
             <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl">Pay-As-You-Go Credits</CardTitle>
-              <CardDescription>Non-expiring candidate assessment credits</CardDescription>
+              <CardTitle className="text-2xl">{t("payment.credits_title", "Pay-As-You-Go Credits")}</CardTitle>
+              <CardDescription>{t("payment.credits_desc", "Non-expiring candidate assessment credits")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Unit Price Badge */}
@@ -199,19 +201,19 @@ export const PaymentPage = () => {
 
               {/* Numeric Stepper */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Number of Credits</Label>
+                <Label className="text-sm font-medium">{t("payment.num_credits", "Number of Credits")}</Label>
                 <div className="flex items-center gap-3">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-5)} disabled={credits <= 1}>−5</Button>
                     </TooltipTrigger>
-                    <TooltipContent>Decrease by 5 credits</TooltipContent>
+                    <TooltipContent>{t("payment.btn.dec_5", "Decrease by 5 credits")}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(-1)} disabled={credits <= 1}>−</Button>
                     </TooltipTrigger>
-                    <TooltipContent>Decrease by 1 credit</TooltipContent>
+                    <TooltipContent>{t("payment.btn.dec_1", "Decrease by 1 credit")}</TooltipContent>
                   </Tooltip>
                   <Input
                     type="number"
@@ -228,13 +230,13 @@ export const PaymentPage = () => {
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(1)}>+</Button>
                     </TooltipTrigger>
-                    <TooltipContent>Increase by 1 credit</TooltipContent>
+                    <TooltipContent>{t("payment.btn.inc_1", "Increase by 1 credit")}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg font-bold" onClick={() => adjustCredits(5)}>+5</Button>
                     </TooltipTrigger>
-                    <TooltipContent>Increase by 5 credits</TooltipContent>
+                    <TooltipContent>{t("payment.btn.inc_5", "Increase by 5 credits")}</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
@@ -242,8 +244,8 @@ export const PaymentPage = () => {
               {/* Dynamic Total */}
               <div className={`rounded-lg p-4 flex justify-between items-center border transition-colors ${isPromo ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-900/50'}`}>
                 <div className="flex flex-col">
-                  <span className={`font-medium ${isPromo ? 'text-green-700 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'}`}>Total</span>
-                  {isPromo && <span className="text-xs text-green-600 dark:text-green-500 font-medium mt-0.5">Trial discount applied!</span>}
+                  <span className={`font-medium ${isPromo ? 'text-green-700 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'}`}>{t("payment.total", "Total")}</span>
+                  {isPromo && <span className="text-xs text-green-600 dark:text-green-500 font-medium mt-0.5">{t("payment.trial_discount", "Trial discount applied!")}</span>}
                 </div>
                 <span className={`text-3xl font-bold tracking-tight ${isPromo ? 'text-green-600 dark:text-green-400' : ''}`}>€{totalPrice.toFixed(2)}</span>
               </div>
@@ -251,13 +253,13 @@ export const PaymentPage = () => {
               {/* B2B Invoicing */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h4 className="font-semibold text-sm text-slate-500 uppercase tracking-wider">B2B Invoicing Details</h4>
+                  <h4 className="font-semibold text-sm text-slate-500 uppercase tracking-wider">{t("payment.b2b_details", "B2B Invoicing Details")}</h4>
                   {registeredProfile ? (
                     <div
                       data-testid="signed-in-badge"
                       className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs px-2.5 py-1 rounded-md max-w-full overflow-hidden"
                     >
-                      <span className="font-semibold shrink-0">Signed in as</span>
+                      <span className="font-semibold shrink-0">{t("payment.signed_in_as", "Signed in as")}</span>
                       <span className="truncate max-w-[220px]" title={getDisplayName()}>
                         {getDisplayName()}
                       </span>
@@ -270,19 +272,19 @@ export const PaymentPage = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5 col-span-2">
-                    <Label className="text-xs">Company Name</Label>
+                    <Label className="text-xs">{t("payment.company_name", "Company Name")}</Label>
                     <Input placeholder="Acme Corp" value={companyName} onChange={e => setCompanyName(e.target.value)} />
                   </div>
                   <div className="space-y-1.5 col-span-2">
-                    <Label className="text-xs">Email</Label>
+                    <Label className="text-xs">{t("payment.label.email", "Email")}</Label>
                     <Input type="email" placeholder="billing@acme.com" value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">VAT / Tax ID</Label>
+                    <Label className="text-xs">{t("payment.vat", "VAT / Tax ID")}</Label>
                     <Input placeholder="DE123456789" value={vat} onChange={e => setVat(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Billing Address</Label>
+                    <Label className="text-xs">{t("payment.billing_address", "Billing Address")}</Label>
                     <Input placeholder="Berlin, Germany" value={billingAddress} onChange={e => setBillingAddress(e.target.value)} />
                   </div>
                 </div>
@@ -295,7 +297,7 @@ export const PaymentPage = () => {
                     {purchaseLoading ? 'Redirecting to Stripe...' : `Checkout — €${totalPrice.toFixed(2)}`}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Proceed to secure Stripe checkout</TooltipContent>
+                <TooltipContent>{t("payment.btn.checkout", "Proceed to secure Stripe checkout")}</TooltipContent>
               </Tooltip>
               <div className="flex items-center gap-4 text-[11px] text-slate-400">
                 <span>💳 Credit Cards</span>
@@ -308,7 +310,7 @@ export const PaymentPage = () => {
 
           {/* What's Included */}
           <div className="w-full max-w-sm space-y-6 mx-auto lg:mx-0 lg:pt-8">
-            <h3 className="font-bold text-xl">Each credit includes:</h3>
+            <h3 className="font-bold text-xl">{t("payment.includes", "Each credit includes:")}</h3>
             <ul className="space-y-4">
               {[
                 "Full ICAR cognitive assessment",

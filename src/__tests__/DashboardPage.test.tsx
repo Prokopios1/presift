@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -67,9 +68,9 @@ vi.mock('firebase/firestore', async (importOriginal) => {
 const renderDashboard = () =>
   render(
     <TooltipProvider>
-      <MemoryRouter>
+      <I18nProvider><MemoryRouter>
         <DashboardPage />
-      </MemoryRouter>
+      </MemoryRouter></I18nProvider>
     </TooltipProvider>
   );
 
@@ -188,13 +189,13 @@ describe('DashboardPage Core Rendering & Navigation', () => {
     renderDashboard();
 
     // Assert — sidebar buttons rendered
-    expect(await screen.findByRole('button', { name: 'Recruiter Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Admin Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Admin' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Buy Credits' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Home / Landing' })).toBeInTheDocument();
 
     // Act — click admin
-    const adminLink = screen.getByRole('button', { name: 'Admin Dashboard' });
+    const adminLink = screen.getByRole('button', { name: 'Admin' });
     fireEvent.click(adminLink);
 
     // Assert

@@ -21,6 +21,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { buildCandidatesCsv } from './AdminPage';
 import { toggleSelectAll, toggleSelectRow, getSelectionState } from './DashboardPage';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface RecruiterAccount {
   id: string;
@@ -74,6 +75,7 @@ export const AdminClientPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { setTargetId } = useImpersonation();
+  const { t } = useI18n();
 
   const [client, setClient] = useState<RecruiterAccount | null>(null);
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
@@ -195,7 +197,7 @@ export const AdminClientPage = () => {
       setClient(updated);
       setEditClientDialog(false);
     } catch (err) {
-      alert('Failed to update client.');
+      alert(t('admin_client.alert.failed_update', 'Failed to update client.'));
       console.error(err);
     } finally {
       setEditClientSaving(false);
@@ -214,7 +216,7 @@ export const AdminClientPage = () => {
         archivedAt: newArchived ? new Date().toISOString() : undefined,
       } : prev);
     } catch (err) {
-      alert('Failed to archive/unarchive client.');
+      alert(t('admin_client.alert.failed_archive', 'Failed to archive/unarchive client.'));
       console.error(err);
     } finally {
       setArchivingClient(false);
@@ -253,7 +255,7 @@ export const AdminClientPage = () => {
       setCreditReason('');
     } catch (err) {
       console.error(err);
-      alert('Failed to adjust credits.');
+      alert(t('admin_client.alert.failed_credits', 'Failed to adjust credits.'));
     } finally {
       setCreditSaving(false);
     }
@@ -278,7 +280,7 @@ export const AdminClientPage = () => {
       await callArchiveCandidate({ candidateId: c.id, archived: newArchived });
       setCandidates(prev => prev.map(x => x.id === c.id ? { ...x, archived: newArchived } : x));
     } catch (e) {
-      alert('Failed to archive/unarchive candidate.');
+      alert(t('adminclientpage.alert.2', 'Failed to archive/unarchive candidate.'));
       console.error(e);
     }
   };
@@ -297,20 +299,20 @@ export const AdminClientPage = () => {
       setCandidates(prev => prev.map(c => c.id === editCandidateDialog.id ? { ...c, ...editCandidateDialog } : c));
       setEditCandidateDialog(null);
     } catch (e) {
-      alert('Failed to edit candidate.');
+      alert(t('adminclientpage.alert.3', 'Failed to edit candidate.'));
       console.error(e);
     }
   };
 
   const handleDeleteCandidate = async (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.')) return;
+    if (!confirm(t('adminclientpage.confirm.7', 'Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.'))) return;
     try {
       const deleteCandidate = httpsCallable(functions, 'deleteCandidate');
       await deleteCandidate({ candidateId: id });
       setCandidates(prev => prev.filter(c => c.id !== id));
       setSelectedCandidateIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     } catch (e) {
-      alert('Failed to delete candidate.');
+      alert(t('admin_client.alert.failed_delete_cand', 'Failed to delete candidate.'));
       console.error(e);
     }
   };
@@ -321,21 +323,21 @@ export const AdminClientPage = () => {
       await updateCandidateStatus({ candidateId, status });
       setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, status } : c));
     } catch (e) {
-      alert('Failed to update status.');
+      alert(t('adminclientpage.alert.4', 'Failed to update status.'));
       console.error(e);
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedCandidateIds.size === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedCandidateIds.size} candidate(s)? This cannot be undone.`)) return;
+    if (!confirm(t('admin_client.confirm.delete_bulk', 'Are you sure you want to delete {size} candidate(s)? This cannot be undone.').replace('{size}', selectedCandidateIds.size.toString()))) return;
     try {
       const bulkDelete = httpsCallable(functions, 'bulkDeleteCandidates');
       await bulkDelete({ candidateIds: Array.from(selectedCandidateIds) });
       setCandidates(prev => prev.filter(c => !selectedCandidateIds.has(c.id)));
       setSelectedCandidateIds(new Set());
     } catch (e) {
-      alert('Failed to delete candidates.');
+      alert(t('admin_client.alert.failed_delete_bulk', 'Failed to delete candidates.'));
       console.error(e);
     }
   };
@@ -371,7 +373,7 @@ export const AdminClientPage = () => {
       setManagedMembership(initialMembership);
       setOriginalMembership(initialMembership);
     } catch (err) {
-      alert('Failed to load candidates.');
+      alert(t('adminclientpage.alert.5', 'Failed to load candidates.'));
       console.error(err);
     } finally {
       setLoadingAllCandidates(false);
@@ -405,7 +407,7 @@ export const AdminClientPage = () => {
       setCandidates(snap.docs.map(d => ({ id: d.id, ...d.data() } as CandidateRecord)));
       setManageCandidatesDialog(false);
     } catch (err) {
-      alert('Failed to save candidate associations.');
+      alert(t('adminclientpage.alert.6', 'Failed to save candidate associations.'));
       console.error(err);
     } finally {
       setManageSaving(false);
@@ -423,7 +425,7 @@ export const AdminClientPage = () => {
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
         <AppSidebar />
         <main className="flex-1 w-full pl-0 md:pl-60 flex items-center justify-center">
-          <p className="text-slate-500">Loading client...</p>
+          <p className="text-slate-500">{t("admin_client.loading", "Loading client...")}</p>
         </main>
       </div>
     );
@@ -464,13 +466,13 @@ export const AdminClientPage = () => {
                   ← Clients
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Return to clients list</TooltipContent>
+              <TooltipContent>{t("admin_client.clients_desc", "Return to clients list")}</TooltipContent>
             </Tooltip>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-3xl font-bold tracking-tight">{client.companyName || client.id}</h1>
                 {client.archived && (
-                  <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">Archived</Badge>
+                  <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">{t("admin_client.archived", "Archived")}</Badge>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -480,7 +482,7 @@ export const AdminClientPage = () => {
                       <Edit className="w-4 h-4 mr-1" />Edit
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Edit client details</TooltipContent>
+                  <TooltipContent>{t("admin_client.edit_desc", "Edit client details")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -488,7 +490,7 @@ export const AdminClientPage = () => {
                       <UserPlus className="w-4 h-4 mr-1" />Impersonate
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Log in as this recruiter to troubleshoot</TooltipContent>
+                  <TooltipContent>{t("admin_client.impersonate_desc", "Log in as this recruiter to troubleshoot")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -500,8 +502,8 @@ export const AdminClientPage = () => {
                       aria-label={client.archived ? 'Unarchive client' : 'Archive client'}
                     >
                       {client.archived
-                        ? <><ArchiveRestore className="w-4 h-4 mr-1" />Unarchive</>
-                        : <><Archive className="w-4 h-4 mr-1" />Archive</>
+                        ? <><ArchiveRestore className="w-4 h-4 mr-1" />{t("admin_client.unarchive", "Unarchive")}</>
+                        : <><Archive className="w-4 h-4 mr-1" />{t("admin_client.archive", "Archive")}</>
                       }
                     </Button>
                   </TooltipTrigger>
@@ -516,8 +518,8 @@ export const AdminClientPage = () => {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Credits</CardTitle>
-                <CardDescription>Balance and usage history for this account.</CardDescription>
+                <CardTitle>{t("admin_client.credits", "Credits")}</CardTitle>
+                <CardDescription>{t("admin_client.credits_desc", "Balance and usage history for this account.")}</CardDescription>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -525,13 +527,13 @@ export const AdminClientPage = () => {
                     Adjust Credits
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Grant or deduct credits from this account</TooltipContent>
+                <TooltipContent>{t("admin_client.credits_desc", "Grant or deduct credits from this account")}</TooltipContent>
               </Tooltip>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-8">
                 <div>
-                  <p className="text-xs text-slate-500 uppercase font-semibold">Balance</p>
+                  <p className="text-xs text-slate-500 uppercase font-semibold">{t("admin_client.table.balance", "Balance")}</p>
                   <p className="text-3xl font-bold">{client.credits ?? 0}</p>
                 </div>
                 <div>
@@ -543,10 +545,10 @@ export const AdminClientPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>By</TableHead>
-                      <TableHead>When</TableHead>
+                      <TableHead>{t("admin_client.table.amount", "Amount")}</TableHead>
+                      <TableHead>{t("admin_client.table.reason", "Reason")}</TableHead>
+                      <TableHead>{t("admin_client.table.by", "By")}</TableHead>
+                      <TableHead>{t("admin_client.table.when", "When")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -572,8 +574,8 @@ export const AdminClientPage = () => {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
               <div>
-                <CardTitle>Candidates</CardTitle>
-                <CardDescription>Candidates linked to this client account.</CardDescription>
+                <CardTitle>{t("admin_client.tab.candidates", "Candidates")}</CardTitle>
+                <CardDescription>{t("admin_client.candidates_desc", "Candidates linked to this client account.")}</CardDescription>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedCandidateIds.size > 0 && (
@@ -585,7 +587,7 @@ export const AdminClientPage = () => {
                           <Trash2 className="w-4 h-4 mr-2" /> Delete selected
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Permanently delete selected candidates</TooltipContent>
+                      <TooltipContent>{t("admin_client.btn.delete_bulk", "Permanently delete selected candidates")}</TooltipContent>
                     </Tooltip>
                   </div>
                 )}
@@ -595,7 +597,7 @@ export const AdminClientPage = () => {
                       <Users className="w-4 h-4 mr-1" />Manage candidates
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Link or unlink candidates from this client</TooltipContent>
+                  <TooltipContent>{t("admin_client.btn.link_unlink", "Link or unlink candidates from this client")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -603,7 +605,7 @@ export const AdminClientPage = () => {
                       <Download className="w-4 h-4 mr-1" />Export CSV
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Export candidates as CSV</TooltipContent>
+                  <TooltipContent>{t("admin_client.btn.export_csv", "Export candidates as CSV")}</TooltipContent>
                 </Tooltip>
               </div>
             </CardHeader>
@@ -617,12 +619,12 @@ export const AdminClientPage = () => {
                 />
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <Switch id="show-archived-candidates" checked={showArchived} onCheckedChange={setShowArchived} />
-                  <Label htmlFor="show-archived-candidates">Show archived</Label>
+                  <Label htmlFor="show-archived-candidates">{t("admin_client.toggle.show_archived", "Show archived")}</Label>
                 </div>
               </div>
 
               {visibleCandidates.length === 0 ? (
-                <p className="text-slate-400 py-8 text-center">No candidates.</p>
+                <p className="text-slate-400 py-8 text-center">{t("admin_client.no_candidates", "No candidates.")}</p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -638,12 +640,12 @@ export const AdminClientPage = () => {
                           aria-label="Select all"
                         />
                       </TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Fit</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t("admin_client.table.name", "Name")}</TableHead>
+                      <TableHead>{t("admin_client.table.role", "Role")}</TableHead>
+                      <TableHead>{t("admin_client.table.status", "Status")}</TableHead>
+                      <TableHead>{t("admin_client.table.date", "Date")}</TableHead>
+                      <TableHead>{t("admin_client.table.fit", "Fit")}</TableHead>
+                      <TableHead className="text-right">{t("admin_client.table.actions", "Actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -661,7 +663,7 @@ export const AdminClientPage = () => {
                         <TableCell className="font-medium">
                           <span className="flex items-center gap-2">
                             {c.name || '—'}
-                            {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">Archived</Badge>}
+                            {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">{t("admin_client.archived", "Archived")}</Badge>}
                           </span>
                         </TableCell>
                         <TableCell className="text-slate-500">{c.appliedRole || '—'}</TableCell>
@@ -688,7 +690,7 @@ export const AdminClientPage = () => {
                                   aria-label={`Copy link for ${c.name}`}
                                 >
                                   {copiedId === c.id ? (
-                                    <span className="text-xs font-semibold text-green-600">Copied</span>
+                                    <span className="text-xs font-semibold text-green-600">{t("admin_client.btn.copied", "Copied")}</span>
                                   ) : (
                                     <Copy className="w-4 h-4 text-slate-500" />
                                   )}
@@ -707,7 +709,7 @@ export const AdminClientPage = () => {
                                   <Edit className="w-4 h-4 text-slate-500" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Edit candidate details</TooltipContent>
+                              <TooltipContent>{t("admin_client.tooltip.edit_candidate", "Edit candidate details")}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -736,7 +738,7 @@ export const AdminClientPage = () => {
                                   Shortlist
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Mark as Shortlisted</TooltipContent>
+                              <TooltipContent>{t("admin_client.tooltip.shortlist", "Mark as Shortlisted")}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -762,7 +764,7 @@ export const AdminClientPage = () => {
                                   <Trash2 className="w-4 h-4 text-red-500" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Delete candidate data (GDPR hard delete)</TooltipContent>
+                              <TooltipContent>{t("admin_client.tooltip.delete_candidate", "Delete candidate data (GDPR hard delete)")}</TooltipContent>
                             </Tooltip>
                           </div>
                         </TableCell>
@@ -814,7 +816,7 @@ export const AdminClientPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditClientDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditClientDialog(false)}>{t("common.cancel", "Cancel")}</Button>
             <Button
               id="edit-client-save"
               onClick={handleEditClient}
@@ -830,8 +832,8 @@ export const AdminClientPage = () => {
       <Dialog open={creditDialog} onOpenChange={setCreditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Adjust Credits</DialogTitle>
-            <DialogDescription>Grant or deduct credits for {client.email || client.id}. Balance: {client.credits ?? 0}</DialogDescription>
+            <DialogTitle>{t("admin_client.adjust_credits", "Adjust Credits")}</DialogTitle>
+            <DialogDescription>{t("admin_client.dialog.credits_desc", "Grant or deduct credits for {email}. Balance: {balance}").replace("{email}", client.email || client.id).replace("{balance}", (client.credits ?? 0).toString())}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -849,7 +851,7 @@ export const AdminClientPage = () => {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreditDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreditDialog(false)}>{t("common.cancel", "Cancel")}</Button>
             <Button onClick={handleCreditAdjust} disabled={creditSaving || creditAmount === 0 || !creditReason.trim()}>
               {creditSaving ? 'Saving...' : 'Confirm'}
             </Button>
@@ -862,7 +864,7 @@ export const AdminClientPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Candidate</DialogTitle>
-            <DialogDescription>Update the candidate's details.</DialogDescription>
+            <DialogDescription>{t("admin_client.dialog.update_desc", "Update the candidate's details.")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditCandidate}>
             <div className="space-y-4 py-4">
@@ -892,7 +894,7 @@ export const AdminClientPage = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>{t("common.cancel", "Cancel")}</Button>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
@@ -903,7 +905,7 @@ export const AdminClientPage = () => {
       <Dialog open={manageCandidatesDialog} onOpenChange={(o) => !o && setManageCandidatesDialog(false)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Manage candidates</DialogTitle>
+            <DialogTitle>{t("admin_client.manage", "Manage candidates")}</DialogTitle>
             <DialogDescription>
               Check candidates to link them to {client.companyName || client.id}.
             </DialogDescription>
@@ -918,7 +920,7 @@ export const AdminClientPage = () => {
               {loadingAllCandidates ? (
                 <p className="text-slate-500 text-sm text-center py-6">Loading…</p>
               ) : filteredManageCandidates.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-6">No candidates found.</p>
+                <p className="text-slate-400 text-sm text-center py-6">{t("admin_client.dialog.no_candidates", "No candidates found.")}</p>
               ) : filteredManageCandidates.map(c => (
                 <label
                   key={c.id}
@@ -947,7 +949,7 @@ export const AdminClientPage = () => {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setManageCandidatesDialog(false)} disabled={manageSaving}>Cancel</Button>
+            <Button variant="outline" onClick={() => setManageCandidatesDialog(false)} disabled={manageSaving}>{t("common.cancel", "Cancel")}</Button>
             <Button id="manage-candidates-save" onClick={handleManageSave} disabled={manageSaving || loadingAllCandidates}>
               {manageSaving ? (manageProgress || 'Saving…') : 'Save'}
             </Button>

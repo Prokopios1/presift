@@ -18,6 +18,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface RecruiterAccount {
   id: string;
@@ -72,6 +73,7 @@ export function buildCandidatesCsv(candidates: CandidateRecord[]): string {
 }
 
 const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp: () => void, onDelete: () => void }) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -101,7 +103,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
             <MoreVertical className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>More actions</TooltipContent>
+        <TooltipContent>{t("admin.tooltip.more_actions", "More actions")}</TooltipContent>
       </Tooltip>
       {open && rect && (
         <div className="fixed inset-0 z-50" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
@@ -116,7 +118,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
                   <Edit2 className="w-4 h-4 text-slate-500" /> Edit
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Edit this organization's details</TooltipContent>
+              <TooltipContent>{t("admin.tooltip.edit_org", "Edit this organization's details")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -124,7 +126,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
                   <Plus className="w-4 h-4 text-slate-500" /> Top Up
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Add credits to this organization's balance</TooltipContent>
+              <TooltipContent>{t("admin.tooltip.add_credits", "Add credits to this organization's balance")}</TooltipContent>
             </Tooltip>
             <div className="h-px bg-slate-200 dark:bg-slate-800 my-1" />
             <Tooltip>
@@ -133,7 +135,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
                   <Trash2 className="w-4 h-4 text-red-500" /> Delete
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Permanently remove this organization and all its data</TooltipContent>
+              <TooltipContent>{t("admin.tooltip.delete_org", "Permanently remove this organization and all its data")}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -143,6 +145,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
 };
 
 export const AdminPage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { setTargetId } = useImpersonation();
@@ -218,7 +221,7 @@ export const AdminPage = () => {
       setTopUpDialog(false);
     } catch (err) {
       console.error(err);
-      alert('Failed to top up credits.');
+      alert(t('admin.alert.failed_topup', 'Failed to top up credits.'));
     } finally {
       setToppingUp(false);
     }
@@ -234,7 +237,7 @@ export const AdminPage = () => {
       setDeleteDialog(false);
     } catch (err) {
       console.error(err);
-      alert('Failed to delete client.');
+      alert(t('admin.alert.failed_delete', 'Failed to delete client.'));
     } finally {
       setDeleting(false);
     }
@@ -275,7 +278,7 @@ export const AdminPage = () => {
       setNewReason('Promo / testing');
     } catch (err) {
       console.error(err);
-      alert('Failed to add client.');
+      alert(t('adminpage.alert.11', 'Failed to add client.'));
     } finally {
       setAddingClient(false);
     }
@@ -301,10 +304,10 @@ export const AdminPage = () => {
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-3xl font-bold tracking-tight">Administrator Dashboard</h1>
-                  <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-none">Admin</Badge>
+                  <h1 className="text-3xl font-bold tracking-tight">{t('admin.title', 'Administrator Dashboard')}</h1>
+                  <Badge className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-none">{t("admin.badge.admin", "Admin")}</Badge>
                 </div>
-              <p className="text-slate-500">Global overview of all PreSift customer accounts.</p>
+              <p className="text-slate-500">{t('admin.description', 'Global overview of all PreSift customer accounts.')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -316,16 +319,16 @@ export const AdminPage = () => {
                     checked={showArchived}
                     onCheckedChange={setShowArchived}
                   />
-                  <Label htmlFor="show-archived">Show archived</Label>
+                  <Label htmlFor="show-archived">{t("admin.show_archived", "Show archived")}</Label>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Show or hide archived organizations</TooltipContent>
+              <TooltipContent>{t("admin.tooltip.show_archived", "Show or hide archived organizations")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={() => setAddClientDialog(true)}>Add Client</Button>
+                <Button onClick={() => setAddClientDialog(true)}>{t("admin.add_client", "Add Client")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Create a new organization account</TooltipContent>
+              <TooltipContent>{t("admin.tooltip.create_org", "Create a new organization account")}</TooltipContent>
             </Tooltip>
           </div>
         </header>
@@ -345,17 +348,17 @@ export const AdminPage = () => {
 
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>Customer Accounts</CardTitle>
-            <CardDescription>Click any row to view the client detail page.</CardDescription>
+            <CardTitle>{t("admin.customer_accounts", "Customer Accounts")}</CardTitle>
+            <CardDescription>{t("admin.customer_accounts_desc", "Click any row to view the client detail page.")}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? <p className="text-slate-500 py-8 text-center">Loading...</p> : (
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Account ID</TableHead><TableHead>Email</TableHead><TableHead>Company</TableHead>
-                  <TableHead>VAT ID</TableHead><TableHead className="text-right">Credits</TableHead>
-                  <TableHead className="text-right">Spent</TableHead>
-                  <TableHead className="text-right">Candidates</TableHead>
+                  <TableHead>{t('admin.table.account', 'Account ID')}</TableHead><TableHead>{t('admin.table.email', 'Email')}</TableHead><TableHead>{t('admin.table.company', 'Company')}</TableHead>
+                  <TableHead>{t('admin.table.vat', 'VAT ID')}</TableHead><TableHead className="text-right">{t('admin.table.credits', 'Credits')}</TableHead>
+                  <TableHead className="text-right">{t('admin.table.spent', 'Spent')}</TableHead>
+                  <TableHead className="text-right">{t('admin.table.candidates', 'Candidates')}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
@@ -371,7 +374,7 @@ export const AdminPage = () => {
                         <span className="flex items-center gap-2">
                           {r.companyName || '—'}
                           {r.archived && (
-                            <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">Archived</Badge>
+                            <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">{t("admin.badge.archived", "Archived")}</Badge>
                           )}
                         </span>
                       </TableCell>
@@ -398,7 +401,7 @@ export const AdminPage = () => {
                                 <Eye className="h-4 w-4 text-blue-500" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Impersonate this recruiter</TooltipContent>
+                            <TooltipContent>{t("admin.tooltip.impersonate", "Impersonate this recruiter")}</TooltipContent>
                           </Tooltip>
                           <ActionMenu 
                             onEdit={() => navigate(`/admin/clients/${r.id}`)}
@@ -419,37 +422,37 @@ export const AdminPage = () => {
         <Dialog open={addClientDialog} onOpenChange={setAddClientDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Client</DialogTitle>
-              <DialogDescription>Create a new customer account and grant initial credits.</DialogDescription>
+              <DialogTitle>{t("admin.add_client_title", "Add New Client")}</DialogTitle>
+              <DialogDescription>{t("admin.add_client_desc", "Create a new customer account and grant initial credits.")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Full Name (required)</Label>
+                <Label>{t("admin.full_name_req", "Full Name (required)")}</Label>
                 <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Jane Doe" />
               </div>
               <div className="space-y-2">
-                <Label>Company Name (required)</Label>
+                <Label>{t("admin.company_name_req", "Company Name (required)")}</Label>
                 <Input value={newCompany} onChange={e => setNewCompany(e.target.value)} placeholder="e.g. Acme Corp" />
               </div>
               <div className="space-y-2">
-                <Label>Email (required)</Label>
+                <Label>{t("admin.email_req", "Email (required)")}</Label>
                 <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="hello@acme.com" />
               </div>
               <div className="space-y-2">
-                <Label>VAT/Tax ID (optional)</Label>
+                <Label>{t("admin.vat_req", "VAT/Tax ID (optional)")}</Label>
                 <Input value={newVat} onChange={e => setNewVat(e.target.value)} placeholder="e.g. DE123456789" />
               </div>
               <div className="space-y-2">
-                <Label>Free credits for promo/testing</Label>
+                <Label>{t("admin.free_credits", "Free credits for promo/testing")}</Label>
                 <Input type="number" min="0" value={newCredits} onChange={e => setNewCredits(parseInt(e.target.value) || 0)} />
               </div>
               <div className="space-y-2">
-                <Label>Reason</Label>
+                <Label>{t("admin.reason", "Reason")}</Label>
                 <Input value={newReason} onChange={e => setNewReason(e.target.value)} placeholder="e.g., Promo / testing" />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setAddClientDialog(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setAddClientDialog(false)}>{t("common.cancel", "Cancel")}</Button>
               <Button
                 onClick={handleAddClient}
                 disabled={addingClient || !newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
@@ -465,21 +468,21 @@ export const AdminPage = () => {
         <Dialog open={topUpDialog} onOpenChange={setTopUpDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Top Up Credits</DialogTitle>
-              <DialogDescription>Add assessment credits to {topUpClient?.companyName}.</DialogDescription>
+              <DialogTitle>{t("admin.top_up_title", "Top Up Credits")}</DialogTitle>
+              <DialogDescription>{t("admin.dialog.add_credits_desc", "Add assessment credits to {companyName}.").replace("{companyName}", topUpClient?.companyName || "")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Credits to Add</Label>
+                <Label>{t("admin.credits_to_add", "Credits to Add")}</Label>
                 <Input type="number" min="1" value={topUpCredits} onChange={e => setTopUpCredits(parseInt(e.target.value) || 0)} />
               </div>
               <div className="space-y-2">
-                <Label>Reason</Label>
+                <Label>{t("admin.reason", "Reason")}</Label>
                 <Input value={topUpReason} onChange={e => setTopUpReason(e.target.value)} placeholder="e.g. promotional" />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setTopUpDialog(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setTopUpDialog(false)}>{t("common.cancel", "Cancel")}</Button>
               <Button
                 onClick={handleTopUp}
                 disabled={toppingUp || topUpCredits <= 0}
@@ -495,7 +498,7 @@ export const AdminPage = () => {
         <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete Client Account</DialogTitle>
+              <DialogTitle>{t("admin.delete_title", "Delete Client Account")}</DialogTitle>
               <DialogDescription className="text-red-600 dark:text-red-400 font-medium">
                 Warning: This action is permanent and irreversible.
               </DialogDescription>
@@ -506,7 +509,7 @@ export const AdminPage = () => {
               This will cascade and permanently delete all of their candidates, campaigns, and credit history.
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialog(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDeleteDialog(false)}>{t("common.cancel", "Cancel")}</Button>
               <Button
                 variant="destructive"
                 onClick={handleDeleteClient}

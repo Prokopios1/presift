@@ -14,7 +14,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Spinner } from '@/components/ui/spinner';
-
+import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
@@ -63,6 +63,7 @@ export const getSelectionState = (
 };
 
 export const DashboardPage = () => {
+  const { t } = useI18n();
   const { user, role } = useAuth();
   const { targetId } = useImpersonation();
   const recruiterId = targetId || user?.uid || '';
@@ -80,6 +81,7 @@ export const DashboardPage = () => {
   const [generatedLinkData, setGeneratedLinkData] = useState<{url: string} | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [creatingLink, setCreatingLink] = useState(false);
+  const [linkLang, setLinkLang] = useState<'el' | 'en'>('el');
   const [deletingBulk, setDeletingBulk] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export const DashboardPage = () => {
 
   const handleBulkDelete = async () => {
     if (selectedCandidateIds.size === 0) return;
-    if (confirm(`Are you sure you want to delete ${selectedCandidateIds.size} candidate(s)? This cannot be undone.`)) {
+    if (confirm(t('dashboard.confirm.bulk_delete', 'Are you sure you want to delete {size} candidate(s)? This cannot be undone.').replace('{size}', selectedCandidateIds.size.toString()))) {
       setDeletingBulk(true);
       try {
         const bulkDelete = httpsCallable(functions, 'bulkDeleteCandidates');
@@ -166,7 +168,7 @@ export const DashboardPage = () => {
         setCandidates(prev => prev.filter(c => !selectedCandidateIds.has(c.id)));
         setSelectedCandidateIds(new Set());
       } catch (e) {
-        alert('Failed to delete candidates.');
+        alert(t('dashboardpage.alert.1', 'Failed to delete candidates.'));
         console.error(e);
       } finally {
         setDeletingBulk(false);
@@ -205,7 +207,7 @@ export const DashboardPage = () => {
       }
       setEditCandidateDialog(null);
     } catch(e) {
-      alert('Failed to edit candidate.');
+      alert(t('dashboard.alert.failed_edit', 'Failed to edit candidate.'));
       console.error(e);
     } finally {
       setSavingEdit(false);
@@ -220,7 +222,7 @@ export const DashboardPage = () => {
       await archiveCandidate({ candidateId: c.id, archived: newArchived });
       setCandidates(prev => prev.map(x => x.id === c.id ? { ...x, archived: newArchived } : x));
     } catch (e) {
-      alert('Failed to archive/unarchive candidate.');
+      alert(t('dashboard.alert.failed_archive', 'Failed to archive/unarchive candidate.'));
       console.error(e);
     } finally {
       setArchivingId(null);
@@ -228,14 +230,14 @@ export const DashboardPage = () => {
   };
 
   const handleDeleteCandidate = async (c: any) => {
-    if (!window.confirm(`Are you sure you want to permanently delete candidate ${c.name}?`)) return;
+    if (!window.confirm(t('dashboard.confirm.delete', 'Are you sure you want to permanently delete candidate {name}?').replace('{name}', c.name))) return;
     setDeletingId(c.id);
     try {
       const deleteCandidateCallable = httpsCallable(functions, 'deleteCandidate');
       await deleteCandidateCallable({ candidateId: c.id });
       setCandidates(prev => prev.filter(x => x.id !== c.id));
     } catch (e) {
-      alert('Failed to delete candidate.');
+      alert(t('dashboard.alert.failed_delete', 'Failed to delete candidate.'));
       console.error(e);
     } finally {
       setDeletingId(null);
@@ -255,7 +257,7 @@ export const DashboardPage = () => {
                   <ArrowLeft className="w-4 h-4 mr-1" /> Back
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Go back to the previous page</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.back", "Go back to the previous page")}</TooltipContent>
             </Tooltip>
             
             <Tooltip>
@@ -264,7 +266,7 @@ export const DashboardPage = () => {
                   Forward <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Go forward to the next page</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.forward", "Go forward to the next page")}</TooltipContent>
             </Tooltip>
           </div>
           <ThemeToggle />
@@ -275,28 +277,28 @@ export const DashboardPage = () => {
 
             <div className="flex items-center gap-3">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Recruiter Dashboard</h1>
-                <p className="text-slate-500">Manage assessments and review candidates.</p>
-<p className="text-slate-500">Recruiter: {recruiterIdentifier}</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title', 'Recruiter Dashboard')}</h1>
+                <p className="text-slate-500">{t('dashboard.description', 'Manage assessments and review candidates.')}</p>
+<p className="text-slate-500">{t("dashboard.recruiter", "Recruiter: ")}{recruiterIdentifier}</p>
               </div>
             </div>
         <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
           <div className="flex flex-col">
-            <span className="text-xs text-slate-500 uppercase font-semibold">Balance</span>
+            <span className="text-xs text-slate-500 uppercase font-semibold">{t("dashboard.balance", "Balance")}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="font-bold text-lg text-slate-900 dark:text-white cursor-help">
-                  {loading ? '...' : `${balance} Credits`}
+                  {loading ? '...' : `${balance} ${t("dashboard.credits", "Credits")}`}
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Credits remaining — each assessment link costs 1 credit</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.credits", "Credits remaining — each assessment link costs 1 credit")}</TooltipContent>
             </Tooltip>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={() => navigate('/pricing')}>Top Up Credits</Button>
+              <Button onClick={() => navigate('/pricing')}>{t("dashboard.topup", "Top Up Credits")}</Button>
             </TooltipTrigger>
-            <TooltipContent>Buy more assessment credits — opens the payment page</TooltipContent>
+            <TooltipContent>{t("dashboard.tooltip.topup", "Buy more assessment credits — opens the payment page")}</TooltipContent>
           </Tooltip>
         </div>
         </header>
@@ -307,7 +309,7 @@ export const DashboardPage = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
             className="pl-9" 
-            placeholder="Search candidates by name, role, or status..." 
+            placeholder={t("dashboard.search", "Search candidates by name, role, or status...")} 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -317,17 +319,17 @@ export const DashboardPage = () => {
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2">
                 <Switch id="show-archived-dash" checked={showArchived} onCheckedChange={setShowArchived} />
-                <Label htmlFor="show-archived-dash">Show archived</Label>
+                <Label htmlFor="show-archived-dash">{t("dashboard.show_archived", "Show archived")}</Label>
               </div>
             </TooltipTrigger>
-            <TooltipContent>Show or hide archived candidates</TooltipContent>
+            <TooltipContent>{t("dashboard.tooltip.archived", "Show or hide archived candidates")}</TooltipContent>
           </Tooltip>
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick={() => setCreateLinkDialogOpen(true)}>+ Create New Assessment</Button>
+            <Button onClick={() => setCreateLinkDialogOpen(true)}>{t("dashboard.create_assessment", "+ Create New Assessment")}</Button>
           </TooltipTrigger>
-          <TooltipContent>Generate an assessment link to send to a candidate</TooltipContent>
+          <TooltipContent>{t("dashboard.tooltip.generate", "Generate an assessment link to send to a candidate")}</TooltipContent>
         </Tooltip>
       </div>
 
@@ -335,20 +337,20 @@ export const DashboardPage = () => {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Recent Candidates</CardTitle>
-              <CardDescription>Overview of recent applicants.</CardDescription>
+              <CardTitle>{t("dashboard.recent_candidates", "Recent Candidates")}</CardTitle>
+              <CardDescription>{t("dashboard.recent_desc", "Overview of recent applicants.")}</CardDescription>
             </div>
             {selectedCandidateIds.size > 0 && (
               <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 px-4 py-2 rounded-lg border border-red-200 dark:border-red-800">
-                <span className="text-sm font-medium">{selectedCandidateIds.size} selected</span>
+                <span className="text-sm font-medium">{selectedCandidateIds.size} {t("dashboard.text.selected", "selected")}</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={deletingBulk}>
                       {deletingBulk ? <Spinner size="sm" className="mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
-                      Delete selected
+                      {t("dashboard.btn.delete_selected", "Delete selected")}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Permanently remove the selected candidates</TooltipContent>
+                  <TooltipContent>{t("dashboard.tooltip.delete_bulk", "Permanently remove the selected candidates")}</TooltipContent>
                 </Tooltip>
               </div>
             )}
@@ -362,16 +364,16 @@ export const DashboardPage = () => {
                       ref={headerCheckboxRef as any}
                       checked={isAllSelected ? true : isSomeSelected ? 'indeterminate' : false}
                       onCheckedChange={handleSelectAll}
-                      aria-label="Select all"
+                      aria-label={t("dashboard.aria.select_all", "Select all")}
                     />
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Fit Score</TableHead>
-                  <TableHead>Integrity</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('dashboard.table.candidate', 'Candidate')}</TableHead>
+                  <TableHead>{t("dashboard.table.role", "Role")}</TableHead>
+                  <TableHead>{t('dashboard.table.status', 'Status')}</TableHead>
+                  <TableHead>{t('dashboard.table.date', 'Date')}</TableHead>
+                  <TableHead>{t('dashboard.table.score', 'Fit Score')}</TableHead>
+                  <TableHead>{t("dashboard.table.integrity", "Integrity")}</TableHead>
+                  <TableHead className="text-right">{t('dashboard.table.actions', 'Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -387,19 +389,19 @@ export const DashboardPage = () => {
                       <Checkbox 
                         checked={selectedCandidateIds.has(c.id)}
                         onCheckedChange={(checked) => handleSelectRow(c.id, !!checked)}
-                        aria-label={`Select ${c.name}`}
+                        aria-label={`${t("dashboard.aria.select", "Select")} ${c.name}`}
                       />
                     </TableCell>
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-2">
                         {c.name}
-                        {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">Archived</Badge>}
+                        {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">{t("dashboard.badge.archived", "Archived")}</Badge>}
                       </span>
                     </TableCell>
                     <TableCell className="text-slate-500">
                       {c.roleTitle || c.appliedRole}
                     </TableCell>
-                    <TableCell>{c.status || 'Pending'}</TableCell>
+                    <TableCell>{t(`status.${(c.status || 'pending').toLowerCase()}`, c.status || 'Pending')}</TableCell>
                     <TableCell className="text-slate-500 text-sm">{c.completionDate ? new Date(c.completionDate).toLocaleDateString() : '-'}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={
@@ -407,19 +409,19 @@ export const DashboardPage = () => {
                         (c.fitBadge || c.fit || '').includes('Conditional') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                         'bg-red-50 text-red-700 border-red-200'
                       }>
-                        {c.fitBadge || c.fit || 'Unknown'}
+                        {c.fitBadge || c.fit || t("dashboard.badge.unknown", "Unknown")}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {c.integrityEvents?.length > 0 ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Badge variant="destructive" className="cursor-help">⚠️ Flagged</Badge>
+                            <Badge variant="destructive" className="cursor-help">⚠️ {t("dashboard.badge.flagged", "Flagged")}</Badge>
                           </TooltipTrigger>
-                          <TooltipContent>Candidate flagged by anti-cheating monitoring</TooltipContent>
+                          <TooltipContent>{t("dashboard.tooltip.flagged", "Candidate flagged by anti-cheating monitoring")}</TooltipContent>
                         </Tooltip>
                       ) : (
-                        <span className="text-slate-400 text-sm">Clear</span>
+                        <span className="text-slate-400 text-sm">{t("dashboard.badge.clear", "Clear")}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right flex items-center justify-end gap-1">
@@ -430,16 +432,16 @@ export const DashboardPage = () => {
                             size="icon" 
                             onClick={() => handleCopyLink(c.id, !!c.archived)} 
                             disabled={!!c.archived}
-                            aria-label={`Copy link for ${c.name}`}
+                            aria-label={`${t("dashboard.aria.copy_link", "Copy link for")} ${c.name}`}
                           >
                             {copiedId === c.id ? (
-                              <span className="text-xs font-semibold text-green-600">Copied</span>
+                              <span className="text-xs font-semibold text-green-600">{t("dashboard.badge.copied", "Copied")}</span>
                             ) : (
                               <Copy className="w-4 h-4 text-slate-500" />
                             )}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{c.archived ? 'Cannot copy link for archived candidate' : 'Copy assessment link'}</TooltipContent>
+                        <TooltipContent>{c.archived ? t('dashboard.tooltip.copy_disabled', 'Cannot copy link for archived candidate') : t('dashboard.tooltip.copy', 'Copy assessment link')}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -447,12 +449,12 @@ export const DashboardPage = () => {
                             variant="ghost" 
                             size="icon" 
                             onClick={() => setEditCandidateDialog({ id: c.id, name: c.name || '', email: c.email || '', appliedRole: c.roleTitle || c.appliedRole || '' })} 
-                            aria-label={`Edit ${c.name}`}
+                            aria-label={`${t("dashboard.aria.edit", "Edit")} ${c.name}`}
                           >
                             <Edit className="w-4 h-4 text-slate-500" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Edit this candidate's details</TooltipContent>
+                        <TooltipContent>{t("dashboard.tooltip.edit", "Edit this candidate's details")}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -461,7 +463,7 @@ export const DashboardPage = () => {
                             size="icon"
                             disabled={archivingId === c.id}
                             onClick={() => handleArchiveCandidate(c)}
-                            aria-label={c.archived ? `Unarchive ${c.name}` : `Archive ${c.name}`}
+                            aria-label={c.archived ? `${t("dashboard.aria.unarchive", "Unarchive")} ${c.name}` : `${t("dashboard.aria.archive", "Archive")} ${c.name}`}
                           >
                             {archivingId === c.id ? <Spinner size="sm" /> : c.archived
                               ? <ArchiveRestore className="w-4 h-4 text-slate-500" />
@@ -469,7 +471,7 @@ export const DashboardPage = () => {
                             }
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{c.archived ? 'Restore this candidate from the archive' : 'Move this candidate to the archive'}</TooltipContent>
+                        <TooltipContent>{c.archived ? t('dashboard.tooltip.unarchive', 'Restore this candidate from the archive') : t('dashboard.tooltip.archive', 'Move this candidate to the archive')}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -478,18 +480,18 @@ export const DashboardPage = () => {
                             size="icon"
                             disabled={deletingId === c.id}
                             onClick={() => handleDeleteCandidate(c)}
-                            aria-label={`Delete ${c.name}`}
+                            aria-label={`${t("dashboard.aria.delete", "Delete")} ${c.name}`}
                           >
                             {deletingId === c.id ? <Spinner size="sm" className="text-red-500" /> : <Trash2 className="w-4 h-4 text-red-500" />}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Permanently remove the selected candidates</TooltipContent>
+                        <TooltipContent>{t("dashboard.tooltip.delete_bulk", "Permanently remove the selected candidates")}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/candidate/${c.id}`)}>View</Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/candidate/${c.id}`)}>{t("dashboard.btn.view", "View")}</Button>
                         </TooltipTrigger>
-                        <TooltipContent>Open this candidate's full profile and results</TooltipContent>
+                        <TooltipContent>{t("dashboard.tooltip.view", "Open this candidate's full profile and results")}</TooltipContent>
                       </Tooltip>
                     </TableCell>
                   </TableRow>
@@ -501,8 +503,8 @@ export const DashboardPage = () => {
 
         <Card className="shadow-sm mt-6">
           <CardHeader>
-            <CardTitle>Candidate Benchmarking</CardTitle>
-            <CardDescription>ICAR (Cognitive) vs WLEIS (Emotional Intelligence) Score Distribution</CardDescription>
+            <CardTitle>{t("dashboard.benchmarking", "Candidate Benchmarking")}</CardTitle>
+            <CardDescription>{t("dashboard.chart.desc", "ICAR (Cognitive) vs WLEIS (Emotional Intelligence) Score Distribution")}</CardDescription>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -535,32 +537,53 @@ export const DashboardPage = () => {
       <Dialog open={createLinkDialogOpen} onOpenChange={setCreateLinkDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assessment Links</DialogTitle>
-            <DialogDescription>Generate links to send to candidates.</DialogDescription>
+            <DialogTitle>{t("dashboard.links", "Assessment Links")}</DialogTitle>
+            <DialogDescription>{t("dashboard.dialog.links_desc", "Generate links to send to candidates.")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex flex-col gap-2">
               <Input 
-                placeholder="Candidate Name" 
+                placeholder={t("dashboard.candidate_name", "Candidate Name")} 
                 id="candidateNameInput"
               />
               <Input 
-                placeholder="Candidate Email (optional)" 
+                placeholder={t("dashboard.candidate_email", "Candidate Email (optional)")} 
                 id="candidateEmailInput"
                 type="email"
               />
               <Input 
-                placeholder="Role Title (e.g., Software Engineer)" 
+                placeholder={t("dashboard.role_title", "Role Title (e.g., Software Engineer)")} 
                 id="roleTitleInput"
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("dashboard.label.language", "Candidate Language")}</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={linkLang === 'el' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLinkLang('el')}
+                >
+                  {t("dashboard.option.el", "Ελληνικά")}
+                </Button>
+                <Button
+                  type="button"
+                  variant={linkLang === 'en' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setLinkLang('en')}
+                >
+                  {t("dashboard.option.en", "English")}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setCreateLinkDialogOpen(false)}>{t("common.cancel", "Cancel")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Close this dialog without creating a link</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.cancel_link", "Close this dialog without creating a link")}</TooltipContent>
             </Tooltip>
             
             <Tooltip>
@@ -569,11 +592,11 @@ export const DashboardPage = () => {
                   const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
                   const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
                   const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
-                  if (!roleTitle) return alert('Enter a role title');
+                  if (!roleTitle) return alert(t('dashboard.alert.enter_role', 'Enter a role title'));
                   setCreatingLink(true);
                   try {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
-                const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId });
+                const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId, lang: linkLang });
                 const data = res.data as any;
                 if (role !== 'admin') {
                   setBalance(b => b - 1);
@@ -583,23 +606,23 @@ export const DashboardPage = () => {
               } catch (e: any) {
                 console.error(e);
                 if (e.code === 'functions/failed-precondition') {
-                  alert('Insufficient credits — top up this recruiter to create a link.');
+                  alert(t('dashboard.alert.insufficient', 'Insufficient credits — top up this recruiter to create a link.'));
                 } else if (e.code === 'functions/permission-denied') {
-                  alert('No permission to create links for this account.');
+                  alert(t('dashboard.alert.no_permission', 'No permission to create links for this account.'));
                 } else if (e.code === 'functions/unauthenticated') {
-                  alert('Please sign in to create a link.');
+                  alert(t('dashboard.alert.sign_in', 'Please sign in to create a link.'));
                 } else {
-                  alert('Failed to create link.');
+                  alert(t('dashboard.alert.failed_link', 'Failed to create link.'));
                 }
               } finally {
                 setCreatingLink(false);
               }
             }}>
               {creatingLink ? <Spinner size="sm" className="mr-2" /> : null}
-              {(balance <= 0 && role !== 'admin') ? 'Out of Credits - Top Up to Create' : 'Generate Assessment Link'}
+              {(balance <= 0 && role !== 'admin') ? t("dashboard.btn.out_of_credits", "Out of Credits - Top Up to Create") : t("dashboard.btn.generate_link", "Generate Assessment Link")}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Create the link and copy it — costs 1 credit</TooltipContent>
+          <TooltipContent>{t("dashboard.tooltip.create_copy", "Create the link and copy it — costs 1 credit")}</TooltipContent>
         </Tooltip>
           </DialogFooter>
         </DialogContent>
@@ -608,8 +631,8 @@ export const DashboardPage = () => {
       <Dialog open={!!generatedLinkData} onOpenChange={(o) => !o && setGeneratedLinkData(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assessment Link Created</DialogTitle>
-            <DialogDescription>Share this link with your candidate.</DialogDescription>
+            <DialogTitle>{t("dashboard.dialog.link_created", "Assessment Link Created")}</DialogTitle>
+            <DialogDescription>{t("dashboard.dialog.share_desc", "Share this link with your candidate.")}</DialogDescription>
           </DialogHeader>
           <div className="py-6 flex flex-col items-center gap-4">
             <p className="text-center font-mono bg-slate-100 dark:bg-slate-900 p-4 rounded text-sm break-all select-all w-full border border-slate-200 dark:border-slate-800">
@@ -628,18 +651,18 @@ export const DashboardPage = () => {
                     }
                   }}
                 >
-                  {linkCopied ? 'Copied!' : 'Copy to Clipboard'}
+                  {linkCopied ? t("dashboard.btn.copied", "Copied!") : t("dashboard.btn.copy_clipboard", "Copy to Clipboard")}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Copy the link to share with the candidate</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.copy_share", "Copy the link to share with the candidate")}</TooltipContent>
             </Tooltip>
           </div>
           <DialogFooter>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={() => setGeneratedLinkData(null)}>Close</Button>
+                <Button variant="ghost" onClick={() => setGeneratedLinkData(null)}>{t("common.close", "Close")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Close this popup</TooltipContent>
+              <TooltipContent>{t("dashboard.tooltip.close_popup", "Close this popup")}</TooltipContent>
             </Tooltip>
           </DialogFooter>
         </DialogContent>
@@ -648,13 +671,13 @@ export const DashboardPage = () => {
       <Dialog open={!!editCandidateDialog} onOpenChange={(o) => !o && setEditCandidateDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Candidate</DialogTitle>
-            <DialogDescription>Update the candidate's details.</DialogDescription>
+            <DialogTitle>{t("dashboard.edit_candidate", "Edit Candidate")}</DialogTitle>
+            <DialogDescription>{t("dashboard.dialog.edit_desc", "Update the candidate's details.")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditCandidate}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Candidate Name</Label>
+                <Label>{t("dashboard.label.candidate_name", "Candidate Name")}</Label>
                 <Input 
                   value={editCandidateDialog?.name || ''} 
                   onChange={e => setEditCandidateDialog({ ...editCandidateDialog, name: e.target.value })}
@@ -662,7 +685,7 @@ export const DashboardPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Candidate Email</Label>
+                <Label>{t("dashboard.label.candidate_email", "Candidate Email")}</Label>
                 <Input 
                   type="email"
                   value={editCandidateDialog?.email || ''} 
@@ -670,7 +693,7 @@ export const DashboardPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Applied Role</Label>
+                <Label>{t("dashboard.label.applied_role", "Applied Role")}</Label>
                 <Input 
                   value={editCandidateDialog?.appliedRole || ''} 
                   onChange={e => setEditCandidateDialog({ ...editCandidateDialog, appliedRole: e.target.value })}
@@ -679,15 +702,15 @@ export const DashboardPage = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>{t("common.cancel", "Cancel")}</Button>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button type="submit" disabled={savingEdit}>
                     {savingEdit ? <Spinner size="sm" className="mr-2" /> : null}
-                    Save Changes
+                    {t("dashboard.btn.save_changes", "Save Changes")}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Save the candidate's updated details</TooltipContent>
+                <TooltipContent>{t("dashboard.tooltip.save_edit", "Save the candidate's updated details")}</TooltipContent>
               </Tooltip>
             </DialogFooter>
           </form>

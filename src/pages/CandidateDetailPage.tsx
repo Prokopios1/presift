@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -75,6 +76,7 @@ function fitBadgeSentence(badge: string): string {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const CandidateDetailPage = () => {
+  const { t } = useI18n();
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -119,19 +121,19 @@ export const CandidateDetailPage = () => {
       await updateCandidateStatus({ candidateId: selectedCandidate.id, status });
       setSelectedCandidate({ ...selectedCandidate, status });
     } catch (e) {
-      alert('Failed to update status');
+      alert(t('candidatedetailpage.alert.12', 'Failed to update status'));
       console.error(e);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.')) {
+    if (confirm(t('candidatedetailpage.confirm.14', 'Are you sure you want to permanently delete this candidate (GDPR)? This cannot be undone.'))) {
       try {
         const deleteCandidate = httpsCallable(functions, 'deleteCandidate');
         await deleteCandidate({ candidateId: id });
         navigate('/dashboard');
       } catch (e) {
-        alert('Failed to delete candidate.');
+        alert(t('candidatedetailpage.alert.13', 'Failed to delete candidate.'));
         console.error(e);
       }
     }
@@ -152,8 +154,8 @@ export const CandidateDetailPage = () => {
     return prompts.slice(0, 3);
   };
 
-  if (loading) return <div className="p-8 text-center">Loading candidate...</div>;
-  if (!selectedCandidate) return <div className="p-8 text-center">Candidate not found.</div>;
+  if (loading) return <div className="p-8 text-center">{t("candidate.loading", "Loading candidate...")}</div>;
+  if (!selectedCandidate) return <div className="p-8 text-center">{t("candidate.not_found", "Candidate not found.")}</div>;
 
   const icar = selectedCandidate.scoreResult?.icar;
   const wleis = selectedCandidate.scoreResult?.wleis?.rawScores;
@@ -167,7 +169,7 @@ export const CandidateDetailPage = () => {
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleBack}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>{t("candidate_detail.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <ThemeToggle />
         </nav>
@@ -188,21 +190,21 @@ export const CandidateDetailPage = () => {
               <div className="ml-auto flex gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant={selectedCandidate.status === 'Shortlisted' ? 'default' : 'outline'} onClick={() => updateStatus('Shortlisted')}>Shortlist</Button>
+                    <Button size="sm" variant={selectedCandidate.status === 'Shortlisted' ? 'default' : 'outline'} onClick={() => updateStatus('Shortlisted')}>{t("candidate_detail.shortlist", "Shortlist")}</Button>
                   </TooltipTrigger>
-                  <TooltipContent>Move to Shortlisted status</TooltipContent>
+                  <TooltipContent>{t("candidate_detail.shortlist_desc", "Move to Shortlisted status")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant={selectedCandidate.status === 'Interviewing' ? 'default' : 'outline'} onClick={() => updateStatus('Interviewing')}>Interview</Button>
+                    <Button size="sm" variant={selectedCandidate.status === 'Interviewing' ? 'default' : 'outline'} onClick={() => updateStatus('Interviewing')}>{t("candidate_detail.interview", "Interview")}</Button>
                   </TooltipTrigger>
-                  <TooltipContent>Move to Interviewing status</TooltipContent>
+                  <TooltipContent>{t("candidate_detail.interview_desc", "Move to Interviewing status")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant={selectedCandidate.status === 'Rejected' ? 'default' : 'outline'} onClick={() => updateStatus('Rejected')}>Reject</Button>
+                    <Button size="sm" variant={selectedCandidate.status === 'Rejected' ? 'default' : 'outline'} onClick={() => updateStatus('Rejected')}>{t("candidate_detail.reject", "Reject")}</Button>
                   </TooltipTrigger>
-                  <TooltipContent>Move to Rejected status</TooltipContent>
+                  <TooltipContent>{t("candidate_detail.reject_desc", "Move to Rejected status")}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -214,7 +216,7 @@ export const CandidateDetailPage = () => {
           {/* ICAR percentile + WLEIS total score cards */}
           <div className="grid grid-cols-2 gap-4">
             <Card>
-              <CardHeader><CardTitle className="text-sm text-slate-500">Cognitive (ICAR)</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-sm text-slate-500">{t("candidate_detail.cognitive", "Cognitive (ICAR)")}</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">{icar?.percentile ?? 0}th <span className="text-sm font-normal text-slate-500">%ile</span></p>
                 {icar?.percentile !== undefined && (
@@ -226,9 +228,9 @@ export const CandidateDetailPage = () => {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle className="text-sm text-slate-500">Emotional Intelligence</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-sm text-slate-500">{t("candidate_detail.emotional_intelligence", "Emotional Intelligence")}</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{wleis?.Total ?? 0} <span className="text-sm font-normal text-slate-500">Score</span></p>
+                <p className="text-3xl font-bold">{wleis?.Total ?? 0} <span className="text-sm font-normal text-slate-500">{t("candidate_detail.score", "Score")}</span></p>
                 {wleis?.Total !== undefined && (
                   <>
                     <p className="text-sm font-semibold mt-1">{wleisLabel(wleis.Total)}</p>
@@ -244,7 +246,7 @@ export const CandidateDetailPage = () => {
             <div className="grid grid-cols-2 gap-4">
               {/* ICAR Domain Breakdown — 3 domains, no Spatial */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">ICAR Domain Breakdown</h3>
+                <h3 className="font-semibold text-lg">{t("candidate_detail.icar_breakdown", "ICAR Domain Breakdown")}</h3>
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   {(['numerical', 'verbal', 'abstract'] as const).map(domain => {
                     const val = icar?.domainScores?.[domain] ?? 'N/A';
@@ -266,7 +268,7 @@ export const CandidateDetailPage = () => {
 
               {/* WLEIS 4x4 Breakdown with subscale meanings + Low/Moderate/High */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">WLEIS 4×4 Breakdown</h3>
+                <h3 className="font-semibold text-lg">{t("candidate_detail.wleis_breakdown", "WLEIS 4×4 Breakdown")}</h3>
                 <div className="grid grid-cols-4 gap-2 text-center text-sm">
                   {([
                     { key: 'SEA', label: 'Self', meaning: 'Reading your own emotions' },
@@ -293,22 +295,22 @@ export const CandidateDetailPage = () => {
 
           {/* Anti-Cheating Summary */}
           <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Anti-Cheating Logs</h3>
+            <h3 className="font-semibold text-lg">{t("candidate_detail.anti_cheating", "Anti-Cheating Logs")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className="text-2xl font-bold">
                     {dur ? `${Math.floor(dur / 60)}m ${dur % 60}s` : 'N/A'}
                   </p>
-                  <p className="text-xs text-slate-500 uppercase mt-1">Total Duration</p>
+                  <p className="text-xs text-slate-500 uppercase mt-1">{t("candidate_detail.total_duration", "Total Duration")}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className={`text-2xl font-bold ${blurs > 0 ? 'text-red-500' : 'text-emerald-500'}`}>{blurs}</p>
-                  <p className="text-xs text-slate-500 uppercase mt-1">Tab-Switch Blurs</p>
+                  <p className="text-xs text-slate-500 uppercase mt-1">{t("candidate_detail.tab_switch", "Tab-Switch Blurs")}</p>
                   {blurs === 0 ? (
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">No integrity issues detected.</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{t("candidate_detail.no_issues", "No integrity issues detected.")}</p>
                   ) : (
                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                       Candidate left the test window {blurs} {blurs === 1 ? 'time' : 'times'} — review results with caution.
@@ -320,7 +322,7 @@ export const CandidateDetailPage = () => {
           </div>
 
           <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Custom Interview Prompts</h3>
+            <h3 className="font-semibold text-lg">{t("candidate_detail.custom_prompts", "Custom Interview Prompts")}</h3>
             <Card className="bg-slate-50 dark:bg-slate-900/50">
               <CardContent className="p-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
                 {getDynamicPrompts(selectedCandidate).map((p, i) => (
@@ -333,15 +335,15 @@ export const CandidateDetailPage = () => {
           <div className="flex gap-4 pt-4 border-t mt-8">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button className="flex-1" onClick={() => window.print()}>Export PDF</Button>
+                <Button className="flex-1" onClick={() => window.print()}>{t("candidate_detail.export_pdf", "Export PDF")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Print or save this candidate report as PDF</TooltipContent>
+              <TooltipContent>{t("candidate_detail.export_pdf_desc", "Print or save this candidate report as PDF")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedCandidate.id)}>Delete Data (GDPR)</Button>
+                <Button variant="destructive" className="flex-1" onClick={() => handleDelete(selectedCandidate.id)}>{t("candidate_detail.delete_data", "Delete Data (GDPR)")}</Button>
               </TooltipTrigger>
-              <TooltipContent>Permanently delete all candidate data (GDPR hard delete)</TooltipContent>
+              <TooltipContent>{t("candidate_detail.delete_data_desc", "Permanently delete all candidate data (GDPR hard delete)")}</TooltipContent>
             </Tooltip>
           </div>
         </div>

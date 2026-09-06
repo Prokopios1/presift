@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -8,11 +9,11 @@ import { TooltipProvider } from '../components/ui/tooltip';
 const renderTest = () =>
   render(
     <TooltipProvider>
-      <MemoryRouter initialEntries={['/test/assess_1']}>
+      <I18nProvider><MemoryRouter initialEntries={['/test/assess_1']}>
         <Routes>
           <Route path="/test/:assessmentId" element={<TestPage />} />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter></I18nProvider>
     </TooltipProvider>
   );
 

@@ -8,9 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Building2, User, Mail, Briefcase, Lock } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -46,7 +49,7 @@ export const RegisterPage = () => {
 
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to create account.');
+      setError(err.message || t('register.error.default', 'Failed to create account.'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -55,11 +58,14 @@ export const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+      <header className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </header>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold tracking-tight">Create an account</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">{t('register.title', 'Create an account')}</CardTitle>
           <CardDescription>
-            Enter your details below to get started with PreSift.
+            {t('register.description', 'Enter your details below to get started with PreSift.')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -71,12 +77,12 @@ export const RegisterPage = () => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t('register.name', 'Full Name')}</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   id="name"
-                  placeholder="John Doe"
+                  placeholder={t('register.name_placeholder', 'John Doe')}
                   required
                   className="pl-9"
                   value={formData.name}
@@ -86,7 +92,7 @@ export const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Work Email</Label>
+              <Label htmlFor="email">{t('register.email', 'Work Email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
@@ -102,7 +108,7 @@ export const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('register.password', 'Password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
@@ -117,12 +123,12 @@ export const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
+              <Label htmlFor="companyName">{t('register.company', 'Company Name')}</Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   id="companyName"
-                  placeholder="Acme Corp"
+                  placeholder={t('register.company_placeholder', 'Acme Corp')}
                   required
                   className="pl-9"
                   value={formData.companyName}
@@ -132,12 +138,12 @@ export const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="jobTitle">Job Title</Label>
+              <Label htmlFor="jobTitle">{t('register.job', 'Job Title')}</Label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
                   id="jobTitle"
-                  placeholder="Head of Talent"
+                  placeholder={t('register.job_placeholder', 'Head of Talent')}
                   className="pl-9"
                   value={formData.jobTitle}
                   onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
@@ -147,12 +153,12 @@ export const RegisterPage = () => {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? t('register.submitting', 'Creating account...') : t('register.submit', 'Create account')}
             </Button>
             <div className="text-sm text-center text-slate-500">
-              Already have an account?{' '}
+              {t('register.has_account', 'Already have an account?')} {' '}
               <Link to="/login" className="text-blue-600 hover:underline">
-                Sign in
+                {t('register.login', 'Sign in')}
               </Link>
             </div>
           </CardFooter>

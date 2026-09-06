@@ -6,18 +6,21 @@ import { signOut } from 'firebase/auth';
 import { useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export const AppSidebar = () => {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
   const { role } = useAuth();
+  const { t } = useI18n();
   const [signingOut, setSigningOut] = useState(false);
 
   const navItems = [
-    { label: 'Recruiter Dashboard', href: '/dashboard', tooltip: 'View and manage candidate assessments', show: true },
-    { label: 'Profile & Billing', href: '/profile', tooltip: 'Manage your profile and view billing history', show: true },
-    { label: 'Admin Dashboard', href: '/admin', tooltip: 'Global overview of all client accounts', show: role === 'admin' },
-    { label: 'Buy Credits', href: '/pricing', tooltip: 'Purchase candidate assessment credits', show: true },
-    { label: 'Home / Landing', href: '/', tooltip: 'Return to the PreSift homepage', show: true },
+    { label: t('nav.dashboard', 'Recruiter Dashboard'), href: '/dashboard', tooltip: t('nav.dashboard.tooltip', 'View and manage candidate assessments'), show: true },
+    { label: t('nav.profile', 'Profile & Billing'), href: '/profile', tooltip: t('nav.profile.tooltip', 'Manage your profile and view billing history'), show: true },
+    { label: t('nav.admin', 'Admin Dashboard'), href: '/admin', tooltip: t('nav.admin.tooltip', 'Global overview of all client accounts'), show: role === 'admin' },
+    { label: t('nav.pricing', 'Buy Credits'), href: '/pricing', tooltip: t('nav.pricing.tooltip', 'Purchase candidate assessment credits'), show: true },
+    { label: t('nav.home', 'Home / Landing'), href: '/', tooltip: t('nav.home.tooltip', 'Return to the PreSift homepage'), show: true },
   ];
 
   return (
@@ -50,7 +53,8 @@ export const AppSidebar = () => {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
+        <LanguageSwitcher className="w-full justify-center h-10" />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -64,10 +68,10 @@ export const AppSidebar = () => {
               }}
             >
               {signingOut ? <Spinner size="sm" className="mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
-              Sign Out
+              {t('nav.signout', 'Sign Out')}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>End your session and return to the login page</TooltipContent>
+          <TooltipContent>{t('nav.signout.tooltip', 'End your session and return to the login page')}</TooltipContent>
         </Tooltip>
       </div>
     </aside>

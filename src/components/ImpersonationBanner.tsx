@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const ImpersonationBanner = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { targetId, setTargetId } = useImpersonation();
   
   if (!targetId) return null;
@@ -16,7 +18,7 @@ export const ImpersonationBanner = () => {
   return (
     <div className="bg-orange-500 text-white px-4 py-2 flex items-center justify-between sticky top-0 z-50">
       <div className="text-sm font-medium">
-        Viewing as Recruiter (ID: {targetId})
+        {t('impersonation.viewing', 'Viewing as Recruiter (ID: ')}{targetId})
       </div>
       <Button 
         variant="secondary" 
@@ -24,7 +26,7 @@ export const ImpersonationBanner = () => {
         onClick={handleReturnToAdmin}
         className="h-8 bg-white text-orange-600 hover:bg-orange-50"
       >
-        Exit Impersonation
+        {t('impersonation.exit', 'Exit Impersonation')}
       </Button>
     </div>
   );

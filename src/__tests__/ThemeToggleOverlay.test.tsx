@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -57,7 +58,7 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
 
   it('proves App root does not render any fixed top-4 right-4 z-50 viewport overlay', () => {
     // Arrange & Act
-    const { container } = render(<App />);
+    const { container } = render(<I18nProvider><App /></I18nProvider>);
 
     // Assert
     const fixedOverlay = container.querySelector('.fixed.top-4.right-4.z-50');
@@ -70,9 +71,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <LandingPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -89,9 +90,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -113,9 +114,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <DashboardPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -135,9 +136,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <AdminPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -157,11 +158,11 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter initialEntries={['/admin/clients/client123']}>
+        <I18nProvider><MemoryRouter initialEntries={['/admin/clients/client123']}>
           <Routes>
             <Route path="/admin/clients/:clientId" element={<AdminClientPage />} />
           </Routes>
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -181,9 +182,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     const { container } = render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <DemoPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
 
@@ -201,9 +202,9 @@ describe('ThemeToggle Overlay & Navigation Placement', () => {
     // Arrange
     render(
       <TooltipProvider>
-        <MemoryRouter>
+        <I18nProvider><MemoryRouter>
           <PaymentPage />
-        </MemoryRouter>
+        </MemoryRouter></I18nProvider>
       </TooltipProvider>
     );
     const themeBtn = screen.getByRole('button', { name: /🌙 Dark/i });
