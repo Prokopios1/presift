@@ -43,12 +43,12 @@ interface SessionData {
 
 type TestStage = 'landing' | 'icar_intro' | 'icar' | 'wleis_intro' | 'wleis' | 'smile_intro' | 'smile_trials' | 'smile_summary';
 
-const WLEIS_OPTIONS = [
-  '1 Strongly disagree',
-  '2 Disagree',
-  '3 Neutral',
-  '4 Agree',
-  '5 Strongly agree',
+const wleisOptions = (t: (k: string, fb?: string) => string) => [
+  t('test.wleis.opt.1', '1 Strongly disagree'),
+  t('test.wleis.opt.2', '2 Disagree'),
+  t('test.wleis.opt.3', '3 Neutral'),
+  t('test.wleis.opt.4', '4 Agree'),
+  t('test.wleis.opt.5', '5 Strongly agree'),
 ];
 
 export const TestPage = () => {
@@ -387,7 +387,11 @@ export const TestPage = () => {
   }
 
   if (error || !sessionData) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500 bg-slate-950">Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500 bg-slate-950">
+        {t("test.load_error", "Error")}: {error}
+      </div>
+    );
   }
 
   // Pre-test landing screen
@@ -396,14 +400,14 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-slate-950 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
         <Card className="max-w-2xl w-full shadow-lg border-t-4 border-t-slate-800">
           <CardHeader>
             <CardTitle className="text-3xl">{t("test_page.psychometric", "Psychometric Assessment")}</CardTitle>
-            <CardDescription>Session ID: {sessionData.sessionId}</CardDescription>
+            <CardDescription>{t("test_page.session_id", "Session ID:")} {sessionData.sessionId}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
 
@@ -413,7 +417,7 @@ export const TestPage = () => {
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="terms">{t("test_page.gdpr_consent", "Mandatory GDPR Consent")}</Label>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  I agree to the processing of my responses for psychological and perceptual assessment.
+                  {t("test_page.gdpr_consent_body", "I agree to the processing of my responses for psychological and perceptual assessment.")}
                 </p>
               </div>
             </div>
@@ -422,7 +426,7 @@ export const TestPage = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button className="w-full h-12 text-lg" disabled={!consent} onClick={startTest}>
-                  Begin Assessment
+                  {t("test.btn.begin", "Begin Assessment")}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("test.btn.start", "Start timed assessment session")}</TooltipContent>
@@ -439,7 +443,7 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
@@ -447,13 +451,13 @@ export const TestPage = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-blue-400">{t("test_page.stage1_title", "Stage 1: Cognitive Reasoning (ICAR)")}</CardTitle>
             <CardDescription className="text-slate-400">
-              Measuring general cognitive ability and problem-solving skills.
+              {t("test_page.stage1_desc", "Measuring general cognitive ability and problem-solving skills.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 text-slate-300">
             <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
               <p>
-                11 short reasoning questions — numbers, words, shapes. Answer each one; you have 45 seconds per question. The timer is shown at the top of the screen. Expected time: ~10 minutes.
+                {t("test_page.stage1_instr", "11 short reasoning questions — numbers, words, shapes. Answer each one; you have 45 seconds per question. The timer is shown at the top of the screen. Expected time: ~10 minutes.")}
               </p>
             </div>
           </CardContent>
@@ -467,10 +471,10 @@ export const TestPage = () => {
                     setTimeLeft(45);
                   }}
                 >
-                  Go
+                  {t("test.btn.go", "Go")}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Begin ICAR questions</TooltipContent>
+              <TooltipContent>{t("test.btn.begin_icar", "Begin ICAR questions")}</TooltipContent>
             </Tooltip>
           </CardFooter>
         </Card>
@@ -484,7 +488,7 @@ export const TestPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
         <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
         </nav>
@@ -492,13 +496,13 @@ export const TestPage = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-purple-400">{t("test_page.stage2_title", "Stage 2: Emotional Intelligence (WLEIS)")}</CardTitle>
             <CardDescription className="text-slate-400">
-              Assessing workplace emotional intelligence and self-awareness.
+              {t("test_page.stage2_desc", "Assessing workplace emotional intelligence and self-awareness.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 text-slate-300">
             <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
               <p>
-                16 statements — choose how much you agree on a 1–5 scale (1 = strongly disagree, 5 = strongly agree). You have 45 seconds per statement. Expected time: ~8 minutes.
+                {t("test_page.stage2_instr", "16 statements — choose how much you agree on a 1–5 scale (1 = strongly disagree, 5 = strongly agree). You have 45 seconds per statement. Expected time: ~8 minutes.")}
               </p>
             </div>
           </CardContent>
@@ -512,10 +516,10 @@ export const TestPage = () => {
                     setTimeLeft(45);
                   }}
                 >
-                  Go
+                  {t("test.btn.go", "Go")}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Begin WLEIS statements</TooltipContent>
+              <TooltipContent>{t("test.btn.begin_wleis", "Begin WLEIS statements")}</TooltipContent>
             </Tooltip>
           </CardFooter>
         </Card>
@@ -535,7 +539,7 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
               <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
@@ -543,13 +547,13 @@ export const TestPage = () => {
             <CardHeader>
               <CardTitle className="text-2xl text-emerald-400">{t("test_page.stage3_title", "Stage 3: Smile Perception Assessment")}</CardTitle>
               <CardDescription className="text-slate-400">
-                Evaluating social perceptiveness and non-verbal emotion appraisal.
+                {t("test_page.stage3_desc", "Evaluating social perceptiveness and non-verbal emotion appraisal.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 text-slate-300">
               <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
                 <p>
-                  Watch short video clips and decide if each smile is genuine or fake. You can replay each clip. Expected time: ~2 minutes.
+                  {t("test_page.stage3_instr", "Watch short video clips and decide if each smile is genuine or fake. Expected time: ~2 minutes.")}
                 </p>
               </div>
             </CardContent>
@@ -564,7 +568,7 @@ export const TestPage = () => {
                       setSmileTrialIndex(0);
                     }}
                   >
-                    Go
+                    {t("test.btn.go", "Go")}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t("test.btn.begin_video", "Begin video perception trials")}</TooltipContent>
@@ -581,11 +585,11 @@ export const TestPage = () => {
           <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+                <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
                 <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
               <div className="font-mono text-sm text-slate-400">
-                Smile Perception: Trial <span className="text-emerald-400 font-bold">{smileTrialIndex + 1}</span> of {totalSmileTrials}
+                {t("test_page.smile_trial_of", "Smile Perception: Trial {current} of {total}").replace("{current}", String(smileTrialIndex + 1)).replace("{total}", String(totalSmileTrials))}
               </div>
             </div>
             <Progress value={((smileTrialIndex + 1) / totalSmileTrials) * 100} className="w-1/3 h-2 bg-slate-800" />
@@ -619,7 +623,7 @@ export const TestPage = () => {
                       className="h-16 text-xl border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
                       onClick={() => handleSmileChoice('genuine')}
                     >
-                      Genuine Smile
+                      {t("test_page.genuine", "Genuine Smile")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("test.btn.authentic", "Judge smile as authentic emotion")}</TooltipContent>
@@ -632,7 +636,7 @@ export const TestPage = () => {
                       className="h-16 text-xl border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
                       onClick={() => handleSmileChoice('fake')}
                     >
-                      Fake / Posed Smile
+                      {t("test_page.fake", "Fake / Posed Smile")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("test.btn.posed", "Judge smile as posed or social")}</TooltipContent>
@@ -654,57 +658,57 @@ export const TestPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
           <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
               <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </nav>
           <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-2xl">
             <CardHeader className="text-center border-b border-slate-800 pb-6">
               <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono mb-2">
-                Assessment Complete
+                {t("test_page.complete_badge", "Assessment Complete")}
               </div>
               <CardTitle className="text-3xl font-bold">{t("test_page.thank_you", "Thank you for completing the assessment.")}</CardTitle>
               <CardDescription className="text-slate-400 text-base mt-2">
-                Your responses have been submitted successfully and will be reviewed by the recruiter. You may now close this window.
+                {t("test_page.thank_body", "Your responses have been submitted successfully and will be reviewed by the recruiter. You may now close this window.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               {calibration ? (
                 <>
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">Perceptual Calibration Summary</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">{t("test_page.cal_summary", "Perceptual Calibration Summary")}</div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-800/80 rounded-lg border border-slate-700 text-center">
                       <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                        Perceptual Accuracy
+                        {t("test_page.perc_accuracy", "Perceptual Accuracy")}
                       </div>
                       <div className="text-3xl font-bold text-emerald-400 font-mono">
                         {smileRes.score} / {smileRes.total}
                       </div>
                       <div className="text-xs text-slate-400 mt-1">
-                        ({(smileRes.accuracy * 100).toFixed(0)}% Correct)
+                        ({t("test_page.percent_correct", "{pct}% Correct").replace("{pct}", (smileRes.accuracy * 100).toFixed(0))})
                       </div>
                     </div>
 
                     <div className="p-4 bg-slate-800/80 rounded-lg border border-slate-700 text-center">
                       <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                        Alignment Level
+                        {t("test_page.alignment_level", "Alignment Level")}
                       </div>
                       <div className="text-3xl font-bold text-sky-400">
                         {calibration.level}
                       </div>
                       <div className="text-xs text-slate-400 mt-1 capitalize">
-                        {calibration.biasDirection} bias
+                        {t("test_page.bias_direction", "{bias} bias").replace("{bias}", calibration.biasDirection)}
                       </div>
                     </div>
                   </div>
 
                   <div className="p-4 bg-slate-800/40 rounded-lg border border-slate-800 space-y-3">
                     <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
-                      <span className="text-slate-400">Self-Reported OEA Score:</span>
+                      <span className="text-slate-400">{t("test_page.self_oea", "Self-Reported OEA Score:")}</span>
                       <span className="font-mono font-semibold text-slate-200">{calibration.rawOea.toFixed(2)} / 5.00</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-400">Calibrated OEA Score:</span>
+                      <span className="text-slate-400">{t("test_page.calibrated_oea", "Calibrated OEA Score:")}</span>
                       <span className="font-mono font-bold text-emerald-400">{calibration.calibratedOeaScore.toFixed(2)} / 5.00</span>
                     </div>
                   </div>
@@ -725,7 +729,7 @@ export const TestPage = () => {
                       navigate('/');
                     }}
                   >
-                    Complete & Return to Dashboard
+                    {t("test_page.go_dashboard", "Complete & Return Home")}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t("test.btn.submit", "Submit results and return home")}</TooltipContent>
@@ -751,11 +755,11 @@ export const TestPage = () => {
       <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <div className="font-mono text-sm text-slate-400">
-            Question {currentQuestion + 1} of {totalQuestions}
+            {t("test_page.question_of", "Question {current} of {total}").replace("{current}", String(currentQuestion + 1)).replace("{total}", String(totalQuestions))}
           </div>
         </div>
         <div className={`font-mono text-xl ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
@@ -785,7 +789,7 @@ export const TestPage = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {WLEIS_OPTIONS.map((opt, i) => (
+              {wleisOptions(t).map((opt, i) => (
                 <Button
                   key={i}
                   variant="outline"

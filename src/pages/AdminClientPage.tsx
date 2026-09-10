@@ -76,7 +76,6 @@ export const AdminClientPage = () => {
   const navigate = useNavigate();
   const { setTargetId } = useImpersonation();
   const { t } = useI18n();
-
   const [client, setClient] = useState<RecruiterAccount | null>(null);
   const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
@@ -154,7 +153,7 @@ export const AdminClientPage = () => {
         ]);
 
         if (!clientSnap.exists()) {
-          setError('Client not found.');
+          setError(t('admin_client.error.not_found', 'Client not found.'));
           return;
         }
         setClient({ id: clientSnap.id, ...clientSnap.data() } as RecruiterAccount);
@@ -162,7 +161,7 @@ export const AdminClientPage = () => {
         setAuditLog(auditSnap.docs.map(d => ({ id: d.id, ...d.data() } as AuditEntry)));
       } catch (err) {
         console.error(err);
-        setError('Failed to load client data.');
+        setError(t('admin_client.error.load_failed', 'Failed to load client data.'));
       } finally {
         setLoading(false);
       }
@@ -436,7 +435,7 @@ export const AdminClientPage = () => {
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
         <AppSidebar />
         <main className="flex-1 w-full pl-0 md:pl-60 flex items-center justify-center">
-          <p className="text-red-500">{error || 'Client not found.'}</p>
+          <p className="text-red-500">{error || t('admin_client.error.not_found', 'Client not found.')}</p>
         </main>
       </div>
     );
@@ -448,8 +447,8 @@ export const AdminClientPage = () => {
       <main className="flex-1 w-full pl-0 md:pl-60">
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("common.back", "Back")}</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>{t("common.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <ThemeToggle />
         </nav>
@@ -463,7 +462,7 @@ export const AdminClientPage = () => {
                   onClick={() => navigate('/admin')}
                   className="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                 >
-                  ← Clients
+                  {t("admin_client.back_clients", "← Clients")}
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t("admin_client.clients_desc", "Return to clients list")}</TooltipContent>
@@ -478,16 +477,16 @@ export const AdminClientPage = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={openEditClientDialog}>
-                      <Edit className="w-4 h-4 mr-1" />Edit
+                    <Button size="sm" variant="outline" onClick={openEditClientDialog} aria-label={t("admin_client.btn.edit", "Edit")}>
+                      <Edit className="w-4 h-4 mr-1" />{t("admin_client.btn.edit", "Edit")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("admin_client.edit_desc", "Edit client details")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={handleImpersonate}>
-                      <UserPlus className="w-4 h-4 mr-1" />Impersonate
+                    <Button size="sm" variant="outline" onClick={handleImpersonate} aria-label={t("admin_client.btn.impersonate", "Impersonate")}>
+                      <UserPlus className="w-4 h-4 mr-1" />{t("admin_client.btn.impersonate", "Impersonate")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("admin_client.impersonate_desc", "Log in as this recruiter to troubleshoot")}</TooltipContent>
@@ -499,7 +498,7 @@ export const AdminClientPage = () => {
                       variant="outline"
                       onClick={handleArchiveToggle}
                       disabled={archivingClient}
-                      aria-label={client.archived ? 'Unarchive client' : 'Archive client'}
+                      aria-label={client.archived ? t('admin_client.btn.unarchive_client', 'Unarchive client') : t('admin_client.btn.archive_client', 'Archive client')}
                     >
                       {client.archived
                         ? <><ArchiveRestore className="w-4 h-4 mr-1" />{t("admin_client.unarchive", "Unarchive")}</>
@@ -507,11 +506,11 @@ export const AdminClientPage = () => {
                       }
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{client.archived ? 'Restore this client' : 'Soft Delete (Archive) this client'}</TooltipContent>
+                  <TooltipContent>{client.archived ? t('admin_client.tooltip.restore_client', 'Restore this client') : t('admin_client.tooltip.archive_client', 'Soft Delete (Archive) this client')}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
-            <p className="text-slate-500 text-sm">{client.email}{client.vatId ? ` • VAT: ${client.vatId}` : ''} • {client.credits ?? 0} credits</p>
+            <p className="text-slate-500 text-sm">{client.email}{client.vatId ? `${t('admin_client.text.vat', ' • VAT: ')}${client.vatId}` : ''} • {client.credits ?? 0} {t('admin_client.text.credits_w', 'credits')}</p>
           </header>
 
           {/* Credits Card */}
@@ -523,8 +522,8 @@ export const AdminClientPage = () => {
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="sm" onClick={() => { setCreditAmount(0); setCreditReason(''); setCreditDialog(true); }}>
-                    Adjust Credits
+                  <Button size="sm" onClick={() => { setCreditAmount(0); setCreditReason(''); setCreditDialog(true); }} aria-label={t("admin_client.adjust_credits", "Adjust Credits")}>
+                    {t("admin_client.adjust_credits", "Adjust Credits")}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t("admin_client.credits_desc", "Grant or deduct credits from this account")}</TooltipContent>
@@ -537,7 +536,7 @@ export const AdminClientPage = () => {
                   <p className="text-3xl font-bold">{client.credits ?? 0}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 uppercase font-semibold">Total Spent</p>
+                  <p className="text-xs text-slate-500 uppercase font-semibold">{t("admin_client.table.total_spent", "Total Spent")}</p>
                   <p className="text-3xl font-bold">€{(client.totalSpent || 0).toFixed(2)}</p>
                 </div>
               </div>
@@ -580,11 +579,11 @@ export const AdminClientPage = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedCandidateIds.size > 0 && (
                   <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 px-4 py-2 rounded-lg border border-red-200 dark:border-red-800 text-sm font-normal">
-                    <span>{selectedCandidateIds.size} selected</span>
+                    <span>{selectedCandidateIds.size} {t("admin_client.text.selected", "selected")}</span>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
-                          <Trash2 className="w-4 h-4 mr-2" /> Delete selected
+                        <Button size="sm" variant="destructive" onClick={handleBulkDelete} aria-label={t("admin_client.btn.delete_selected", "Delete selected")}>
+                          <Trash2 className="w-4 h-4 mr-2" /> {t("admin_client.btn.delete_selected", "Delete selected")}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t("admin_client.btn.delete_bulk", "Permanently delete selected candidates")}</TooltipContent>
@@ -593,16 +592,16 @@ export const AdminClientPage = () => {
                 )}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={openManageCandidates}>
-                      <Users className="w-4 h-4 mr-1" />Manage candidates
+                    <Button size="sm" variant="outline" onClick={openManageCandidates} aria-label={t("admin_client.manage", "Manage candidates")}>
+                      <Users className="w-4 h-4 mr-1" />{t("admin_client.manage", "Manage candidates")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("admin_client.btn.link_unlink", "Link or unlink candidates from this client")}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={handleExportCsv} disabled={visibleCandidates.length === 0} aria-label="Export CSV">
-                      <Download className="w-4 h-4 mr-1" />Export CSV
+                    <Button size="sm" variant="outline" onClick={handleExportCsv} disabled={visibleCandidates.length === 0} aria-label={t("admin_client.btn.export", "Export CSV")}>
+                      <Download className="w-4 h-4 mr-1" />{t("admin_client.btn.export", "Export CSV")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("admin_client.btn.export_csv", "Export candidates as CSV")}</TooltipContent>
@@ -613,7 +612,7 @@ export const AdminClientPage = () => {
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <Input
                   className="max-w-sm"
-                  placeholder="Search by name or email…"
+                  placeholder={t('admin_client.search', 'Search by name or email…')}
                   value={candidateSearch}
                   onChange={e => setCandidateSearch(e.target.value)}
                 />
@@ -637,7 +636,7 @@ export const AdminClientPage = () => {
                             const shouldSelect = checked === true || checked === 'indeterminate';
                             setSelectedCandidateIds(prev => toggleSelectAll(prev, visibleIds, shouldSelect));
                           }}
-                          aria-label="Select all"
+                          aria-label={t('admin_client.btn.select_all', 'Select all')}
                         />
                       </TableHead>
                       <TableHead>{t("admin_client.table.name", "Name")}</TableHead>
@@ -657,7 +656,7 @@ export const AdminClientPage = () => {
                             onCheckedChange={(checked) => {
                               setSelectedCandidateIds(prev => toggleSelectRow(prev, c.id, !!checked));
                             }}
-                            aria-label={`Select ${c.name}`}
+                            aria-label={t('admin_client.btn.select_name', 'Select {name}').replace('{name}', (c.name || ''))}
                           />
                         </TableCell>
                         <TableCell className="font-medium">
@@ -667,7 +666,7 @@ export const AdminClientPage = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-slate-500">{c.appliedRole || '—'}</TableCell>
-                        <TableCell>{c.status || 'Pending'}</TableCell>
+                        <TableCell>{c.status || t('admin_client.status.pending', 'Pending')}</TableCell>
                         <TableCell className="text-slate-500 text-sm">
                           {c.completionDate ? new Date(c.completionDate).toLocaleDateString() : '—'}
                         </TableCell>
@@ -676,7 +675,7 @@ export const AdminClientPage = () => {
                             (c.fitBadge || '').includes('Strong') ? 'bg-green-50 text-green-700 border-green-200' :
                             (c.fitBadge || '').includes('Conditional') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                             'bg-red-50 text-red-700 border-red-200'
-                          }>{c.fitBadge || 'Unknown'}</Badge>
+                          }>{c.fitBadge || t('admin_client.fit.unknown', 'Unknown')}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -687,7 +686,7 @@ export const AdminClientPage = () => {
                                   size="icon"
                                   onClick={() => handleCopyLink(c.id, !!c.archived)}
                                   disabled={!!c.archived}
-                                  aria-label={`Copy link for ${c.name}`}
+                                  aria-label={t('admin_client.btn.copy_link_name', 'Copy link for {name}').replace('{name}', (c.name || ''))}
                                 >
                                   {copiedId === c.id ? (
                                     <span className="text-xs font-semibold text-green-600">{t("admin_client.btn.copied", "Copied")}</span>
@@ -696,7 +695,7 @@ export const AdminClientPage = () => {
                                   )}
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>{c.archived ? 'Cannot copy link for archived candidate' : 'Copy assessment link'}</TooltipContent>
+                              <TooltipContent>{c.archived ? t('admin_client.tooltip.copy_disabled_cand', 'Cannot copy link for archived candidate') : t('admin_client.tooltip.copy_cand', 'Copy assessment link')}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -704,7 +703,7 @@ export const AdminClientPage = () => {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => setEditCandidateDialog({ id: c.id, name: c.name || '', email: c.email || '', appliedRole: c.appliedRole || '' })}
-                                  aria-label={`Edit ${c.name}`}
+                                  aria-label={t('admin_client.btn.edit_name', 'Edit {name}').replace('{name}', (c.name || ''))}
                                 >
                                   <Edit className="w-4 h-4 text-slate-500" />
                                 </Button>
@@ -717,7 +716,7 @@ export const AdminClientPage = () => {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleArchiveCandidate(c)}
-                                  aria-label={c.archived ? `Unarchive ${c.name}` : `Archive ${c.name}`}
+                                  aria-label={c.archived ? t('admin_client.btn.unarchive_name', 'Unarchive {name}').replace('{name}', (c.name || '')) : t('admin_client.btn.archive_name', 'Archive {name}').replace('{name}', (c.name || ''))}
                                 >
                                   {c.archived
                                     ? <ArchiveRestore className="w-4 h-4 text-slate-500" />
@@ -725,7 +724,7 @@ export const AdminClientPage = () => {
                                   }
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>{c.archived ? 'Unarchive this candidate' : 'Archive this candidate — hides from active list'}</TooltipContent>
+                              <TooltipContent>{c.archived ? t('admin_client.tooltip.unarchive_cand', 'Unarchive this candidate') : t('admin_client.tooltip.archive_cand', 'Archive this candidate — hides from active list')}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -735,7 +734,7 @@ export const AdminClientPage = () => {
                                   onClick={() => handleUpdateStatus(c.id, 'Shortlisted')}
                                   disabled={c.status === 'Shortlisted'}
                                 >
-                                  Shortlist
+                                  {t('candidate_detail.shortlist', 'Shortlist')}
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>{t("admin_client.tooltip.shortlist", "Mark as Shortlisted")}</TooltipContent>
@@ -746,12 +745,12 @@ export const AdminClientPage = () => {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => navigate(`/candidate/${c.id}`, { state: { fromAdmin: true, clientId: client.id } })}
-                                  aria-label={`View report for ${c.name}`}
+                                  aria-label={t('admin_client.btn.view_name', 'View report for {name}').replace('{name}', (c.name || ''))}
                                 >
                                   <FileText className="w-4 h-4 text-blue-500" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>View Candidate Report</TooltipContent>
+                              <TooltipContent>{t('admin_client.tooltip.view_report', 'View Candidate Report')}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -759,7 +758,7 @@ export const AdminClientPage = () => {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleDeleteCandidate(c.id)}
-                                  aria-label={`Delete ${c.name}`}
+                                  aria-label={t('admin_client.btn.delete_name', 'Delete {name}').replace('{name}', (c.name || ''))}
                                 >
                                   <Trash2 className="w-4 h-4 text-red-500" />
                                 </Button>
@@ -782,36 +781,36 @@ export const AdminClientPage = () => {
       <Dialog open={editClientDialog} onOpenChange={(o) => !o && setEditClientDialog(false)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Client</DialogTitle>
-            <DialogDescription>Update {client.companyName || client.id}'s details.</DialogDescription>
+            <DialogTitle>{t("admin_client.dialog.edit_title", "Edit Client")}</DialogTitle>
+            <DialogDescription>{t("admin_client.dialog.edit_client_desc", "Update {company}'s details.").replace('{company}', client.companyName || client.id)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Company Name (required)</Label>
+              <Label>{t("admin_client.label.company_req", "Company Name (required)")}</Label>
               <Input
                 id="edit-client-company"
                 value={editCompany}
                 onChange={e => setEditCompany(e.target.value)}
-                placeholder="e.g. Acme Corp"
+                placeholder={t('admin_client.placeholder.company', 'e.g. Acme Corp')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Email (required)</Label>
+              <Label>{t("admin_client.label.email_req", "Email (required)")}</Label>
               <Input
                 id="edit-client-email"
                 type="email"
                 value={editEmail}
                 onChange={e => setEditEmail(e.target.value)}
-                placeholder="hello@acme.com"
+                placeholder={t('admin_client.placeholder.email', 'hello@acme.com')}
               />
             </div>
             <div className="space-y-2">
-              <Label>VAT / Tax ID (optional)</Label>
+              <Label>{t("admin_client.label.vat_optional", "VAT / Tax ID (optional)")}</Label>
               <Input
                 id="edit-client-vat"
                 value={editVat}
                 onChange={e => setEditVat(e.target.value)}
-                placeholder="e.g. DE123456789"
+                placeholder={t('admin_client.placeholder.vat', 'e.g. DE123456789')}
               />
             </div>
           </div>
@@ -822,7 +821,7 @@ export const AdminClientPage = () => {
               onClick={handleEditClient}
               disabled={editClientSaving || !editClientValid}
             >
-              {editClientSaving ? 'Saving...' : 'Save Changes'}
+              {editClientSaving ? t('admin_client.btn.saving', 'Saving...') : t('admin_client.btn.save_changes', 'Save Changes')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -837,23 +836,23 @@ export const AdminClientPage = () => {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Amount (positive to grant, negative to deduct)</Label>
+              <Label>{t("admin_client.label.amount_desc", "Amount (positive to grant, negative to deduct)")}</Label>
               <Input type="number" value={creditAmount} onChange={e => setCreditAmount(parseInt(e.target.value) || 0)} />
             </div>
             <div className="space-y-2">
-              <Label>Reason (required)</Label>
-              <Input value={creditReason} onChange={e => setCreditReason(e.target.value)} placeholder="e.g., Courtesy credit" />
+              <Label>{t("admin_client.label.reason_req", "Reason (required)")}</Label>
+              <Input value={creditReason} onChange={e => setCreditReason(e.target.value)} placeholder={t('admin_client.placeholder.reason', 'e.g., Courtesy credit')} />
             </div>
             {creditAmount !== 0 && (
               <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg text-sm">
-                New balance: <strong>{Math.max(0, (client.credits || 0) + creditAmount)}</strong>
+                {t("admin_client.label.new_balance", "New balance: ")}<strong>{Math.max(0, (client.credits || 0) + creditAmount)}</strong>
               </div>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreditDialog(false)}>{t("common.cancel", "Cancel")}</Button>
             <Button onClick={handleCreditAdjust} disabled={creditSaving || creditAmount === 0 || !creditReason.trim()}>
-              {creditSaving ? 'Saving...' : 'Confirm'}
+              {creditSaving ? t('admin_client.btn.saving', 'Saving...') : t('admin_client.btn.confirm', 'Confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -863,13 +862,13 @@ export const AdminClientPage = () => {
       <Dialog open={!!editCandidateDialog} onOpenChange={(o) => !o && setEditCandidateDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Candidate</DialogTitle>
+            <DialogTitle>{t("admin_client.dialog.edit_candidate_title", "Edit Candidate")}</DialogTitle>
             <DialogDescription>{t("admin_client.dialog.update_desc", "Update the candidate's details.")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditCandidate}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Candidate Name</Label>
+                <Label>{t("admin_client.label.candidate_name", "Candidate Name")}</Label>
                 <Input
                   value={editCandidateDialog?.name || ''}
                   onChange={e => setEditCandidateDialog({ ...editCandidateDialog, name: e.target.value })}
@@ -877,7 +876,7 @@ export const AdminClientPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Candidate Email</Label>
+                <Label>{t("admin_client.label.candidate_email", "Candidate Email")}</Label>
                 <Input
                   type="email"
                   value={editCandidateDialog?.email || ''}
@@ -885,7 +884,7 @@ export const AdminClientPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Applied Role</Label>
+                <Label>{t("admin_client.label.applied_role", "Applied Role")}</Label>
                 <Input
                   value={editCandidateDialog?.appliedRole || ''}
                   onChange={e => setEditCandidateDialog({ ...editCandidateDialog, appliedRole: e.target.value })}
@@ -895,7 +894,7 @@ export const AdminClientPage = () => {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditCandidateDialog(null)}>{t("common.cancel", "Cancel")}</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit">{t("admin_client.btn.save_changes", "Save Changes")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -907,18 +906,18 @@ export const AdminClientPage = () => {
           <DialogHeader>
             <DialogTitle>{t("admin_client.manage", "Manage candidates")}</DialogTitle>
             <DialogDescription>
-              Check candidates to link them to {client.companyName || client.id}.
+              {t("admin_client.dialog.manage_desc", "Check candidates to link them to {company}.").replace('{company}', client.companyName || client.id)}
             </DialogDescription>
           </DialogHeader>
           <div className="py-2 space-y-3">
             <Input
-              placeholder="Search by name or email…"
+              placeholder={t('admin_client.search', 'Search by name or email…')}
               value={manageSearch}
               onChange={e => setManageSearch(e.target.value)}
             />
             <div className="max-h-72 overflow-y-auto border rounded-lg divide-y">
               {loadingAllCandidates ? (
-                <p className="text-slate-500 text-sm text-center py-6">Loading…</p>
+                <p className="text-slate-500 text-sm text-center py-6">{t('admin_client.loading_candidates', 'Loading…')}</p>
               ) : filteredManageCandidates.length === 0 ? (
                 <p className="text-slate-400 text-sm text-center py-6">{t("admin_client.dialog.no_candidates", "No candidates found.")}</p>
               ) : filteredManageCandidates.map(c => (
@@ -935,7 +934,7 @@ export const AdminClientPage = () => {
                         return next;
                       });
                     }}
-                    aria-label={`Toggle ${c.name}`}
+                    aria-label={t('admin_client.btn.toggle_name', 'Toggle {name}').replace('{name}', (c.name || ''))}
                   />
                   <span className="flex flex-col">
                     <span className="text-sm font-medium">{c.name || '—'}</span>
@@ -951,7 +950,7 @@ export const AdminClientPage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setManageCandidatesDialog(false)} disabled={manageSaving}>{t("common.cancel", "Cancel")}</Button>
             <Button id="manage-candidates-save" onClick={handleManageSave} disabled={manageSaving || loadingAllCandidates}>
-              {manageSaving ? (manageProgress || 'Saving…') : 'Save'}
+              {manageSaving ? (manageProgress || t('admin_client.btn.saving_ellipsis', 'Saving…')) : t('admin_client.btn.save', 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>

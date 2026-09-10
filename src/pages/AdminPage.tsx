@@ -115,7 +115,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
             <Tooltip>
               <TooltipTrigger asChild>
                 <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onEdit(); }}>
-                  <Edit2 className="w-4 h-4 text-slate-500" /> Edit
+                  <Edit2 className="w-4 h-4 text-slate-500" /> {t("admin.act.edit", "Edit")}
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t("admin.tooltip.edit_org", "Edit this organization's details")}</TooltipContent>
@@ -123,7 +123,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
             <Tooltip>
               <TooltipTrigger asChild>
                 <button className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-sm text-left w-full" onClick={() => { setOpen(false); onTopUp(); }}>
-                  <Plus className="w-4 h-4 text-slate-500" /> Top Up
+                  <Plus className="w-4 h-4 text-slate-500" /> {t("admin.act.topup", "Top Up")}
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t("admin.tooltip.add_credits", "Add credits to this organization's balance")}</TooltipContent>
@@ -132,7 +132,7 @@ const ActionMenu = ({ onEdit, onTopUp, onDelete }: { onEdit: () => void, onTopUp
             <Tooltip>
               <TooltipTrigger asChild>
                 <button className="flex items-center gap-2 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm text-left w-full" onClick={() => { setOpen(false); onDelete(); }}>
-                  <Trash2 className="w-4 h-4 text-red-500" /> Delete
+                  <Trash2 className="w-4 h-4 text-red-500" /> {t("admin.act.delete", "Delete")}
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t("admin.tooltip.delete_org", "Permanently remove this organization and all its data")}</TooltipContent>
@@ -294,8 +294,8 @@ export const AdminPage = () => {
       <main className="flex-1 w-full pl-0 md:pl-60">
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(1)}>Forward <ArrowRight className="w-4 h-4 ml-1" /></Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("admin.nav.back", "Back")}</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(1)}>{t("admin.nav.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <ThemeToggle />
         </nav>
@@ -335,13 +335,13 @@ export const AdminPage = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Total Customers', value: recruiters.length },
-            { label: 'Credits Outstanding', value: totalCreds },
-            { label: 'Total Revenue', value: `€${totalRev.toFixed(2)}` },
+            { label: t('admin.stat.total_customers', 'Total Customers'), value: recruiters.length },
+            { label: t('admin.stat.credits_outstanding', 'Credits Outstanding'), value: totalCreds },
+            { label: t('admin.stat.total_revenue', 'Total Revenue'), value: `€${totalRev.toFixed(2)}` },
           ].map((s, i) => (
             <Card key={i} className="shadow-sm">
               <CardHeader className="pb-2"><CardDescription className="text-xs uppercase tracking-wider font-semibold">{s.label}</CardDescription></CardHeader>
-              <CardContent><p className="text-3xl font-bold">{loading ? '...' : s.value}</p></CardContent>
+              <CardContent><p className="text-3xl font-bold">{loading ? t('admin.loading_value', '...') : s.value}</p></CardContent>
             </Card>
           ))}
         </div>
@@ -352,7 +352,7 @@ export const AdminPage = () => {
             <CardDescription>{t("admin.customer_accounts_desc", "Click any row to view the client detail page.")}</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? <p className="text-slate-500 py-8 text-center">Loading...</p> : (
+            {loading ? <p className="text-slate-500 py-8 text-center">{t('admin.loading', 'Loading...')}</p> : (
               <Table>
                 <TableHeader><TableRow>
                   <TableHead>{t('admin.table.account', 'Account ID')}</TableHead><TableHead>{t('admin.table.email', 'Email')}</TableHead><TableHead>{t('admin.table.company', 'Company')}</TableHead>
@@ -428,19 +428,19 @@ export const AdminPage = () => {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>{t("admin.full_name_req", "Full Name (required)")}</Label>
-                <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Jane Doe" />
+                <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder={t('admin.placeholder.full_name', 'e.g. Jane Doe')} />
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.company_name_req", "Company Name (required)")}</Label>
-                <Input value={newCompany} onChange={e => setNewCompany(e.target.value)} placeholder="e.g. Acme Corp" />
+                <Input value={newCompany} onChange={e => setNewCompany(e.target.value)} placeholder={t('admin_client.placeholder.company', 'e.g. Acme Corp')} />
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.email_req", "Email (required)")}</Label>
-                <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="hello@acme.com" />
+                <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder={t('admin_client.placeholder.email', 'hello@acme.com')} />
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.vat_req", "VAT/Tax ID (optional)")}</Label>
-                <Input value={newVat} onChange={e => setNewVat(e.target.value)} placeholder="e.g. DE123456789" />
+                <Input value={newVat} onChange={e => setNewVat(e.target.value)} placeholder={t('admin_client.placeholder.vat', 'e.g. DE123456789')} />
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.free_credits", "Free credits for promo/testing")}</Label>
@@ -448,7 +448,7 @@ export const AdminPage = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.reason", "Reason")}</Label>
-                <Input value={newReason} onChange={e => setNewReason(e.target.value)} placeholder="e.g., Promo / testing" />
+                <Input value={newReason} onChange={e => setNewReason(e.target.value)} placeholder={t('admin.placeholder.promo', 'e.g., Promo / testing')} />
               </div>
             </div>
             <DialogFooter>
@@ -458,7 +458,7 @@ export const AdminPage = () => {
                 disabled={addingClient || !newName.trim() || !newCompany.trim() || !newEmail.trim() || newCredits < 0}
               >
                 {addingClient ? <Spinner size="sm" className="mr-2" /> : null}
-                {addingClient ? 'Saving...' : 'Create Client'}
+                {addingClient ? t('admin.btn.saving', 'Saving...') : t('admin.btn.create_client', 'Create Client')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -478,7 +478,7 @@ export const AdminPage = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.reason", "Reason")}</Label>
-                <Input value={topUpReason} onChange={e => setTopUpReason(e.target.value)} placeholder="e.g. promotional" />
+                <Input value={topUpReason} onChange={e => setTopUpReason(e.target.value)} placeholder={t('admin.placeholder.promo2', 'e.g. promotional')} />
               </div>
             </div>
             <DialogFooter>
@@ -488,7 +488,7 @@ export const AdminPage = () => {
                 disabled={toppingUp || topUpCredits <= 0}
               >
                 {toppingUp ? <Spinner size="sm" className="mr-2" /> : null}
-                {toppingUp ? 'Saving...' : 'Top Up'}
+                {toppingUp ? t('admin.btn.saving', 'Saving...') : t('admin.act.topup', 'Top Up')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -500,13 +500,13 @@ export const AdminPage = () => {
             <DialogHeader>
               <DialogTitle>{t("admin.delete_title", "Delete Client Account")}</DialogTitle>
               <DialogDescription className="text-red-600 dark:text-red-400 font-medium">
-                Warning: This action is permanent and irreversible.
+                {t("admin.delete_warning", "Warning: This action is permanent and irreversible.")}
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 text-slate-600 dark:text-slate-400">
-              Are you sure you want to completely delete <strong>{deleteClientTarget?.companyName}</strong>?
+              {t("admin.delete_confirm", "Are you sure you want to completely delete {name}?").replace('{name}', deleteClientTarget?.companyName || '')}
               <br /><br />
-              This will cascade and permanently delete all of their candidates, campaigns, and credit history.
+              {t("admin.delete_cascade", "This will cascade and permanently delete all of their candidates, campaigns, and credit history.")}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialog(false)}>{t("common.cancel", "Cancel")}</Button>
@@ -516,7 +516,7 @@ export const AdminPage = () => {
                 disabled={deleting}
               >
                 {deleting ? <Spinner size="sm" className="mr-2" /> : null}
-                {deleting ? 'Deleting...' : 'Delete Permanently'}
+                {deleting ? t('admin.btn.deleting', 'Deleting...') : t('admin.btn.delete_permanently', 'Delete Permanently')}
               </Button>
             </DialogFooter>
           </DialogContent>

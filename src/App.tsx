@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ImpersonationProvider, useImpersonation } from './contexts/ImpersonationContext';
-import { I18nProvider } from './contexts/I18nContext';
+import { I18nProvider, useI18n } from './contexts/I18nContext';
 
 import { LandingPage } from './pages/LandingPage';
 import { PaymentPage } from './pages/PaymentPage';
@@ -18,18 +18,20 @@ import { TooltipProvider } from './components/ui/tooltip';
 import { CandidateDetailPage } from './pages/CandidateDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useI18n();
   const { role, loading } = useAuth();
-  if (loading) return <div className="p-8 text-center">Checking access...</div>;
+  if (loading) return <div className="p-8 text-center">{t("common.checking_access", "Checking access...")}</div>;
   if (role !== 'admin') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const RecruiterGuard = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useI18n();
   const { user, role, loading } = useAuth();
   const { targetId } = useImpersonation();
   const location = useLocation();
 
-  if (loading) return <div className="p-8 text-center">Checking access...</div>;
+  if (loading) return <div className="p-8 text-center">{t("common.checking_access", "Checking access...")}</div>;
   if (!user) return <Navigate to="/login" replace />;
 
   if (role === 'admin') {

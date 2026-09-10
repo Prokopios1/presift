@@ -167,7 +167,7 @@ test.describe('Assessment session (candidate flow)', () => {
     await page.goto(`/assessment/${candidateId}`);
     await expect(page.getByText('Ψυχομετρική Αξιολόγηση')).toBeVisible({ timeout: 15_000 });
     await page.getByText('Συναίνεση GDPR (Υποχρεωτικό)').click();
-    await page.getByRole('button', { name: 'Begin Assessment' }).click();
+    await page.getByRole('button', { name: 'Έναρξη Αξιολόγησης' }).click();
 
     // Assert — ICAR instruction headline now in Greek (gr.json stage1_title),
     // never the English fallback.
