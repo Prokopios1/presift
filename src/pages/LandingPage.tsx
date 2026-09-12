@@ -19,13 +19,13 @@ export const LandingPage = () => {
         <main className="max-w-6xl mx-auto px-6 py-20 md:py-28">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
-              {t('landing.hero.title_start', 'Stop interviewing candidates who look good on paper but ')}
+              {t('landing.hero.title_start', 'Beyond the resume: ')}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {t('landing.hero.title_highlight', 'fail under pressure.')}
+                {t('landing.hero.title_highlight', 'Precise metrics for cognitive power and human chemistry.')}
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              {t('landing.hero.subtitle', 'Screen fluid intelligence & stress resilience in 10 minutes. Reduce bad hires by filtering candidates objectively before the first interview.')}
+              {t('landing.hero.subtitle', '10 minutes to measure IQ & EQ. Zero guesswork.')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
               <Tooltip>

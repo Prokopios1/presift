@@ -612,7 +612,7 @@ export const TestPage = () => {
             <div className="w-full max-w-2xl flex flex-col items-center space-y-4">
               <div className="text-center">
                 <h3 className="text-lg font-medium text-slate-200">{t("test_page.smile_question", "Is this smile genuine or fake?")}</h3>
-                <p className="text-xs text-slate-400 mt-1">{t("test.video.instruct", "Select your judgment below once the clip finishes playing.")}</p>
+                <p className="text-xs text-slate-400 mt-1">{t("test.video.instruct", "Once the clip finishes playing, choose if the video shows a real or fake smile.")}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 w-full">
@@ -639,7 +639,7 @@ export const TestPage = () => {
                       {t("test_page.fake", "Fake / Posed Smile")}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t("test.btn.posed", "Judge smile as posed or social")}</TooltipContent>
+                  <TooltipContent>{t("test.btn.posed", "Real or fake smile?")}</TooltipContent>
                 </Tooltip>
               </div>
 

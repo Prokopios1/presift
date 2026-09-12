@@ -17,8 +17,8 @@ test.describe('Landing page (B2B psychometric engine)', () => {
     const adminLink = page.getByRole('button', { name: 'Admin', exact: true });
     const pricingLink = page.locator('nav').getByRole('link', { name: 'Pricing', exact: true });
     
-    const headline = page.getByRole('heading', { name: /Stop interviewing candidates who look good on paper but fail under pressure./i });
-    const subtext = page.getByText('Screen fluid intelligence & stress resilience in 10 minutes. Reduce bad hires by filtering candidates objectively before the first interview.');
+    const headline = page.getByRole('heading', { name: /Beyond the resume: Precise metrics for cognitive power and human chemistry./i });
+    const subtext = page.getByText('10 minutes to measure IQ & EQ. Zero guesswork.');
     const getStartedLink = page.getByRole('link', { name: /Get Started/i });
     const footerText = page.getByText('© 2026 PreSift. All rights reserved. GDPR Compliant.');
 
