@@ -91,9 +91,10 @@ test.describe('Assessment session (candidate flow)', () => {
     // helper also clicks the intro "Go" gates and smile answers.
     const dialogs = await answerAllQuestions(page, 32);
 
-    // Assert — the end screen confirms submission (the modern flow renders an
-    // in-page thank-you rather than an alert when SMILE is present).
-    await expect(page.getByText('Assessment Complete')).toBeVisible({ timeout: 30_000 });
+    // Assert — the dedicated Thank You page confirms submission (no in-page
+    // completion panel, no results shown).
+    await expect(page).toHaveURL(/\/thank-you/, { timeout: 30_000 });
+    await expect(page.getByText('Assessment Complete')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Thank you for completing/)).toBeVisible({ timeout: 15_000 });
   });
 

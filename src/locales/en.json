@@ -439,5 +439,8 @@
   "admin_client.tooltip.restore_client": "Restore this client",
   "admin_client.tooltip.unarchive_cand": "Unarchive this candidate",
   "admin_client.tooltip.view_report": "View Candidate Report",
-  "admin_client.btn.export": "Export CSV"
+  "admin_client.btn.export": "Export CSV",
+  "thankyou.next": "Your responses have been submitted. The recruiter will review your results and contact you if your profile matches the role.",
+  "thankyou.close_hint": "You may now close this window.",
+  "thankyou.back_home": "Back to home"
 }

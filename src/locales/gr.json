@@ -439,5 +439,8 @@
   "admin_client.tooltip.restore_client": "Επαναφορά αυτού του πελάτη",
   "admin_client.tooltip.unarchive_cand": "Αναίρεση αρχειοθέτησης αυτού του υποψηφίου",
   "admin_client.tooltip.view_report": "Προβολή Αναφοράς Υποψηφίου",
-  "admin_client.btn.export": "Εξαγωγή CSV"
+  "admin_client.btn.export": "Εξαγωγή CSV",
+  "thankyou.next": "Οι απαντήσεις σας υποβλήθηκαν. Ο υπεύθυνος προσλήψεων θα εξετάσει τα αποτελέσματά σας και θα επικοινωνήσει μαζί σας εφόσον το προφίλ σας ταιριάζει με τη θέση.",
+  "thankyou.close_hint": "Μπορείτε τώρα να κλείσετε αυτό το παράθυρο.",
+  "thankyou.back_home": "Επιστροφή στην αρχή"
 }

@@ -17,6 +17,7 @@ import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { CandidateDetailPage } from './pages/CandidateDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ThankYouPage } from './pages/ThankYouPage';
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const { t } = useI18n();
   const { role, loading } = useAuth();
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/candidate/:candidateId" element={<CandidateDetailPage />} />
                 <Route path="/test/:assessmentId" element={<TestPage />} />
                 <Route path="/assessment/:assessmentId" element={<TestPage />} />
+                <Route path="/thank-you" element={<ThankYouPage />} />
                 {import.meta.env.MODE !== 'production' && <Route path="/demo" element={<DemoPage />} />}
                 <Route path="/pricing" element={<PaymentPage />} />
               </Routes>

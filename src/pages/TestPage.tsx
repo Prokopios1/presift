@@ -97,11 +97,6 @@ export const TestPage = () => {
     const saved = localStorage.getItem(`assessment_${assessmentId}_smile`);
     return saved ? JSON.parse(saved) : [];
   });
-  const [submittedResult, setSubmittedResult] = useState<any>(() => {
-    const saved = localStorage.getItem(`assessment_${assessmentId}_submittedResult`);
-    return saved ? JSON.parse(saved) : null;
-  });
-
   const [stage, setStage] = useState<TestStage>(() => {
     const savedStage = localStorage.getItem(`assessment_${assessmentId}_stage`);
     if (savedStage) return savedStage as TestStage;
@@ -277,15 +272,10 @@ export const TestPage = () => {
         ...(finalSmile ? { smileAnswers: finalSmile } : {}),
       });
       const resData = response.data as any;
-      if (resData?.scoreResult) {
-        setSubmittedResult(resData.scoreResult);
-        localStorage.setItem(`assessment_${assessmentId}_submittedResult`, JSON.stringify(resData.scoreResult));
-      }
-      if (!sessionData.smileTask) {
-        alert(t('testpage.alert.8', 'Assessment Complete!'));
-        clearLocalStorage();
-        navigate('/');
-      }
+      const langParam = sessionData.lang || 'el';
+      localStorage.setItem(`assessment_${assessmentId}_submittedResult`, JSON.stringify(resData?.scoreResult ?? null));
+      clearLocalStorage();
+      navigate(`/thank-you?lang=${langParam}`);
     } catch (err: any) {
       isSubmitting.current = false;
       if (err?.code === 'not-found' || err?.code === 'functions/not-found' || err?.message?.includes('not found')) {
@@ -651,91 +641,11 @@ export const TestPage = () => {
     }
 
     if (stage === 'smile_summary' || smileStage === 'summary') {
-      const smileRes = submittedResult?.smile || submittedResult?.scoreResult?.smile;
-      const calibration = smileRes?.calibration;
-
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4 relative">
-          <nav className="absolute top-0 left-0 w-full p-4 flex items-center z-40 bg-transparent">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
-              <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
-            </div>
-          </nav>
-          <Card className="max-w-2xl w-full bg-slate-900 border-slate-800 text-slate-100 shadow-2xl">
-            <CardHeader className="text-center border-b border-slate-800 pb-6">
-              <div className="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono mb-2">
-                {t("test_page.complete_badge", "Assessment Complete")}
-              </div>
-              <CardTitle className="text-3xl font-bold">{t("test_page.thank_you", "Thank you for completing the assessment.")}</CardTitle>
-              <CardDescription className="text-slate-400 text-base mt-2">
-                {t("test_page.thank_body", "Your responses have been submitted successfully and will be reviewed by the recruiter. You may now close this window.")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              {calibration ? (
-                <>
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">{t("test_page.cal_summary", "Perceptual Calibration Summary")}</div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-800/80 rounded-lg border border-slate-700 text-center">
-                      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                        {t("test_page.perc_accuracy", "Perceptual Accuracy")}
-                      </div>
-                      <div className="text-3xl font-bold text-emerald-400 font-mono">
-                        {smileRes.score} / {smileRes.total}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        ({t("test_page.percent_correct", "{pct}% Correct").replace("{pct}", (smileRes.accuracy * 100).toFixed(0))})
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-slate-800/80 rounded-lg border border-slate-700 text-center">
-                      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                        {t("test_page.alignment_level", "Alignment Level")}
-                      </div>
-                      <div className="text-3xl font-bold text-sky-400">
-                        {calibration.level}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1 capitalize">
-                        {t("test_page.bias_direction", "{bias} bias").replace("{bias}", calibration.biasDirection)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-slate-800/40 rounded-lg border border-slate-800 space-y-3">
-                    <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
-                      <span className="text-slate-400">{t("test_page.self_oea", "Self-Reported OEA Score:")}</span>
-                      <span className="font-mono font-semibold text-slate-200">{calibration.rawOea.toFixed(2)} / 5.00</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-400">{t("test_page.calibrated_oea", "Calibrated OEA Score:")}</span>
-                      <span className="font-mono font-bold text-emerald-400">{calibration.calibratedOeaScore.toFixed(2)} / 5.00</span>
-                    </div>
-                  </div>
-                </>
-              ) : submittedResult ? null : (
-                <div className="text-center py-8 text-slate-400 space-y-2">
-                  <div className="animate-pulse text-emerald-400 font-semibold">{t("test.submitting", "Submitting your responses...")}</div>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-                    onClick={() => {
-                      clearLocalStorage();
-                      navigate('/');
-                    }}
-                  >
-                    {t("test_page.go_dashboard", "Complete & Return Home")}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("test.btn.submit", "Submit results and return home")}</TooltipContent>
-              </Tooltip>
-            </CardFooter>
-          </Card>
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50 p-4">
+          <div className="text-center py-8 text-slate-400 space-y-2">
+            <div className="animate-pulse text-emerald-400 font-semibold">{t("test.submitting", "Submitting your responses...")}</div>
+          </div>
         </div>
       );
     }
