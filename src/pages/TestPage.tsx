@@ -605,12 +605,12 @@ export const TestPage = () => {
                 <p className="text-xs text-slate-400 mt-1">{t("test.video.instruct", "Once the clip finishes playing, choose if the video shows a real or fake smile.")}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-16 text-xl border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
+                      className="h-auto min-h-16 py-3 text-base leading-tight whitespace-normal text-center border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
                       onClick={() => handleSmileChoice('genuine')}
                     >
                       {t("test_page.genuine", "Genuine Smile")}
@@ -623,7 +623,7 @@ export const TestPage = () => {
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-16 text-xl border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
+                      className="h-auto min-h-16 py-3 text-base leading-tight whitespace-normal text-center border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
                       onClick={() => handleSmileChoice('fake')}
                     >
                       {t("test_page.fake", "Fake / Posed Smile")}

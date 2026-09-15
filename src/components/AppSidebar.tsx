@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ export const AppSidebar = () => {
   const { role } = useAuth();
   const { t } = useI18n();
   const [signingOut, setSigningOut] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navItems = [
     { label: t('nav.dashboard', 'Recruiter Dashboard'), href: '/dashboard', tooltip: t('nav.dashboard.tooltip', 'View and manage candidate assessments'), show: true },
@@ -24,7 +25,40 @@ export const AppSidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col">
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label={t('nav.open_menu', 'Open navigation menu')}
+        aria-expanded={drawerOpen}
+        onClick={() => setDrawerOpen(true)}
+        className={`md:hidden fixed bottom-4 left-4 z-50 h-9 w-9 ${drawerOpen ? 'hidden' : ''}`}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+      {drawerOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          aria-hidden="true"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col transition-transform duration-200 md:translate-x-0 ${
+          drawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={t('nav.close_menu', 'Close navigation menu')}
+          onClick={() => setDrawerOpen(false)}
+          className="md:hidden absolute right-2 top-2 h-9 w-9"
+        >
+          <X className="h-5 w-5" />
+        </Button>
       <div className="p-6 border-b border-slate-200 dark:border-slate-800">
         <div className="font-bold text-2xl tracking-tighter bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           PreSift
@@ -74,6 +108,7 @@ export const AppSidebar = () => {
           <TooltipContent>{t('nav.signout.tooltip', 'End your session and return to the login page')}</TooltipContent>
         </Tooltip>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
