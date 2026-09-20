@@ -139,7 +139,7 @@ export const PaymentPage = () => {
               PreSift
             </Link>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" onClick={() => (window.location.href = '/dashboard')}>{t("payment.dashboard", "Dashboard")}</Button>

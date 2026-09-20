@@ -39,13 +39,13 @@ export const AppSidebar = () => {
       </Button>
       {drawerOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          className="md:hidden fixed inset-0 bg-black/50 z-50"
           aria-hidden="true"
           onClick={() => setDrawerOpen(false)}
         />
       )}
       <aside
-        className={`fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-40 flex flex-col transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 z-50 flex flex-col transition-transform duration-200 md:translate-x-0 ${
           drawerOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

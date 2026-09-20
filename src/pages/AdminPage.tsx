@@ -420,7 +420,7 @@ export const AdminPage = () => {
 
         {/* Add Client Dialog */}
         <Dialog open={addClientDialog} onOpenChange={setAddClientDialog}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("admin.add_client_title", "Add New Client")}</DialogTitle>
               <DialogDescription>{t("admin.add_client_desc", "Create a new customer account and grant initial credits.")}</DialogDescription>

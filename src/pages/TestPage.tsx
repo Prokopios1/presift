@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -403,13 +402,13 @@ export const TestPage = () => {
 
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked as boolean)} />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="terms">{t("test_page.gdpr_consent", "Mandatory GDPR Consent")}</Label>
+              <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked as boolean)} className="mt-1 shrink-0" />
+              <label htmlFor="terms" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
+                <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.gdpr_consent", "Mandatory GDPR Consent")}</span>
                 <p className="text-sm text-slate-500 leading-relaxed">
                   {t("test_page.gdpr_consent_body", "I agree to the processing of my responses for psychological and perceptual assessment.")}
                 </p>
-              </div>
+              </label>
             </div>
           </CardContent>
           <CardFooter>
@@ -662,17 +661,17 @@ export const TestPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col select-none">
-      <header className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+      <header className="p-4 border-b border-slate-800 flex justify-between items-center gap-2 md:gap-0 bg-slate-950">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1" /> {t("test_page.back", "Back")}</Button>
             <Button variant="outline" size="sm" className="bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700 hover:text-white disabled:text-slate-500" onClick={() => navigate(1)}>{t("test_page.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
-          <div className="font-mono text-sm text-slate-400">
+          <div className="font-mono text-sm text-slate-400 min-w-0">
             {t("test_page.question_of", "Question {current} of {total}").replace("{current}", String(currentQuestion + 1)).replace("{total}", String(totalQuestions))}
           </div>
         </div>
-        <div className={`font-mono text-xl ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
+        <div className={`font-mono text-xl shrink-0 ml-2 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
           00:{timeLeft.toString().padStart(2, '0')}
         </div>
       </header>
