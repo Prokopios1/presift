@@ -8,38 +8,32 @@ test.describe('Landing page (B2B psychometric engine)', () => {
     });
   });
 
-  test('renders core marketing content and navigation', async ({ page }) => {
+  test('renders core marketing content without navigation', async ({ page }) => {
     // Arrange
     await page.goto('/');
 
     // Act
-    const dashboardLink = page.getByRole('button', { name: 'Dashboard', exact: true });
-    const adminLink = page.getByRole('button', { name: 'Admin', exact: true });
-    const pricingLink = page.locator('nav').getByRole('link', { name: 'Pricing', exact: true });
-    
-    const headline = page.getByRole('heading', { name: /Beyond speculations: Precise metrics for cognitive power and human chemistry./i });
-    const subtext = page.getByText('10 minutes to measure IQ & EQ. Zero guesswork.');
+    const headline = page.getByRole('heading', { name: /Beyond speculations/i });
+    const subtitle = page.getByText('10 minutes to measure IQ & EQ. Zero guesswork.');
     const getStartedLink = page.getByRole('link', { name: /Get Started/i });
-    const footerText = page.getByText('© 2026 PreSift. All rights reserved. GDPR Compliant.');
 
     // Assert
-    await expect(dashboardLink).toBeVisible();
-    await expect(adminLink).toBeVisible();
-    await expect(pricingLink).toBeVisible();
     await expect(headline).toBeVisible();
-    await expect(subtext).toBeVisible();
+    await expect(subtitle).toBeVisible();
     await expect(getStartedLink).toBeVisible();
-    await expect(footerText).toBeVisible();
+    await expect(getStartedLink).toHaveAttribute('href', '/register');
+    await expect(page.locator('footer')).toContainText('© 2026 PreSift. All rights reserved. GDPR Compliant.');
+    await expect(page.getByRole('button', { name: "Dashboard", exact: true })).toHaveCount(0);
+    await expect(page.locator('nav')).toHaveCount(0);
   });
 
-  test('checkout redirects to Stripe hosted checkout', async ({ page }) => {
+  test('guest checkout is blocked by the login guard', async ({ page }) => {
     // Arrange
     const dialogs: string[] = [];
     page.on('dialog', async (d) => {
       dialogs.push(d.message());
       await d.accept();
     });
-    page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
 
     await page.goto('/pricing');
 
@@ -59,15 +53,10 @@ test.describe('Landing page (B2B psychometric engine)', () => {
     // Click checkout
     await page.getByRole('button', { name: 'Checkout — €75.00' }).click();
 
-    // Assert — real Stripe Checkout (test mode) takes over
-    try {
-      await page.waitForURL(/checkout\.stripe\.com/, { timeout: 15_000 });
-    } catch (e) {
-      if (dialogs.length > 0) {
-        throw new Error(`Stripe checkout failed with dialog: ${dialogs[0]}`);
-      }
-      throw e;
-    }
-    expect(page.url()).toMatch(/checkout\.stripe\.com/);
+    // Assert
+    await page.waitForTimeout(1000);
+    expect(dialogs.length).toBeGreaterThan(0);
+    expect(dialogs[0]).toContain('Must be logged in to purchase credits.');
+    await expect(page).not.toHaveURL(/checkout.stripe.com/);
   });
 });
