@@ -44,7 +44,7 @@
   "error.ERR_LENGTH_MISMATCH": "The number of answers does not match the session.",
   "error.ERR_MISSING_ANSWER": "An answer is missing for one or more items.",
   "error.default": "An unexpected error occurred.",
-  "landing.hero.title_start": "Beyond the resume: ",
+  "landing.hero.title_start": "Beyond speculations: ",
   "landing.hero.title_highlight": "Precise metrics for cognitive power and human chemistry.",
   "landing.hero.subtitle": "10 minutes to measure IQ & EQ. Zero guesswork.",
   "landing.cta.start": "Get Started",
