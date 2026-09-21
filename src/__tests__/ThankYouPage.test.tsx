@@ -54,7 +54,7 @@ describe('ThankYouPage', () => {
         'Οι απαντήσεις σας υποβλήθηκαν. Ο υπεύθυνος προσλήψεων θα εξετάσει τα αποτελέσματά σας και θα επικοινωνήσει μαζί σας εφόσον το προφίλ σας ταιριάζει με τη θέση.'
       )
     ).toBeTruthy();
-    expect(screen.getByText('Επιστροφή στην αρχή')).toBeTruthy();
+    expect(screen.queryByText('Επιστροφή στην αρχή')).toBeNull();
   });
 
   it('renders in Greek when arrived with ?lang=el even if the UI is English', () => {
@@ -78,13 +78,12 @@ describe('ThankYouPage', () => {
     expect(screen.queryByText(/OEA Score/i)).toBeNull();
   });
 
-  it("back-home link points to '/'", () => {
+  it('renders no link back to the home page', () => {
     // Arrange
     localStorage.setItem('presift_language', 'en');
     // Act
     renderThankYou();
     // Assert
-    const link = screen.getByRole('link', { name: 'Back to home' });
-    expect(link.getAttribute('href')).toBe('/');
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -36,9 +36,6 @@ export const ThankYouPage = () => {
             <p className="text-sm text-slate-400">
               {t('thankyou.close_hint', 'You may now close this window.')}
             </p>
-            <Link to="/" className="inline-block text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 underline">
-              {t('thankyou.back_home', 'Back to home')}
-            </Link>
           </CardContent>
         </Card>
       </main>
