@@ -487,5 +487,10 @@
   "candidate_detail.prompt.balanced": "Οι βαθμολογίες σας υποδεικνύουν ισορροπημένη συναισθηματική νοημοσύνη και γνωστικές δεξιότητες. Πώς σκοπεύετε να αξιοποιήσετε αυτά τα δυνατά σημεία σε αυτόν τον ρόλο;",
   "candidate_detail.percentile_ordinal": "ο",
   "candidate_detail.percentile_unit": "εκατοστημόριο",
-  "candidate_detail.not_available": "Μ/Δ"
+  "candidate_detail.not_available": "Μ/Δ",
+  "fit.label.strong": "Ισχυρή αντιστοιχία",
+  "fit.label.conditional": "Μέτρια αντιστοιχία",
+  "fit.label.low": "Χαμηλή αντιστοιχία",
+  "fit.label.integrity": "Σημαία Ακεραιότητας",
+  "fit.label.locked": "Κλειδωμένο"
 }

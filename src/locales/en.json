@@ -487,5 +487,10 @@
   "candidate_detail.prompt.balanced": "Your scores indicate balanced emotional intelligence and cognitive skills. How do you plan to leverage these strengths in this role?",
   "candidate_detail.percentile_ordinal": "th",
   "candidate_detail.percentile_unit": "%ile",
-  "candidate_detail.not_available": "N/A"
+  "candidate_detail.not_available": "N/A",
+  "fit.label.strong": "Strong Fit",
+  "fit.label.conditional": "Conditional Fit",
+  "fit.label.low": "Low Fit",
+  "fit.label.integrity": "Integrity Flag",
+  "fit.label.locked": "Locked"
 }

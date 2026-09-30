@@ -21,6 +21,7 @@ import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebas
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { fitBadgeLabel } from '@/lib/fitBadge';
 
 export const toggleSelectAll = (
   currentSelected: Set<string>,
@@ -409,7 +410,7 @@ export const DashboardPage = () => {
                         (c.fitBadge || c.fit || '').includes('Conditional') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                         'bg-red-50 text-red-700 border-red-200'
                       }>
-                        {c.fitBadge || c.fit || t("dashboard.badge.unknown", "Unknown")}
+                        {c.fitBadge || c.fit ? fitBadgeLabel(c.fitBadge || c.fit, t) : t("dashboard.badge.unknown", "Unknown")}
                       </Badge>
                     </TableCell>
                     <TableCell>

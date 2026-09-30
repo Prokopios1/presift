@@ -11,10 +11,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { fitBadgeLabel, type TFn } from '@/lib/fitBadge';
 
 // ── Interpretation helpers ───────────────────────────────────────────────────
-
-type TFn = (key: string, fallback?: string) => string;
 
 
 function icarPercentileLabel(p: number, t: TFn): string {
@@ -186,7 +185,7 @@ export const CandidateDetailPage = () => {
           {/* Fit badge + plain sentence */}
           <div className="flex flex-col gap-2">
             <div className="flex gap-4 items-center">
-              <Badge className="text-lg py-1 px-3" variant="secondary">{selectedCandidate.fitBadge || selectedCandidate.fit}</Badge>
+              <Badge className="text-lg py-1 px-3" variant="secondary">{fitBadgeLabel(selectedCandidate.fitBadge || selectedCandidate.fit, t)}</Badge>
               {blurs > 0 && (
                 <Badge variant="destructive" className="text-lg py-1 px-3">{t('candidate_detail.integrity_flags', '⚠️ {count} Integrity Flags').replace('{count}', String(blurs))}</Badge>
               )}

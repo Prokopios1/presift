@@ -19,6 +19,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { fitBadgeLabel, type TFn } from '@/lib/fitBadge';
 
 interface RecruiterAccount {
   id: string;
@@ -47,7 +48,7 @@ interface CandidateRecord {
 }
 
 // CSV helper — exported so AdminClientPage and tests can import it
-export function buildCandidatesCsv(candidates: CandidateRecord[]): string {
+export function buildCandidatesCsv(candidates: CandidateRecord[], t?: TFn): string {
   const headers = [
     'name', 'email', 'appliedRole', 'status', 'created',
     'cognitivePercentile', 'eiPercentile', 'fitBadge', 'integrityFlag',
@@ -66,7 +67,7 @@ export function buildCandidatesCsv(candidates: CandidateRecord[]): string {
     escape(c.createdAt ? new Date(c.createdAt).toLocaleDateString() : c.completionDate ? new Date(c.completionDate).toLocaleDateString() : ''),
     escape(c.cognitivePercentile),
     escape(c.eiPercentile),
-    escape(c.fitBadge),
+    escape(t ? fitBadgeLabel(c.fitBadge, t) : c.fitBadge),
     escape(c.integrityFlag),
   ].join(','));
   return [headers.join(','), ...rows].join('\n');

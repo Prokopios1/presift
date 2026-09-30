@@ -22,6 +22,7 @@ import { buildCandidatesCsv } from './AdminPage';
 import { toggleSelectAll, toggleSelectRow, getSelectionState } from './DashboardPage';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { fitBadgeLabel } from '@/lib/fitBadge';
 
 interface RecruiterAccount {
   id: string;
@@ -343,7 +344,7 @@ export const AdminClientPage = () => {
 
   const handleExportCsv = () => {
     if (!client) return;
-    const csv = buildCandidatesCsv(visibleCandidates);
+    const csv = buildCandidatesCsv(visibleCandidates, t);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -675,7 +676,7 @@ export const AdminClientPage = () => {
                             (c.fitBadge || '').includes('Strong') ? 'bg-green-50 text-green-700 border-green-200' :
                             (c.fitBadge || '').includes('Conditional') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                             'bg-red-50 text-red-700 border-red-200'
-                          }>{c.fitBadge || t('admin_client.fit.unknown', 'Unknown')}</Badge>
+                          }>{c.fitBadge ? fitBadgeLabel(c.fitBadge, t) : t('admin_client.fit.unknown', 'Unknown')}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
