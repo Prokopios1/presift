@@ -14,23 +14,26 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 // ── Interpretation helpers ───────────────────────────────────────────────────
 
-function icarPercentileLabel(p: number): string {
-  if (p >= 90) return 'Well above average';
-  if (p >= 75) return 'Above average';
-  if (p >= 50) return 'Average';
-  if (p >= 25) return 'Below average';
-  return 'Well below average';
+type TFn = (key: string, fallback?: string) => string;
+
+
+function icarPercentileLabel(p: number, t: TFn): string {
+  if (p >= 90) return t('candidate_detail.icar.well_above_average', 'Well above average');
+  if (p >= 75) return t('candidate_detail.icar.above_average', 'Above average');
+  if (p >= 50) return t('candidate_detail.icar.average', 'Average');
+  if (p >= 25) return t('candidate_detail.icar.below_average', 'Below average');
+  return t('candidate_detail.icar.well_below_average', 'Well below average');
 }
 
-function icarPercentileSentence(p: number): string {
+function icarPercentileSentence(p: number, t: TFn): string {
   const pct = Math.round(p);
-  return `Performs better than ${pct}% of the reference group on reasoning tasks.`;
+  return t('candidate_detail.icar.performs_better', 'Performs better than {pct}% of the reference group on reasoning tasks.').replace('{pct}', String(pct));
 }
 
-function icarDomainLabel(score: number): string {
-  if (score >= 3) return 'Strong';
-  if (score === 2) return 'Moderate';
-  return 'Weak';
+function icarDomainLabel(score: number, t: TFn): string {
+  if (score >= 3) return t('candidate_detail.domain.strong', 'Strong');
+  if (score === 2) return t('candidate_detail.domain.moderate', 'Moderate');
+  return t('candidate_detail.domain.weak', 'Weak');
 }
 
 function icarDomainColor(score: number): string {
@@ -39,24 +42,24 @@ function icarDomainColor(score: number): string {
   return 'text-red-600 dark:text-red-400';
 }
 
-function wleisLabel(total: number): string {
-  if (total >= 59) return 'Above the mid-range';
-  if (total >= 38) return 'Around the mid-range';
-  return 'Below the mid-range';
+function wleisLabel(total: number, t: TFn): string {
+  if (total >= 59) return t('candidate_detail.wleis.above_mid', 'Above the mid-range');
+  if (total >= 38) return t('candidate_detail.wleis.around_mid', 'Around the mid-range');
+  return t('candidate_detail.wleis.below_mid', 'Below the mid-range');
 }
 
-function wleisSentence(total: number): string {
+function wleisSentence(total: number, t: TFn): string {
   if (total >= 59)
-    return 'Reports strong emotional awareness and regulation relative to the norm group.';
+    return t('candidate_detail.wleis.desc_strong', 'Reports strong emotional awareness and regulation relative to the norm group.');
   if (total >= 38)
-    return 'Reports moderate emotional intelligence — in line with most professionals.';
-  return 'Reports lower emotional intelligence; explore specific subscales in the interview.';
+    return t('candidate_detail.wleis.desc_mod', 'Reports moderate emotional intelligence — in line with most professionals.');
+  return t('candidate_detail.wleis.desc_low', 'Reports lower emotional intelligence; explore specific subscales in the interview.');
 }
 
-function wleisSubscaleLabel(score: number): string {
-  if (score >= 15) return 'High';
-  if (score >= 10) return 'Moderate';
-  return 'Low';
+function wleisSubscaleLabel(score: number, t: TFn): string {
+  if (score >= 15) return t('candidate_detail.wleis.high', 'High');
+  if (score >= 10) return t('candidate_detail.wleis.moderate', 'Moderate');
+  return t('candidate_detail.wleis.low', 'Low');
 }
 
 function wleisSubscaleColor(score: number): string {
@@ -65,12 +68,12 @@ function wleisSubscaleColor(score: number): string {
   return 'text-red-600 dark:text-red-400';
 }
 
-function fitBadgeSentence(badge: string): string {
+function fitBadgeSentence(badge: string, t: TFn): string {
   if (badge?.includes('Strong'))
-    return 'Strong overall match — reasoning and EI align well with role demands.';
+    return t('candidate_detail.fit.strong', 'Strong overall match — reasoning and EI align well with role demands.');
   if (badge?.includes('Conditional'))
-    return 'Moderate match — explore specific areas in the interview.';
-  return 'Weak overall match — probe carefully before advancing.';
+    return t('candidate_detail.fit.moderate', 'Moderate match — explore specific areas in the interview.');
+  return t('candidate_detail.fit.weak', 'Weak overall match — probe carefully before advancing.');
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -139,17 +142,17 @@ export const CandidateDetailPage = () => {
     }
   };
 
-  const getDynamicPrompts = (c: any) => {
+  const getDynamicPrompts = (c: any, t: TFn) => {
     if (!c?.scoreResult?.wleis?.rawScores) return [];
     const { SEA = 0, OEA = 0, UOE = 0, ROE = 0 } = c.scoreResult.wleis.rawScores;
     let prompts = [];
-    if (SEA < 20) prompts.push('Can you describe a time you felt overwhelmed and how you recognized it?');
-    if (OEA < 20) prompts.push('Tell me about a situation where you had to read the room and adjust your approach.');
-    if (UOE < 20) prompts.push('Describe a time when you motivated yourself to complete a tedious task.');
-    if (ROE < 20) prompts.push('How do you handle working with someone who is extremely stressed or frustrated?');
-    if (c.scoreResult?.icar?.percentile < 30) prompts.push('Can you walk me through your step-by-step process for solving a completely new problem?');
+    if (SEA < 20) prompts.push(t('candidate_detail.prompt.sea', 'Can you describe a time you felt overwhelmed and how you recognized it?'));
+    if (OEA < 20) prompts.push(t('candidate_detail.prompt.oea', 'Tell me about a situation where you had to read the room and adjust your approach.'));
+    if (UOE < 20) prompts.push(t('candidate_detail.prompt.uoe', 'Describe a time when you motivated yourself to complete a tedious task.'));
+    if (ROE < 20) prompts.push(t('candidate_detail.prompt.roe', 'How do you handle working with someone who is extremely stressed or frustrated?'));
+    if (c.scoreResult?.icar?.percentile < 30) prompts.push(t('candidate_detail.prompt.icar', 'Can you walk me through your step-by-step process for solving a completely new problem?'));
     if (prompts.length === 0) {
-      prompts.push('Your scores indicate balanced emotional intelligence and cognitive skills. How do you plan to leverage these strengths in this role?');
+      prompts.push(t('candidate_detail.prompt.balanced', 'Your scores indicate balanced emotional intelligence and cognitive skills. How do you plan to leverage these strengths in this role?'));
     }
     return prompts.slice(0, 3);
   };
@@ -168,7 +171,7 @@ export const CandidateDetailPage = () => {
       <main className="flex-1 w-full pl-0 md:pl-60">
         <nav className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 sticky top-0 z-40 px-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleBack}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
+            <Button variant="outline" size="sm" onClick={handleBack}><ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back', 'Back')}</Button>
             <Button variant="outline" size="sm" onClick={() => navigate(1)}>{t("candidate_detail.forward", "Forward ")}<ArrowRight className="w-4 h-4 ml-1" /></Button>
           </div>
           <ThemeToggle />
@@ -185,7 +188,7 @@ export const CandidateDetailPage = () => {
             <div className="flex gap-4 items-center">
               <Badge className="text-lg py-1 px-3" variant="secondary">{selectedCandidate.fitBadge || selectedCandidate.fit}</Badge>
               {blurs > 0 && (
-                <Badge variant="destructive" className="text-lg py-1 px-3">⚠️ {blurs} Integrity Flags</Badge>
+                <Badge variant="destructive" className="text-lg py-1 px-3">{t('candidate_detail.integrity_flags', '⚠️ {count} Integrity Flags').replace('{count}', String(blurs))}</Badge>
               )}
               <div className="ml-auto flex gap-2">
                 <Tooltip>
@@ -209,7 +212,7 @@ export const CandidateDetailPage = () => {
               </div>
             </div>
             {(selectedCandidate.fitBadge || selectedCandidate.fit) && (
-              <p className="text-sm text-slate-500 mt-1">{fitBadgeSentence(selectedCandidate.fitBadge || selectedCandidate.fit)}</p>
+              <p className="text-sm text-slate-500 mt-1">{fitBadgeSentence(selectedCandidate.fitBadge || selectedCandidate.fit, t)}</p>
             )}
           </div>
 
@@ -218,11 +221,11 @@ export const CandidateDetailPage = () => {
             <Card>
               <CardHeader><CardTitle className="text-sm text-slate-500">{t("candidate_detail.cognitive", "Cognitive (ICAR)")}</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{icar?.percentile ?? 0}th <span className="text-sm font-normal text-slate-500">%ile</span></p>
+                <p className="text-3xl font-bold">{icar?.percentile ?? 0}{t('candidate_detail.percentile_ordinal', 'th')} <span className="text-sm font-normal text-slate-500">{t('candidate_detail.percentile_unit', '%ile')}</span></p>
                 {icar?.percentile !== undefined && (
                   <>
-                    <p className="text-sm font-semibold mt-1">{icarPercentileLabel(icar.percentile)}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{icarPercentileSentence(icar.percentile)}</p>
+                    <p className="text-sm font-semibold mt-1">{icarPercentileLabel(icar.percentile, t)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{icarPercentileSentence(icar.percentile, t)}</p>
                   </>
                 )}
               </CardContent>
@@ -233,8 +236,8 @@ export const CandidateDetailPage = () => {
                 <p className="text-3xl font-bold">{wleis?.Total ?? 0} <span className="text-sm font-normal text-slate-500">{t("candidate_detail.score", "Score")}</span></p>
                 {wleis?.Total !== undefined && (
                   <>
-                    <p className="text-sm font-semibold mt-1">{wleisLabel(wleis.Total)}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{wleisSentence(wleis.Total)}</p>
+                    <p className="text-sm font-semibold mt-1">{wleisLabel(wleis.Total, t)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{wleisSentence(wleis.Total, t)}</p>
                   </>
                 )}
               </CardContent>
@@ -249,15 +252,19 @@ export const CandidateDetailPage = () => {
                 <h3 className="font-semibold text-lg">{t("candidate_detail.icar_breakdown", "ICAR Domain Breakdown")}</h3>
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   {(['numerical', 'verbal', 'abstract'] as const).map(domain => {
-                    const val = icar?.domainScores?.[domain] ?? 'N/A';
+                    const val = icar?.domainScores?.[domain] ?? t('candidate_detail.not_available', 'N/A');
                     const numVal = typeof val === 'number' ? val : -1;
                     return (
                       <div key={domain} className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
                         <div className="font-bold">{val}</div>
-                        <div className="text-slate-500 text-[10px] uppercase">{domain}</div>
+                        <div className="text-slate-500 text-[10px] uppercase">
+                          {domain === 'numerical' ? t('candidate_detail.icar.numerical', 'Numerical') : 
+                           domain === 'verbal' ? t('candidate_detail.icar.verbal', 'Verbal') : 
+                           t('candidate_detail.icar.abstract', 'Abstract')}
+                        </div>
                         {numVal >= 0 && (
                           <div className={`text-[10px] font-semibold mt-0.5 ${icarDomainColor(numVal)}`}>
-                            {icarDomainLabel(numVal)}
+                            {icarDomainLabel(numVal, t)}
                           </div>
                         )}
                       </div>
@@ -271,10 +278,10 @@ export const CandidateDetailPage = () => {
                 <h3 className="font-semibold text-lg">{t("candidate_detail.wleis_breakdown", "WLEIS 4×4 Breakdown")}</h3>
                 <div className="grid grid-cols-4 gap-2 text-center text-sm">
                   {([
-                    { key: 'SEA', label: 'Self', meaning: 'Reading your own emotions' },
-                    { key: 'OEA', label: 'Others', meaning: "Reading others' emotions" },
-                    { key: 'UOE', label: 'Use', meaning: 'Using emotions to guide thinking' },
-                    { key: 'ROE', label: 'Reg', meaning: 'Managing your own emotions' },
+                    { key: 'SEA', label: t('candidate_detail.wleis.self_label', 'Self'), meaning: t('candidate_detail.wleis.self_meaning', 'Reading your own emotions') },
+                    { key: 'OEA', label: t('candidate_detail.wleis.others_label', 'Others'), meaning: t('candidate_detail.wleis.others_meaning', "Reading others' emotions") },
+                    { key: 'UOE', label: t('candidate_detail.wleis.use_label', 'Use'), meaning: t('candidate_detail.wleis.use_meaning', 'Using emotions to guide thinking') },
+                    { key: 'ROE', label: t('candidate_detail.wleis.reg_label', 'Reg'), meaning: t('candidate_detail.wleis.reg_meaning', 'Managing your own emotions') },
                   ] as const).map(({ key, label, meaning }) => {
                     const val: number = wleis?.[key] ?? 0;
                     return (
@@ -282,7 +289,7 @@ export const CandidateDetailPage = () => {
                         <div className="font-bold">{val}</div>
                         <div className="text-slate-500 text-[10px] uppercase">{label}</div>
                         <div className={`text-[10px] font-semibold mt-0.5 ${wleisSubscaleColor(val)}`}>
-                          {wleisSubscaleLabel(val)}
+                          {wleisSubscaleLabel(val, t)}
                         </div>
                         <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">{meaning}</div>
                       </div>
@@ -300,7 +307,7 @@ export const CandidateDetailPage = () => {
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className="text-2xl font-bold">
-                    {dur ? `${Math.floor(dur / 60)}m ${dur % 60}s` : 'N/A'}
+                    {dur ? t('candidate_detail.time_format', '{m}m {s}s').replace('{m}', String(Math.floor(dur / 60))).replace('{s}', String(dur % 60)) : t('candidate_detail.not_available', 'N/A')}
                   </p>
                   <p className="text-xs text-slate-500 uppercase mt-1">{t("candidate_detail.total_duration", "Total Duration")}</p>
                 </CardContent>
@@ -313,7 +320,9 @@ export const CandidateDetailPage = () => {
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{t("candidate_detail.no_issues", "No integrity issues detected.")}</p>
                   ) : (
                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                      Candidate left the test window {blurs} {blurs === 1 ? 'time' : 'times'} — review results with caution.
+                      {blurs === 1 
+                        ? t('candidate_detail.blur_warning_singular', 'Candidate left the test window {count} time — review results with caution.').replace('{count}', String(blurs))
+                        : t('candidate_detail.blur_warning_plural', 'Candidate left the test window {count} times — review results with caution.').replace('{count}', String(blurs))}
                     </p>
                   )}
                 </CardContent>
@@ -325,7 +334,7 @@ export const CandidateDetailPage = () => {
             <h3 className="font-semibold text-lg">{t("candidate_detail.custom_prompts", "Custom Interview Prompts")}</h3>
             <Card className="bg-slate-50 dark:bg-slate-900/50">
               <CardContent className="p-4 space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                {getDynamicPrompts(selectedCandidate).map((p, i) => (
+                {getDynamicPrompts(selectedCandidate, t).map((p, i) => (
                   <p key={i}>{i + 1}. "{p}"</p>
                 ))}
               </CardContent>
