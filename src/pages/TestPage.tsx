@@ -64,6 +64,7 @@ export const TestPage = () => {
     return saved ? JSON.parse(saved) : false;
   });
   const [consent, setConsent] = useState(false);
+  const [ackChecked, setAckChecked] = useState(false);
   
 
   const [currentQuestion, setCurrentQuestion] = useState(() => {
@@ -320,10 +321,12 @@ export const TestPage = () => {
       if (sessionData.wleisItems && sessionData.wleisItems.length > 0) {
         setCurrentQuestion(sessionData.items.length);
         setStage('wleis_intro');
+        setAckChecked(false);
       } else if (sessionData.smileTask) {
         setCurrentQuestion(totalQuestions);
         setStage('smile_intro');
         setSmileStage('instructions');
+        setAckChecked(false);
       } else {
         submitTest(newIcar, newWleis);
       }
@@ -332,6 +335,7 @@ export const TestPage = () => {
         setCurrentQuestion(totalQuestions);
         setStage('smile_intro');
         setSmileStage('instructions');
+        setAckChecked(false);
       } else {
         submitTest(newIcar, newWleis);
       }
@@ -359,6 +363,7 @@ export const TestPage = () => {
 
   const startTest = () => {
     setStarted(true);
+    setAckChecked(false);
     if (sessionData && sessionData.items.length > 0) {
       setStage('icar_intro');
     } else if (sessionData && sessionData.wleisItems.length > 0) {
@@ -449,12 +454,19 @@ export const TestPage = () => {
                 {t("test_page.stage1_instr", "11 short reasoning questions — numbers, words, shapes. Answer each one; you have 45 seconds per question. The timer is shown at the top of the screen. Expected time: ~10 minutes.")}
               </p>
             </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox id="ack-icar" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+              <label htmlFor="ack-icar" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
+                <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
+              </label>
+            </div>
           </CardContent>
           <CardFooter>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+                  disabled={!ackChecked}
                   onClick={() => {
                     setStage('icar');
                     setTimeLeft(45);
@@ -494,12 +506,19 @@ export const TestPage = () => {
                 {t("test_page.stage2_instr", "16 statements — choose how much you agree on a 1–5 scale (1 = strongly disagree, 5 = strongly agree). You have 45 seconds per statement. Expected time: ~8 minutes.")}
               </p>
             </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox id="ack-wleis" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+              <label htmlFor="ack-wleis" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
+                <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
+              </label>
+            </div>
           </CardContent>
           <CardFooter>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   className="w-full h-12 text-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold"
+                  disabled={!ackChecked}
                   onClick={() => {
                     setStage('wleis');
                     setTimeLeft(45);
@@ -542,8 +561,14 @@ export const TestPage = () => {
             <CardContent className="space-y-6 text-slate-300">
               <div className="p-4 bg-slate-800/60 rounded-lg border border-slate-700 text-sm leading-relaxed space-y-3">
                 <p>
-                  {t("test_page.stage3_instr", "Watch short video clips and decide if each smile is genuine or fake. Expected time: ~2 minutes.")}
+                  {t("test_page.stage3_instr", "In this short task you'll see a series of facial expressions. For each one, decide whether it looks spontaneous or posed. Trust your first impression — there are no trick questions. Expected time: ~2 minutes.")}
                 </p>
+              </div>
+              <div className="flex items-start space-x-2">
+                <Checkbox id="ack-smile" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+                <label htmlFor="ack-smile" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
+                  <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
+                </label>
               </div>
             </CardContent>
             <CardFooter>
@@ -551,6 +576,7 @@ export const TestPage = () => {
                 <TooltipTrigger asChild>
                   <Button
                     className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+                    disabled={!ackChecked}
                     onClick={() => {
                       setStage('smile_trials');
                       setSmileStage('trials');
@@ -600,8 +626,8 @@ export const TestPage = () => {
 
             <div className="w-full max-w-2xl flex flex-col items-center space-y-4">
               <div className="text-center">
-                <h3 className="text-lg font-medium text-slate-200">{t("test_page.smile_question", "Is this smile genuine or fake?")}</h3>
-                <p className="text-xs text-slate-400 mt-1">{t("test.video.instruct", "Once the clip finishes playing, choose if the video shows a real or fake smile.")}</p>
+                <h3 className="text-lg font-medium text-slate-200">{t("test_page.smile_question", "Does this expression look spontaneous or posed?")}</h3>
+                <p className="text-xs text-slate-400 mt-1">{t("test.video.instruct", "Once the clip finishes playing, choose whether the expression looks spontaneous or posed.")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
@@ -612,10 +638,10 @@ export const TestPage = () => {
                       className="h-auto min-h-16 py-3 text-base leading-tight whitespace-normal text-center border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-100 font-semibold"
                       onClick={() => handleSmileChoice('genuine')}
                     >
-                      {t("test_page.genuine", "Genuine Smile")}
+                      {t("test_page.genuine", "Spontaneous")}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t("test.btn.authentic", "Judge smile as authentic emotion")}</TooltipContent>
+                  <TooltipContent>{t("test.btn.authentic", "Judge the expression as spontaneous")}</TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
@@ -625,10 +651,10 @@ export const TestPage = () => {
                       className="h-auto min-h-16 py-3 text-base leading-tight whitespace-normal text-center border-rose-500/50 bg-rose-950/40 hover:bg-rose-600 text-rose-100 font-semibold"
                       onClick={() => handleSmileChoice('fake')}
                     >
-                      {t("test_page.fake", "Fake / Posed Smile")}
+                      {t("test_page.fake", "Posed")}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t("test.btn.posed", "Real or fake smile?")}</TooltipContent>
+                  <TooltipContent>{t("test.btn.posed", "Spontaneous or posed?")}</TooltipContent>
                 </Tooltip>
               </div>
 
@@ -671,7 +697,7 @@ export const TestPage = () => {
             {t("test_page.question_of", "Question {current} of {total}").replace("{current}", String(currentQuestion + 1)).replace("{total}", String(totalQuestions))}
           </div>
         </div>
-        <div className={`font-mono text-xl shrink-0 ml-2 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
+        <div className={`font-mono text-xl shrink-0 ml-2 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
           00:{timeLeft.toString().padStart(2, '0')}
         </div>
       </header>

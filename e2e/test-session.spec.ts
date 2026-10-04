@@ -18,13 +18,17 @@ function captureDialogs(page: Page): string[] {
 async function answerAllQuestions(page: Page, totalQuestions: number): Promise<string[]> {
   const dialogs = captureDialogs(page);
   const go = page.getByRole('button', { name: 'Go', exact: true });
-  const smileOption = page.getByRole('button', { name: /Genuine Smile|Fake/ }).first();
+  const smileOption = page.getByRole('button', { name: /Spontaneous|Posed/ }).first();
   const option = page.locator('main button').first();
   // Cap generously: ICAR + WLEIS + SMILE trials + intro transitions.
   for (let q = 0; q < 80; q++) {
     if (await option.isVisible().catch(() => false)) {
       await option.click();
     } else if (await go.isVisible().catch(() => false)) {
+      const ack = page.getByRole('checkbox', { name: /I have read/i });
+      if (await ack.isVisible().catch(() => false)) {
+        await ack.check();
+      }
       await go.click();
     } else if (await smileOption.isVisible().catch(() => false)) {
       await smileOption.click();
@@ -106,6 +110,8 @@ test.describe('Assessment session (candidate flow)', () => {
     await page.getByRole('button', { name: 'Begin Assessment' }).click();
     // ICAR intro screen: its CTA ("Go") is outside <main> — click it to reach
     // the first question, then answer one and reload.
+    const ack = page.getByRole('checkbox', { name: /I have read/i });
+    await ack.check();
     await page.getByRole('button', { name: 'Go', exact: true }).click();
     await page.locator('main button').first().click();
     await page.waitForTimeout(300);

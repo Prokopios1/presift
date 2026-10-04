@@ -60,6 +60,8 @@ describe('TestPage pre-test gate', () => {
     expect(screen.getByText(/11 short reasoning questions — numbers, words, shapes/i)).toBeTruthy();
     
     const goBtn = screen.getByRole('button', { name: /Go/i });
+    const ack = await screen.findByRole('checkbox', { name: /I have read/i });
+    fireEvent.click(ack);
     fireEvent.click(goBtn);
 
     expect(screen.getByText(/Question 1 of 32/)).toBeTruthy();
@@ -96,8 +98,8 @@ describe('TestPage pre-test gate', () => {
     fireEvent.click(checkbox);
     fireEvent.click(btn);
     
-    expect(await screen.findByText(/Stage 3: Smile Perception Assessment/i)).toBeTruthy();
-    expect(screen.getByText(/Watch short video clips and decide if each smile is genuine or fake/i)).toBeTruthy();
+    expect(await screen.findByText(/Stage 3: Emotion Perception \(EPA\)/i)).toBeTruthy();
+    expect(screen.getByText(/In this short task you'll see a series of facial expressions/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Go/i })).toBeTruthy();
   });
 
@@ -122,6 +124,8 @@ describe('TestPage pre-test gate', () => {
     expect(screen.getByText(/16 statements — choose how much you agree on a 1–5 scale/i)).toBeTruthy();
 
     const goBtn = screen.getByRole('button', { name: /Go/i });
+    const ack = await screen.findByRole('checkbox', { name: /I have read/i });
+    fireEvent.click(ack);
     fireEvent.click(goBtn);
 
     // 1-5 buttons
@@ -155,9 +159,11 @@ describe('TestPage pre-test gate', () => {
     fireEvent.click(btn);
 
     const goBtn = await screen.findByRole('button', { name: /Go/i });
+    const ack = await screen.findByRole('checkbox', { name: /I have read/i });
+    fireEvent.click(ack);
     fireEvent.click(goBtn);
 
-    expect(await screen.findByRole('button', { name: /Genuine Smile/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Fake \/ Posed Smile/i })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /Spontaneous/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Posed/i })).toBeTruthy();
   });
 });
