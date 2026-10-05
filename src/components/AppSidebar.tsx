@@ -18,6 +18,12 @@ export const AppSidebar = () => {
 
   const navItems = [
     { label: t('nav.dashboard', 'Recruiter Dashboard'), href: '/dashboard', tooltip: t('nav.dashboard.tooltip', 'View and manage candidate assessments'), show: true },
+    {
+      label: t('nav.guide', 'Recruiter Guide'),
+      href: '/recruiter/guide',
+      tooltip: t('nav.guide.tooltip', 'How to run assessments and interpret results'),
+      show: true,
+    },
     { label: t('nav.profile', 'Profile & Billing'), href: '/profile', tooltip: t('nav.profile.tooltip', 'Manage your profile and view billing history'), show: true },
     { label: t('nav.admin', 'Admin Dashboard'), href: '/admin', tooltip: t('nav.admin.tooltip', 'Global overview of all client accounts'), show: role === 'admin' },
     { label: t('nav.pricing', 'Buy Credits'), href: '/pricing', tooltip: t('nav.pricing.tooltip', 'Purchase candidate assessment credits'), show: true },

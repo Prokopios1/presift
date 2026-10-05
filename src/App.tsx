@@ -17,6 +17,7 @@ import { ImpersonationBanner } from './components/ImpersonationBanner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { CandidateDetailPage } from './pages/CandidateDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { RecruiterGuidePage } from './pages/RecruiterGuidePage';
 import { ThankYouPage } from './pages/ThankYouPage';
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const { t } = useI18n();
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/admin/clients/:clientId" element={<AdminGuard><AdminClientPage /></AdminGuard>} />
                 <Route path="/dashboard" element={<RecruiterGuard><DashboardPage /></RecruiterGuard>} />
                 <Route path="/profile" element={<RecruiterGuard><ProfilePage /></RecruiterGuard>} />
+                <Route path="/recruiter/guide" element={<RecruiterGuard><RecruiterGuidePage /></RecruiterGuard>} />
                 <Route path="/candidate/:candidateId" element={<CandidateDetailPage />} />
                 <Route path="/test/:assessmentId" element={<TestPage />} />
                 <Route path="/assessment/:assessmentId" element={<TestPage />} />
