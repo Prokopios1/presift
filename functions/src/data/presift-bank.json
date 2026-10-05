@@ -7,10 +7,9 @@
     "difficulty is the classical p-value (proportion correct in the norming sample); range 0.1-1.0, HIGHER = EASIER. irt.b is derived as b = -ln(p/(1-p)), with p capped to [0.02, 0.98] for derivation.",
     "IRT model: 3PL (a = discrimination, b = difficulty on the logit scale, c = pseudo-guessing). Theta is on the N(0,1) logit scale.",
     "Scale mapping: percentileRank = Phi(theta)*100 (0-100); standardScore = 100 + 15*z (baseline mean 100, SD 15). Both interpretations of the spec are emitted.",
-    "ICAR items are ICAR-format originals (4 domains x 4 items). They are NOT verbatim ICAR items, which are copyrighted (ICAR Project).",
+    "This is an 11-item adapted cognitive scale (numerical/verbal/abstract; spatial excluded) and not verbatim copyrighted ICAR items.",
     "WLEIS items are construct-parallel originals (4 subscales x 4 items). The original WLEIS is copyrighted (Wong & Law, 2002); replace with licensed items for commercial use.",
-    "All templates and answer keys are server-side only. Clients receive fully resolved session instances (see antiCheat).",
-    "Spatial items use asset codes (e.g. L-UP) resolved server-side to hosted SVG assets; the key scheme is renderer-agnostic."
+    "All templates and answer keys are server-side only. Clients receive fully resolved session instances (see antiCheat)."
   ],
   "norming": {
     "baseline": {
@@ -403,6 +402,7 @@
     ]
   },
   "cognitive": {
+    "notes": "This is an 11-item adapted cognitive scale (numerical/verbal/abstract; spatial excluded) and not verbatim copyrighted ICAR items.",
     "domains": {
       "numerical": "Letter & Number Series",
       "verbal": "Verbal Reasoning",

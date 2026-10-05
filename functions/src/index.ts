@@ -410,7 +410,8 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
     status: "Invited",
     lang: candidateLang,
     createdAt: FieldValue.serverTimestamp(),
-    recruiterId
+    recruiterId,
+    clientIds: [recruiterId],
   });
 
   // Return the URL for the recruiter to copy (config-driven origin; set with
@@ -443,6 +444,77 @@ export const deleteCandidate = functions.https.onCall(async (data, _context) => 
 
   await candRef.delete();
   return { success: true };
+});
+
+export const deleteCandidateSelf = functions.https.onCall(async (data, _context) => {
+  const { candidateId } = data || {};
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+
+  if (_context.auth) {
+    const isAdmin = _context.auth.token?.admin === true;
+    const isRecordOwner = doc.data()?.recruiterId === _context.auth.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
+      throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+    }
+  }
+
+  if (typeof candRef.listCollections === "function") {
+    const collections = await candRef.listCollections();
+    for (const coll of collections) {
+      const subDocs = await coll.get();
+      const batch = admin.firestore().batch();
+      subDocs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  }
+
+  await candRef.delete();
+  return { deleted: true };
+});
+
+export const getCandidateSelf = functions.https.onCall(async (data, _context) => {
+  const { candidateId } = data || {};
+  if (!candidateId || typeof candidateId !== "string") {
+    throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
+  }
+  const candRef = admin.firestore().collection("candidates").doc(candidateId);
+  const doc = await candRef.get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Candidate not found");
+  }
+
+  if (_context.auth) {
+    const isAdmin = _context.auth.token?.admin === true;
+    const isRecordOwner = doc.data()?.recruiterId === _context.auth.uid;
+    if (!isAdmin && !isRecordOwner && !allowAnonDemo()) {
+      throw new functions.https.HttpsError("permission-denied", "You do not own this candidate.");
+    }
+  }
+
+  const cData = doc.data() || {};
+  const createdAt = cData.createdAt?.toDate
+    ? cData.createdAt.toDate().toISOString()
+    : (cData.createdAt ? new Date(cData.createdAt).toISOString() : new Date().toISOString());
+
+  const safeData: Record<string, any> = {
+    name: cData.name || "",
+    email: cData.email || "",
+    appliedRole: cData.appliedRole || "",
+    lang: cData.lang || "el",
+    status: cData.status || "",
+    createdAt,
+  };
+
+  // Product rule: candidates are never shown their scores (the thank-you page
+  // tells them the recruiter will review). Never expose scoring here.
+  return safeData;
 });
 
 const ALLOWED_CANDIDATE_STATUSES = new Set([
@@ -1184,3 +1256,4 @@ export const deleteClient = functions.https.onCall(async (data, _context) => {
 
   return { success: true, deletedCandidates: candidatesSnap.size, deletedCampaigns: campaignsSnap.size };
 });
+

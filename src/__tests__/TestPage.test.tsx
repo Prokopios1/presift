@@ -60,8 +60,15 @@ describe('TestPage pre-test gate', () => {
     expect(screen.getByText(/11 short reasoning questions — numbers, words, shapes/i)).toBeTruthy();
     
     const goBtn = screen.getByRole('button', { name: /Go/i });
+    // Stage-1 intro gates on TWO boxes: instructions ack + GDPR consent.
+    expect((goBtn as HTMLButtonElement).disabled).toBe(true);
     const ack = await screen.findByRole('checkbox', { name: /I have read/i });
     fireEvent.click(ack);
+    // ack alone is not enough — Go stays disabled until consent is ticked too
+    expect((goBtn as HTMLButtonElement).disabled).toBe(true);
+    const consentBox = await screen.findByRole('checkbox', { name: /Mandatory GDPR Consent/i });
+    fireEvent.click(consentBox);
+    expect((goBtn as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(goBtn);
 
     expect(screen.getByText(/Question 1 of 32/)).toBeTruthy();

@@ -29,6 +29,11 @@ async function answerAllQuestions(page: Page, totalQuestions: number): Promise<s
       if (await ack.isVisible().catch(() => false)) {
         await ack.check();
       }
+      // Stage-1 intro gates on a SECOND box (GDPR consent) before Go enables.
+      const stageConsent = page.getByRole('checkbox', { name: /Mandatory GDPR Consent/i });
+      if (await stageConsent.isVisible().catch(() => false)) {
+        await stageConsent.check();
+      }
       await go.click();
     } else if (await smileOption.isVisible().catch(() => false)) {
       await smileOption.click();
@@ -112,6 +117,7 @@ test.describe('Assessment session (candidate flow)', () => {
     // the first question, then answer one and reload.
     const ack = page.getByRole('checkbox', { name: /I have read/i });
     await ack.check();
+    await page.getByRole('checkbox', { name: /Mandatory GDPR Consent/i }).check();
     await page.getByRole('button', { name: 'Go', exact: true }).click();
     await page.locator('main button').first().click();
     await page.waitForTimeout(300);

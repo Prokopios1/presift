@@ -65,7 +65,7 @@ export const TestPage = () => {
   });
   const [consent, setConsent] = useState(false);
   const [ackChecked, setAckChecked] = useState(false);
-  
+  const [icarConsent, setIcarConsent] = useState(false);
 
   const [currentQuestion, setCurrentQuestion] = useState(() => {
     const saved = localStorage.getItem(`assessment_${assessmentId}_current`);
@@ -275,7 +275,7 @@ export const TestPage = () => {
       const langParam = sessionData.lang || 'el';
       localStorage.setItem(`assessment_${assessmentId}_submittedResult`, JSON.stringify(resData?.scoreResult ?? null));
       clearLocalStorage();
-      navigate(`/thank-you?lang=${langParam}`);
+      navigate(`/thank-you?lang=${langParam}&c=${assessmentId}`);
     } catch (err: any) {
       isSubmitting.current = false;
       if (err?.code === 'not-found' || err?.code === 'functions/not-found' || err?.message?.includes('not found')) {
@@ -322,11 +322,13 @@ export const TestPage = () => {
         setCurrentQuestion(sessionData.items.length);
         setStage('wleis_intro');
         setAckChecked(false);
+        setIcarConsent(false);
       } else if (sessionData.smileTask) {
         setCurrentQuestion(totalQuestions);
         setStage('smile_intro');
         setSmileStage('instructions');
         setAckChecked(false);
+        setIcarConsent(false);
       } else {
         submitTest(newIcar, newWleis);
       }
@@ -336,6 +338,7 @@ export const TestPage = () => {
         setStage('smile_intro');
         setSmileStage('instructions');
         setAckChecked(false);
+        setIcarConsent(false);
       } else {
         submitTest(newIcar, newWleis);
       }
@@ -364,6 +367,7 @@ export const TestPage = () => {
   const startTest = () => {
     setStarted(true);
     setAckChecked(false);
+    setIcarConsent(false);
     if (sessionData && sessionData.items.length > 0) {
       setStage('icar_intro');
     } else if (sessionData && sessionData.wleisItems.length > 0) {
@@ -407,7 +411,7 @@ export const TestPage = () => {
 
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked as boolean)} className="mt-1 shrink-0" />
+              <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked as boolean)} className="mt-1 shrink-0 border-slate-400 bg-slate-800 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white" />
               <label htmlFor="terms" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
                 <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.gdpr_consent", "Mandatory GDPR Consent")}</span>
                 <p className="text-sm text-slate-500 leading-relaxed">
@@ -455,9 +459,18 @@ export const TestPage = () => {
               </p>
             </div>
             <div className="flex items-start space-x-2">
-              <Checkbox id="ack-icar" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+              <Checkbox id="ack-icar" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0 border-slate-400 bg-slate-800 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white" />
               <label htmlFor="ack-icar" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
                 <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
+              </label>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox id="icar-consent" checked={icarConsent} onCheckedChange={(checked) => setIcarConsent(checked as boolean)} className="mt-1 shrink-0 border-slate-400 bg-slate-800 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white" />
+              <label htmlFor="icar-consent" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
+                <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.gdpr_consent", "Mandatory GDPR Consent")}</span>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {t("test_page.gdpr_consent_body", "I agree to the processing of my responses for psychological and perceptual assessment.")}
+                </p>
               </label>
             </div>
           </CardContent>
@@ -466,7 +479,7 @@ export const TestPage = () => {
               <TooltipTrigger asChild>
                 <Button
                   className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold"
-                  disabled={!ackChecked}
+                  disabled={!ackChecked || !icarConsent}
                   onClick={() => {
                     setStage('icar');
                     setTimeLeft(45);
@@ -507,7 +520,7 @@ export const TestPage = () => {
               </p>
             </div>
             <div className="flex items-start space-x-2">
-              <Checkbox id="ack-wleis" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+              <Checkbox id="ack-wleis" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0 border-slate-400 bg-slate-800 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white" />
               <label htmlFor="ack-wleis" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
                 <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
               </label>
@@ -565,7 +578,7 @@ export const TestPage = () => {
                 </p>
               </div>
               <div className="flex items-start space-x-2">
-                <Checkbox id="ack-smile" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0" />
+                <Checkbox id="ack-smile" checked={ackChecked} onCheckedChange={(checked) => setAckChecked(checked as boolean)} className="mt-1 shrink-0 border-slate-400 bg-slate-800 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white" />
                 <label htmlFor="ack-smile" className="grid gap-1.5 leading-none cursor-pointer min-h-[44px] justify-center flex flex-col">
                   <span className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{t("test_page.instr_ack", "I have read and understand these instructions.")}</span>
                 </label>
