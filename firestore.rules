@@ -56,5 +56,11 @@ service cloud.firestore {
       // persists progress in localStorage and submits via callables.
       allow read, create, update, delete: if false;
     }
+
+    match /emailLog/{logId} {
+      // Delivery audit trail. Admins may read; only Cloud Functions write.
+      allow read: if isAdmin();
+      allow write: if false;
+    }
   }
 }

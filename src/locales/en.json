@@ -535,5 +535,16 @@
   "guide.s7.q2": "How long does it take? About 15–20 minutes in total.",
   "guide.s7.q3": "Can they retake it? A new link means a new credit. There is no \"reset\".",
   "guide.s7.q4": "What does \"Strong/Moderate/Low fit\" mean? It is an overall indicator based on percentile — not a verdict.",
-  "guide.s7.q5": "What is the \"Integrity Flag\"? An indication that something in the attempt was not clean; check it before judging."
+  "guide.s7.q5": "What is the \"Integrity Flag\"? An indication that something in the attempt was not clean; check it before judging.",
+  "dashboard.alert.email_failed": "Link created, but the invitation e-mail could not be sent. Copy the link and send it yourself.",
+  "dashboard.alert.email_capped": "Link created. The e-mail was not sent because the daily e-mail limit is reached. Copy the link and send it yourself.",
+  "dashboard.label.purpose": "Assessment Purpose",
+  "dashboard.option.purpose_hire": "Candidate hiring",
+  "dashboard.option.purpose_benchmark": "Internal benchmark study",
+  "dashboard.benchmark.explainer": "Use this option for existing employees taking part in an internal benchmark study. The performance rating is recorded before the assessment is completed and is permanently locked.",
+  "dashboard.benchmark.rating_label": "Performance rating for {{name}} (1-10)",
+  "dashboard.benchmark.name_fallback": "the employee",
+  "dashboard.benchmark.anchors": "1 = πολύ χαμηλή, 10 = εξαιρετική",
+  "dashboard.benchmark.rating_error": "Enter an integer between 1 and 10.",
+  "dashboard.badge.benchmark": "Benchmark · {{rating}}/10"
 }

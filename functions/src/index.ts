@@ -5,17 +5,12 @@ import { resolveSession, buildSessionKeys, localizeSession, SessionKey } from ".
 import { validateSubmission, processSubmission, AssessmentSubmission } from "./submission";
 import { scoreSmileTask, SmileTrialConfig } from "./smile";
 import { bank } from "./data/presift-bank";
-import * as nodemailer from "nodemailer";
 import PDFDocument from "pdfkit";
+import { sendMail, sendCandidateInvite } from "./mailer";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.sendgrid.net",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  auth: {
-    user: process.env.SMTP_USER || "apikey",
-    pass: process.env.SMTP_PASS || "SG.production_key_mock"
-  },
-});
+// Outbound e-mail transport lives in ./mailer. It reads SMTP_* from the
+// environment (functions/.env locally and on deploy) and THROWS when a
+// credential is missing — no mock fallback.
 
 // Initialize Firebase Admin
 if (admin.apps.length === 0) {
@@ -368,8 +363,23 @@ export const topUpCredits = functions.https.onCall(async (data, _context) => {
 
 export const createAssessmentLink = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
-  const { roleTitle, candidateName, candidateEmail, recruiterId: payloadRecruiterId, lang } = data || {};
+  const { roleTitle, candidateName, candidateEmail, recruiterId: payloadRecruiterId, lang, purpose, performanceRating } = data || {};
   if (!roleTitle) throw new functions.https.HttpsError("invalid-argument", "Missing roleTitle");
+
+  if (purpose !== undefined && purpose !== "hire" && purpose !== "benchmark") {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid purpose: must be 'hire' or 'benchmark'");
+  }
+  const isBenchmark = purpose === "benchmark";
+  if (isBenchmark) {
+    if (
+      typeof performanceRating !== "number" ||
+      !Number.isInteger(performanceRating) ||
+      performanceRating < 1 ||
+      performanceRating > 10
+    ) {
+      throw new functions.https.HttpsError("invalid-argument", "performanceRating must be an integer between 1 and 10 when purpose is benchmark");
+    }
+  }
 
   // Candidate test language (product decision): recruiter picks 'el'|'en' when
   // generating the link; default 'el'. Server returns content in that language.
@@ -412,12 +422,45 @@ export const createAssessmentLink = functions.https.onCall(async (data, _context
     createdAt: FieldValue.serverTimestamp(),
     recruiterId,
     clientIds: [recruiterId],
+    ...(isBenchmark
+      ? {
+          purpose: "benchmark",
+          performanceRating,
+          ratingScale: "1-10",
+          ratedAt: FieldValue.serverTimestamp(),
+          raterUid: _context.auth?.uid ?? null,
+        }
+      : {}),
   });
 
   // Return the URL for the recruiter to copy (config-driven origin; set with
   // firebase functions:config:set demo.origin=https://presift.web.app)
   const origin = demoConfig().origin || "http://localhost:5173";
-  return { url: `${origin}/assessment/${candRef.id}`, candidateId: candRef.id };
+  const url = `${origin}/assessment/${candRef.id}`;
+
+  // Invitation e-mail. Automatic by default; pass notify:false to suppress it
+  // (e.g. when the recruiter hands the link over in person). A mail failure
+  // never blocks link creation — it is returned as emailStatus and logged.
+  let emailStatus: string = "not-requested";
+  if (data?.notify !== false && candidateEmail) {
+    const recruiterData = doc.data() || {};
+    const result = await sendCandidateInvite({
+      to: candidateEmail,
+      candidateName,
+      roleTitle,
+      company: recruiterData.companyName || recruiterData.name || "PreSift",
+      url,
+      lang: candidateLang,
+      ...(isBenchmark ? { purpose: "benchmark" as const } : {}),
+      candidateId: candRef.id,
+      recruiterId,
+    });
+    emailStatus = result.status === "skipped" ? `skipped:${result.reason}` : result.status;
+  } else if (!candidateEmail) {
+    emailStatus = "no-email";
+  }
+
+  return { url, candidateId: candRef.id, emailStatus };
 });
 
 // Candidate mutations go through callables (admin SDK) so Firestore rules can
@@ -521,8 +564,15 @@ const ALLOWED_CANDIDATE_STATUSES = new Set([
   "Invited", "In Progress", "Shortlisted", "Interviewing", "Rejected", "Completed", "Abandoned",
 ]);
 
+const LOCKED_RATING_KEYS = ["performanceRating", "purpose", "ratingScale", "ratedAt", "raterUid"] as const;
+
 export const updateCandidateStatus = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  for (const key of LOCKED_RATING_KEYS) {
+    if (data && Object.prototype.hasOwnProperty.call(data, key)) {
+      throw new functions.https.HttpsError("invalid-argument", `Field '${key}' is locked after creation and cannot be updated`);
+    }
+  }
   const { candidateId, status } = data || {};
   if (!candidateId || typeof candidateId !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "Missing candidateId");
@@ -548,6 +598,11 @@ export const updateCandidateStatus = functions.https.onCall(async (data, _contex
 
 export const updateCandidate = functions.https.onCall(async (data, _context) => {
   if (!_context.auth && !allowAnonDemo()) throw new functions.https.HttpsError("unauthenticated", "Must be logged in");
+  for (const key of LOCKED_RATING_KEYS) {
+    if (data && Object.prototype.hasOwnProperty.call(data, key)) {
+      throw new functions.https.HttpsError("invalid-argument", `Field '${key}' is locked after creation and cannot be updated`);
+    }
+  }
   const { candidateId, name, email, appliedRole } = data || {};
 
   if (!candidateId || typeof candidateId !== "string") {
@@ -897,16 +952,14 @@ export const checkAbandonedSessions = functions.pubsub.schedule("every 24 hours"
     }
 
     if (candidateData.email) {
-      try {
-        await transporter.sendMail({
-          from: '"PreSift Support" <support@presift.app>',
-          to: candidateData.email,
-          subject: "Your assessment is still pending",
-          text: "Please complete your assessment within 24 hours.",
-        });
-      } catch (err) {
-        console.error("Email failed for", candidateData.email, err);
-      }
+      await sendMail({
+        to: candidateData.email,
+        subject: "Your assessment is still pending",
+        text: "Please complete your assessment within 24 hours.",
+        kind: "reminder",
+        candidateId: docSnapshot.id,
+        recruiterId: candidateData.recruiterId,
+      });
     }
   }
 

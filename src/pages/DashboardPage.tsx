@@ -83,6 +83,9 @@ export const DashboardPage = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [creatingLink, setCreatingLink] = useState(false);
   const [linkLang, setLinkLang] = useState<'el' | 'en'>('el');
+  const [linkPurpose, setLinkPurpose] = useState<'hire' | 'benchmark'>('hire');
+  const [performanceRating, setPerformanceRating] = useState<string>('');
+  const [dialogCandidateName, setDialogCandidateName] = useState<string>('');
   const [deletingBulk, setDeletingBulk] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
@@ -328,7 +331,14 @@ export const DashboardPage = () => {
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button onClick={() => setCreateLinkDialogOpen(true)}>{t("dashboard.create_assessment", "+ Create New Assessment")}</Button>
+            <Button onClick={() => {
+              // Reset the dialog so a previous benchmark study never leaks into
+              // the next link (stale purpose + stale rating = wrong data).
+              setLinkPurpose('hire');
+              setPerformanceRating('');
+              setDialogCandidateName('');
+              setCreateLinkDialogOpen(true);
+            }}>{t("dashboard.create_assessment", "+ Create New Assessment")}</Button>
           </TooltipTrigger>
           <TooltipContent>{t("dashboard.tooltip.generate", "Generate an assessment link to send to a candidate")}</TooltipContent>
         </Tooltip>
@@ -396,6 +406,11 @@ export const DashboardPage = () => {
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-2">
                         {c.name}
+                        {c.purpose === 'benchmark' && (
+                          <Badge variant="outline" className="text-xs">
+                            {t("dashboard.badge.benchmark", "Benchmark · {{rating}}/10").replace("{{rating}}", String(c.performanceRating ?? ""))}
+                          </Badge>
+                        )}
                         {c.archived && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none text-xs">{t("dashboard.badge.archived", "Archived")}</Badge>}
                       </span>
                     </TableCell>
@@ -546,12 +561,61 @@ export const DashboardPage = () => {
               <Input 
                 placeholder={t("dashboard.candidate_name", "Candidate Name")} 
                 id="candidateNameInput"
+                value={dialogCandidateName}
+                onChange={(e) => setDialogCandidateName(e.target.value)}
               />
               <Input 
                 placeholder={t("dashboard.candidate_email", "Candidate Email (optional)")} 
                 id="candidateEmailInput"
                 type="email"
               />
+              <div className="flex flex-col gap-1.5">
+                <Label>{t("dashboard.label.purpose", "Assessment Purpose")}</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={linkPurpose === 'hire' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setLinkPurpose('hire')}
+                  >
+                    {t("dashboard.option.purpose_hire", "Candidate hiring")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={linkPurpose === 'benchmark' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setLinkPurpose('benchmark')}
+                  >
+                    {t("dashboard.option.purpose_benchmark", "Internal benchmark study")}
+                  </Button>
+                </div>
+              </div>
+              {linkPurpose === 'benchmark' && (
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs text-slate-500">
+                    {t("dashboard.benchmark.explainer", "Use this option for existing employees taking part in an internal benchmark study. The performance rating is recorded before the assessment is completed and is permanently locked.")}
+                  </p>
+                  <Label htmlFor="performanceRatingInput">
+                    {t("dashboard.benchmark.rating_label", "Performance rating for {{name}} (1-10)").replace(
+                      "{{name}}",
+                      dialogCandidateName.trim() || t("dashboard.benchmark.name_fallback", "the employee")
+                    )}
+                  </Label>
+                  <Input
+                    id="performanceRatingInput"
+                    type="number"
+                    min={1}
+                    max={10}
+                    step={1}
+                    required
+                    value={performanceRating}
+                    onChange={(e) => setPerformanceRating(e.target.value)}
+                  />
+                  <span className="text-xs text-slate-500">
+                    {t("dashboard.benchmark.anchors", "1 = πολύ χαμηλή, 10 = εξαιρετική")}
+                  </span>
+                </div>
+              )}
               <Input 
                 placeholder={t("dashboard.role_title", "Role Title (e.g., Software Engineer)")} 
                 id="roleTitleInput"
@@ -589,21 +653,49 @@ export const DashboardPage = () => {
             
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button disabled={creatingLink || (balance <= 0 && role !== 'admin')} onClick={async () => {
+                <Button
+                  disabled={
+                    creatingLink ||
+                    (balance <= 0 && role !== 'admin') ||
+                    (linkPurpose === 'benchmark' &&
+                      (performanceRating.trim() === '' ||
+                        !Number.isInteger(Number(performanceRating)) ||
+                        Number(performanceRating) < 1 ||
+                        Number(performanceRating) > 10))
+                  }
+                  onClick={async () => {
                   const roleTitle = (document.getElementById('roleTitleInput') as HTMLInputElement).value;
                   const candidateName = (document.getElementById('candidateNameInput') as HTMLInputElement).value;
                   const candidateEmail = (document.getElementById('candidateEmailInput') as HTMLInputElement).value;
                   if (!roleTitle) return alert(t('dashboard.alert.enter_role', 'Enter a role title'));
+                  if (linkPurpose === 'benchmark') {
+                    const num = Number(performanceRating);
+                    if (performanceRating.trim() === '' || !Number.isInteger(num) || num < 1 || num > 10) {
+                      return alert(t('dashboard.benchmark.rating_error', 'Enter an integer between 1 and 10.'));
+                    }
+                  }
                   setCreatingLink(true);
                   try {
                 const createLink = httpsCallable(functions, 'createAssessmentLink');
-                const res = await createLink({ roleTitle, candidateName, candidateEmail, recruiterId, lang: linkLang });
+                const payload: Record<string, any> = { roleTitle, candidateName, candidateEmail, recruiterId, lang: linkLang, purpose: linkPurpose };
+                if (linkPurpose === 'benchmark') {
+                  payload.performanceRating = Number(performanceRating);
+                }
+                const res = await createLink(payload);
                 const data = res.data as any;
                 if (role !== 'admin') {
                   setBalance(b => b - 1);
                 }
                 setGeneratedLinkData({ url: data.url });
+                if (data.emailStatus === 'failed') {
+                  alert(t('dashboard.alert.email_failed', 'Link created, but the invitation e-mail could not be sent. Copy the link and send it yourself.'));
+                } else if (data.emailStatus && String(data.emailStatus).startsWith('skipped')) {
+                  alert(t('dashboard.alert.email_capped', 'Link created. The e-mail was not sent because the daily e-mail limit is reached. Copy the link and send it yourself.'));
+                }
                 setCreateLinkDialogOpen(false);
+                setLinkPurpose('hire');
+                setPerformanceRating('');
+                setDialogCandidateName('');
               } catch (e: any) {
                 console.error(e);
                 if (e.code === 'functions/failed-precondition') {

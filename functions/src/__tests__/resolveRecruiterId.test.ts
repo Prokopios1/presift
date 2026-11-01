@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as functions from 'firebase-functions';
 
 // ── Hoisted mock holders ─────────────────────────────────────────────
@@ -40,12 +40,18 @@ function makeContext(
 
 describe('resolveRecruiterId (claims-based)', () => {
   const originalEmulator = process.env.FUNCTIONS_EMULATOR;
+  const originalRuntime = process.env.CLOUD_RUNTIME_CONFIG;
   beforeEach(() => {
     holder.getUser.mockReset();
     process.env.FUNCTIONS_EMULATOR = 'false';
+    // firebase-functions falls back to functions/.runtimeconfig.json (which sets
+    // demo.allow_anon=true). Pin demo mode off so results do not depend on cwd.
+    process.env.CLOUD_RUNTIME_CONFIG = '{"demo":{"allow_anon":"false"}}';
   });
   afterEach(() => {
     process.env.FUNCTIONS_EMULATOR = originalEmulator;
+    if (originalRuntime === undefined) delete process.env.CLOUD_RUNTIME_CONFIG;
+    else process.env.CLOUD_RUNTIME_CONFIG = originalRuntime;
   });
 
   // ── Arrange: claim-admin caller impersonating a non-admin recruiter
