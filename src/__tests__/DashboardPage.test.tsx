@@ -286,4 +286,20 @@ describe('DashboardPage Candidate Archiving & Filtering', () => {
     const copyBtn = screen.getByRole('button', { name: /Copy link for Alice Strong/i });
     expect(copyBtn).toBeDisabled();
   });
+
+  it('renders Team Benchmark button and opens the modal', async () => {
+    localStorage.setItem('presift_uid', 'rec_123');
+    renderDashboard();
+
+    // Verify benchmark button exists
+    const benchmarkBtn = await screen.findByRole('button', { name: /Team Benchmark/i });
+    expect(benchmarkBtn).toBeInTheDocument();
+
+    // Click to open modal
+    fireEvent.click(benchmarkBtn);
+
+    // Verify modal elements are present
+    expect(await screen.findByText(/Benchmark Your Team/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Generate Team Assessment Links/i })).toBeInTheDocument();
+  });
 });

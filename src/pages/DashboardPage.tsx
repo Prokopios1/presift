@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Edit, Copy, Trash2, Archive, ArchiveRestore, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Search, Edit, Copy, Trash2, Archive, ArchiveRestore, ArrowLeft, ArrowRight, Zap, Check } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +20,9 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db, functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LabelList, BarChart, Bar, Legend } from 'recharts';
 import { fitBadgeLabel } from '@/lib/fitBadge';
+import { calculatePearsonCorrelation, getCorrelationDescriptor } from '@/lib/psychometrics';
 
 export const toggleSelectAll = (
   currentSelected: Set<string>,
@@ -90,6 +91,15 @@ export const DashboardPage = () => {
   const [savingEdit, setSavingEdit] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [teamBenchmarkOpen, setTeamBenchmarkOpen] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; email: string; rating: string }[]>([
+    { name: '', email: '', rating: '' },
+    { name: '', email: '', rating: '' },
+    { name: '', email: '', rating: '' }
+  ]);
+  const [teamLinksGenerated, setTeamLinksGenerated] = useState<{ name: string; email: string; rating: number; url: string }[] | null>(null);
+  const [teamCopied, setTeamCopied] = useState(false);
+  const [creatingTeamLinks, setCreatingTeamLinks] = useState(false);
   const headerCheckboxRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
 
   const filteredCandidates = candidates.filter(c => {
@@ -152,6 +162,27 @@ export const DashboardPage = () => {
     icar: c.scoreResult?.icar?.percentile || 0,
     wleis: c.scoreResult?.wleis?.rawScores?.Total || 0,
   }));
+
+  // Benchmark correlation data: completed candidates with purpose === 'benchmark' & performanceRating
+  const completedBenchmarkCandidates = candidates.filter(
+    c => c.purpose === 'benchmark' && typeof c.performanceRating === 'number' && c.scoreResult
+  );
+
+  const benchmarkPairs = completedBenchmarkCandidates.map(c => {
+    // preSift scaled index (1-10): blend of ICAR (cognitive percentile / 10) and WLEIS (total / 16 * 10 or scaled)
+    const icarVal = (c.scoreResult?.icar?.percentile ?? 50) / 10; // 0-10
+    const wleisRaw = c.scoreResult?.wleis?.rawScores?.Total ?? 48; // max ~64
+    const wleisVal = Math.min(10, Math.max(1, (wleisRaw / 64) * 10)); // 0-10
+    const blended = Math.round(((icarVal * 0.6 + wleisVal * 0.4) || 5) * 10) / 10;
+    return {
+      name: c.name,
+      managerRating: Number(c.performanceRating),
+      presiftScore: blended
+    };
+  });
+
+  const benchmarkCorrelation = calculatePearsonCorrelation(benchmarkPairs);
+  const correlationDesc = getCorrelationDescriptor(benchmarkCorrelation);
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     const shouldSelect = checked === true || checked === 'indeterminate';
@@ -329,19 +360,34 @@ export const DashboardPage = () => {
             <TooltipContent>{t("dashboard.tooltip.archived", "Show or hide archived candidates")}</TooltipContent>
           </Tooltip>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button onClick={() => {
-              // Reset the dialog so a previous benchmark study never leaks into
-              // the next link (stale purpose + stale rating = wrong data).
-              setLinkPurpose('hire');
-              setPerformanceRating('');
-              setDialogCandidateName('');
-              setCreateLinkDialogOpen(true);
-            }}>{t("dashboard.create_assessment", "+ Create New Assessment")}</Button>
-          </TooltipTrigger>
-          <TooltipContent>{t("dashboard.tooltip.generate", "Generate an assessment link to send to a candidate")}</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                className="border-blue-500/50 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium"
+                onClick={() => setTeamBenchmarkOpen(true)}
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                {t("dashboard.benchmark.btn", "⚡ Team Benchmark (POC)")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("dashboard.benchmark.btn_tooltip", "Launch team benchmark workflow for top performers")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => {
+                // Reset the dialog so a previous benchmark study never leaks into
+                // the next link (stale purpose + stale rating = wrong data).
+                setLinkPurpose('hire');
+                setPerformanceRating('');
+                setDialogCandidateName('');
+                setCreateLinkDialogOpen(true);
+              }}>{t("dashboard.create_assessment", "+ Create New Assessment")}</Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("dashboard.tooltip.generate", "Generate an assessment link to send to a candidate")}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -525,15 +571,15 @@ export const DashboardPage = () => {
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" dataKey="icar" name="ICAR Percentile" unit="%ile" domain={[0, 100]} />
-                <YAxis type="number" dataKey="wleis" name="WLEIS Score" domain={[16, 80]} />
+                <YAxis type="number" dataKey="wleis" name="WLEIS Score" domain={[16, 112]} />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-white p-2 border rounded shadow text-sm">
-                        <p className="font-bold">{data.name}</p>
+                      <div className="bg-white dark:bg-slate-900 border p-2 rounded shadow-sm text-xs">
+                        <p className="font-semibold">{data.name}</p>
                         <p>ICAR: {data.icar}%ile</p>
                         <p>WLEIS: {data.wleis}</p>
                       </div>
@@ -548,6 +594,65 @@ export const DashboardPage = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Team Benchmark Correlation Card */}
+        {completedBenchmarkCandidates.length > 0 && (
+          <Card className="shadow-sm mt-6 border-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-blue-500" />
+                  {t("dashboard.benchmark.chart_title", "Team Benchmark: Manager Rating vs preSift Score")}
+                </CardTitle>
+                <CardDescription>
+                  {t("dashboard.benchmark.chart_desc", "Side-by-side comparison of manager ratings and preSift cognitive/EI scores.")}
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                {benchmarkCorrelation !== null ? (
+                  <div className="inline-flex flex-col items-end">
+                    <Badge className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1">
+                      {correlationDesc.percent}% {t("dashboard.benchmark.correlation_badge", "Statistical Match")}
+                    </Badge>
+                    <span className="text-xs text-slate-500 mt-1">{correlationDesc.label}</span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-500 max-w-[200px] text-right inline-block">
+                    {t("dashboard.benchmark.insufficient_text", "Need at least 3 completed benchmark assessments to compute correlation.")}
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={benchmarkPairs} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} />
+                  <ChartTooltip content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white dark:bg-slate-900 border p-2 rounded shadow-sm text-xs">
+                          <p className="font-semibold">{label}</p>
+                          <p className="text-blue-600 dark:text-blue-400">
+                            Manager Rating: {payload[0]?.value}/10
+                          </p>
+                          <p className="text-emerald-600 dark:text-emerald-400">
+                            preSift Index: {payload[1]?.value}/10
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} />
+                  <Legend />
+                  <Bar dataKey="managerRating" name="Manager Rating (1-10)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="presiftScore" name="preSift Scaled Score (1-10)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Dialog open={createLinkDialogOpen} onOpenChange={setCreateLinkDialogOpen}>
@@ -807,6 +912,194 @@ export const DashboardPage = () => {
               </Tooltip>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Benchmark Setup Modal */}
+      <Dialog open={teamBenchmarkOpen} onOpenChange={setTeamBenchmarkOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-blue-500" />
+              {t("dashboard.benchmark.modal_title", "Benchmark Your Team (Proof of Concept)")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("dashboard.benchmark.modal_desc", "Test preSift against the known performance of your current team members. Rate 3-5 members (1-10) and generate their direct links.")}
+            </DialogDescription>
+          </DialogHeader>
+
+          {teamLinksGenerated ? (
+            <div className="space-y-4 py-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-900 text-sm text-blue-700 dark:text-blue-300">
+                {t("dashboard.benchmark.links_ready_desc", "Send these links to your team members to take their 10-minute assessment:")}
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {teamLinksGenerated.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded border text-xs gap-3">
+                    <div className="font-medium truncate min-w-[120px]">
+                      {item.name} <span className="text-slate-400">({item.rating}/10)</span>
+                    </div>
+                    <div className="truncate font-mono text-slate-500 flex-1">{item.url}</div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.url);
+                        alert(`Copied link for ${item.name}!`);
+                      }}
+                    >
+                      <Copy className="w-3.5 h-3.5 mr-1" />
+                      {t("common.copy", "Copy")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <DialogFooter className="flex items-center justify-between sm:justify-between w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTeamLinksGenerated(null);
+                    setTeamBenchmarkOpen(false);
+                  }}
+                >
+                  {t("common.close", "Close")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    const allLinksText = teamLinksGenerated
+                      .map(item => `${item.name} (${item.rating}/10): ${item.url}`)
+                      .join('\n');
+                    navigator.clipboard.writeText(allLinksText);
+                    setTeamCopied(true);
+                    setTimeout(() => setTeamCopied(false), 2500);
+                  }}
+                >
+                  {teamCopied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {teamCopied ? t("dashboard.benchmark.copied_all", "Copied All Links!") : t("dashboard.benchmark.copy_all", "Copy All Links")}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="space-y-3">
+                {teamMembers.map((member, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      placeholder={t("dashboard.benchmark.name_th", "Name")}
+                      className="flex-1"
+                      value={member.name}
+                      onChange={(e) => {
+                        const copy = [...teamMembers];
+                        copy[idx].name = e.target.value;
+                        setTeamMembers(copy);
+                      }}
+                    />
+                    <Input
+                      placeholder={t("dashboard.benchmark.email_th", "Email (optional)")}
+                      className="flex-1"
+                      type="email"
+                      value={member.email}
+                      onChange={(e) => {
+                        const copy = [...teamMembers];
+                        copy[idx].email = e.target.value;
+                        setTeamMembers(copy);
+                      }}
+                    />
+                    <Input
+                      placeholder="Rating (1-10)"
+                      className="w-28 text-center"
+                      type="number"
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={member.rating}
+                      onChange={(e) => {
+                        const copy = [...teamMembers];
+                        copy[idx].rating = e.target.value;
+                        setTeamMembers(copy);
+                      }}
+                    />
+                    {teamMembers.length > 3 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 h-9 w-9 p-0"
+                        onClick={() => {
+                          setTeamMembers(teamMembers.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {teamMembers.length < 5 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setTeamMembers([...teamMembers, { name: '', email: '', rating: '' }]);
+                  }}
+                >
+                  {t("dashboard.benchmark.add_row", "+ Add Team Member")}
+                </Button>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setTeamBenchmarkOpen(false)}>
+                  {t("common.cancel", "Cancel")}
+                </Button>
+                <Button
+                  disabled={
+                    creatingTeamLinks ||
+                    teamMembers.some(m => !m.name.trim() || !m.rating.trim() || Number(m.rating) < 1 || Number(m.rating) > 10)
+                  }
+                  onClick={async () => {
+                    setCreatingTeamLinks(true);
+                    try {
+                      const createLink = httpsCallable(functions, 'createAssessmentLink');
+                      const results: { name: string; email: string; rating: number; url: string }[] = [];
+
+                      for (const member of teamMembers) {
+                        const payload: Record<string, any> = {
+                          roleTitle: 'Team Benchmark',
+                          candidateName: member.name.trim(),
+                          candidateEmail: member.email.trim() || undefined,
+                          recruiterId,
+                          lang: linkLang,
+                          purpose: 'benchmark',
+                          performanceRating: Number(member.rating)
+                        };
+                        const res = await createLink(payload);
+                        const data = res.data as any;
+                        results.push({
+                          name: member.name.trim(),
+                          email: member.email.trim(),
+                          rating: Number(member.rating),
+                          url: data.url
+                        });
+                      }
+
+                      setTeamLinksGenerated(results);
+                    } catch (err) {
+                      console.error('Failed generating team benchmark links:', err);
+                      alert(t('dashboardpage.alert.failed_benchmark_links', 'Failed generating team benchmark links. Check credits or connection.'));
+                    } finally {
+                      setCreatingTeamLinks(false);
+                    }
+                  }}
+                >
+                  {creatingTeamLinks ? <Spinner size="sm" className="mr-2" /> : null}
+                  {t("dashboard.benchmark.generate_btn", "Generate Team Assessment Links")}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
         </div>

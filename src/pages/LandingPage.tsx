@@ -39,7 +39,21 @@ export const LandingPage = () => {
                 </TooltipTrigger>
                 <TooltipContent>{t('landing.cta.tooltip', 'Start screening with pay-as-you-go credits')}</TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to={isRegistered ? '/dashboard?mode=benchmark' : '/register?intent=benchmark'}
+                    className="h-14 px-8 text-lg border-2 border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-md flex items-center justify-center transition-colors"
+                  >
+                    {t('landing.cta.benchmark', 'Benchmark Your Team')}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{t('landing.cta.benchmark.tooltip', 'Test preSift on your current team members — risk-free')}</TooltipContent>
+              </Tooltip>
             </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 pt-1">
+              {t('landing.cta.benchmark.subtext', 'Skeptical? Test preSift on your top performers first — 100% risk-free.')}
+            </p>
           </div>
         </main>
 

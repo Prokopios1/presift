@@ -44,6 +44,12 @@ describe('LandingPage', () => {
     // Get Started CTA is present and links to /register for unauthenticated users
     const getStartedLink = screen.getByRole('link', { name: /Get Started/i });
     expect(getStartedLink.getAttribute('href')).toBe('/register');
+    
+    // Benchmark Your Team CTA is present
+    const benchmarkLink = screen.getByRole('link', { name: /Benchmark Your Team/i });
+    expect(benchmarkLink.getAttribute('href')).toBe('/register?intent=benchmark');
+    expect(screen.getByText(/Skeptical\? Test preSift on your top performers first/i)).toBeTruthy();
+    
     expect(screen.queryByRole('button', { name: /View Demo Dashboard/i })).toBeNull();
     
     // Footer
@@ -71,6 +77,8 @@ describe('LandingPage', () => {
     // Assert
     const getStartedLink = screen.getByRole('link', { name: /Get Started/i });
     expect(getStartedLink.getAttribute('href')).toBe('/dashboard');
+    const benchmarkLink = screen.getByRole('link', { name: /Benchmark Your Team/i });
+    expect(benchmarkLink.getAttribute('href')).toBe('/dashboard?mode=benchmark');
   });
 
   it('renders as standalone page with no nav and no theme toggle', () => {

@@ -178,7 +178,15 @@ export const CandidateDetailPage = () => {
 
         <div className="p-8 max-w-4xl mx-auto space-y-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">{selectedCandidate.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">{selectedCandidate.name}</h1>
+              {selectedCandidate.purpose === 'benchmark' && (
+                <Badge variant="outline" className="text-sm border-blue-500/40 text-blue-600 dark:text-blue-400">
+                  {t("candidate_detail.benchmark_badge", "Benchmark Employee")}
+                  {typeof selectedCandidate.performanceRating === 'number' && ` · ${selectedCandidate.performanceRating}/10`}
+                </Badge>
+              )}
+            </div>
             <p className="text-slate-500">{selectedCandidate.roleTitle || selectedCandidate.appliedRole} • {selectedCandidate.status}</p>
           </div>
 
@@ -243,6 +251,25 @@ export const CandidateDetailPage = () => {
             </Card>
           </div>
 
+          {/* Benchmark Manager Rating Card if purpose is benchmark */}
+          {selectedCandidate.purpose === 'benchmark' && typeof selectedCandidate.performanceRating === 'number' && (
+            <Card className="border-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  {t("candidate_detail.manager_rating", "Manager Performance Rating")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {selectedCandidate.performanceRating}
+                  </span>
+                  <span className="text-sm text-slate-500">/ 10</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Domain breakdowns */}
           {selectedCandidate.scoreResult && (
             <div className="grid grid-cols-2 gap-4">
@@ -253,9 +280,13 @@ export const CandidateDetailPage = () => {
                   {(['numerical', 'verbal', 'abstract'] as const).map(domain => {
                     const val = icar?.domainScores?.[domain] ?? t('candidate_detail.not_available', 'N/A');
                     const numVal = typeof val === 'number' ? val : -1;
+                    const maxVal = domain === 'abstract' ? 3 : 4;
+                    const displayVal = numVal >= 0
+                      ? `${(numVal / maxVal * 10).toFixed(1).replace(/\.0$/, '')}/10`
+                      : val;
                     return (
                       <div key={domain} className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                        <div className="font-bold">{val}</div>
+                        <div className="font-bold">{displayVal}</div>
                         <div className="text-slate-500 text-[10px] uppercase">
                           {domain === 'numerical' ? t('candidate_detail.icar.numerical', 'Numerical') : 
                            domain === 'verbal' ? t('candidate_detail.icar.verbal', 'Verbal') : 
@@ -283,9 +314,10 @@ export const CandidateDetailPage = () => {
                     { key: 'ROE', label: t('candidate_detail.wleis.reg_label', 'Reg'), meaning: t('candidate_detail.wleis.reg_meaning', 'Managing your own emotions') },
                   ] as const).map(({ key, label, meaning }) => {
                     const val: number = wleis?.[key] ?? 0;
+                    const displayVal = `${(val / 20 * 10).toFixed(1).replace(/\.0$/, '')}/10`;
                     return (
                       <div key={key} className="bg-slate-100 dark:bg-slate-800 p-2 rounded">
-                        <div className="font-bold">{val}</div>
+                        <div className="font-bold">{displayVal}</div>
                         <div className="text-slate-500 text-[10px] uppercase">{label}</div>
                         <div className={`text-[10px] font-semibold mt-0.5 ${wleisSubscaleColor(val)}`}>
                           {wleisSubscaleLabel(val, t)}
