@@ -19,13 +19,16 @@ export const LandingPage = () => {
         <main className="max-w-6xl mx-auto px-6 py-20 md:py-28">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
-              {t('landing.hero.title_start', 'Beyond the resume: ')}
+              {t('landing.hero.title_start', 'People aren\'t lying about themselves — they\'re just often wrong about themselves. ')}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {t('landing.hero.title_highlight', 'Precise metrics for cognitive power and human chemistry.')}
+                {t('landing.hero.title_highlight', 'PreSift shows you the difference.')}
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
               {t('landing.hero.subtitle', '10 minutes to measure IQ & EQ. Zero guesswork.')}
+            </p>
+            <p className="text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              {t('landing.hero.body', 'Ask people to rate themselves and you get an opinion — usually a flattering one. PreSift pairs that self-rating with a real task that measures the same ability. When self-view and performance don\'t match, you learn something no single questionnaire can tell you.')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
               <Tooltip>

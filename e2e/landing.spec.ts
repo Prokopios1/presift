@@ -13,7 +13,7 @@ test.describe('Landing page (B2B psychometric engine)', () => {
     await page.goto('/');
 
     // Act
-    const headline = page.getByRole('heading', { name: /Beyond speculations/i });
+    const headline = page.getByRole('heading', { name: /often wrong about themselves/i });
     const subtitle = page.getByText('10 minutes to measure IQ & EQ. Zero guesswork.');
     const getStartedLink = page.getByRole('link', { name: /Get Started/i });
 

@@ -34,7 +34,7 @@ describe('LandingPage', () => {
     // Act & Assert
     // Core hero elements
     expect(screen.queryByText(/B2B Psychometric Screening Engine/i)).toBeNull();
-    expect(screen.getByText(/Beyond speculations/i)).toBeTruthy();
+    expect(screen.getByText(/often wrong about themselves/i)).toBeTruthy();
     
     // Nav items are removed
     expect(screen.queryByRole('button', { name: /Register/i })).toBeNull();
